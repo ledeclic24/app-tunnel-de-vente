@@ -1,8 +1,16 @@
 import React, { useState } from 'react';
 import { ArrowRight, CheckCircle2 } from 'lucide-react';
+import { getButtonStyle, getEditableProps, cx } from '../../lib/blockStyle';
 
-export default function FormBlock({ content, onSubmitLead, onAdvance }) {
+export default function FormBlock({ content, onSubmitLead, onAdvance, editMode, selectedElement, onSelectElement }) {
   const { headline, buttonText, successMessage } = content;
+  const editable = (elementKey, kind, label) =>
+    getEditableProps({ elementKey, kind, styles: content.styles, editMode, selectedElement, onSelectElement, label });
+
+  const headlineProps = editable('headline', 'text', 'Titre');
+  const buttonProps = editable('button', 'button', 'Bouton');
+  const buttonStyle = { ...getButtonStyle(content.style), ...buttonProps.style };
+
   const [submitted, setSubmitted] = useState(false);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -32,7 +40,15 @@ export default function FormBlock({ content, onSubmitLead, onAdvance }) {
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
-            {headline && <h3 className="font-sans font-bold text-xl text-surface mb-2">{headline}</h3>}
+            {headline && (
+              <h3
+                className={cx('font-sans font-bold text-xl text-surface mb-2', headlineProps.className)}
+                style={headlineProps.style}
+                onClick={headlineProps.onClick}
+              >
+                {headline}
+              </h3>
+            )}
             <input
               type="text"
               placeholder="Prénom"
@@ -51,7 +67,9 @@ export default function FormBlock({ content, onSubmitLead, onAdvance }) {
             <button
               type="submit"
               disabled={submitting}
-              className="magnetic-btn btn-fill-slide group relative w-full bg-accent text-background px-6 py-3 rounded-xl text-sm font-semibold disabled:opacity-60"
+              style={buttonStyle}
+              className={cx('magnetic-btn btn-fill-slide group relative w-full bg-accent text-background px-6 py-3 rounded-xl text-sm font-semibold disabled:opacity-60', buttonProps.className)}
+              onClick={editMode ? buttonProps.onClick : undefined}
             >
               <span className="relative z-10 flex items-center justify-center gap-2">
                 {submitting ? 'Envoi...' : (buttonText || 'Envoyer')}

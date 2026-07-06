@@ -10,6 +10,7 @@ import CountdownBlock from './CountdownBlock';
 import FaqBlock from './FaqBlock';
 import CtaBlock from './CtaBlock';
 import QuizBlock from './QuizBlock';
+import { getEditableProps } from '../../lib/blockStyle';
 
 const COMPONENTS = {
   hero: HeroBlock,
@@ -25,8 +26,33 @@ const COMPONENTS = {
   quiz: QuizBlock,
 };
 
-export default function BlockRenderer({ block, onAdvance, onSubmitLead }) {
+export default function BlockRenderer({ block, onAdvance, onSubmitLead, editMode, selectedElement, onSelectElement }) {
   const Component = COMPONENTS[block.type];
   if (!Component) return null;
-  return <Component content={block.content} onAdvance={onAdvance} onSubmitLead={onSubmitLead} />;
+  const sectionProps = getEditableProps({
+    elementKey: 'section',
+    kind: 'card',
+    styles: block.content?.styles,
+    editMode,
+    selectedElement,
+    onSelectElement,
+    label: 'Section',
+  });
+  return (
+    <div
+      className={sectionProps.className ? `${sectionProps.className} rounded-[2rem]` : undefined}
+      style={sectionProps.style}
+      onClick={sectionProps.onClick}
+      onClickCapture={editMode ? (e) => e.preventDefault() : undefined}
+    >
+      <Component
+        content={block.content}
+        onAdvance={onAdvance}
+        onSubmitLead={onSubmitLead}
+        editMode={editMode}
+        selectedElement={selectedElement}
+        onSelectElement={onSelectElement}
+      />
+    </div>
+  );
 }

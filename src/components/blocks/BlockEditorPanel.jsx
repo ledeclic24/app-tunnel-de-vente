@@ -48,10 +48,7 @@ function ListEditor({ items, onChange, renderRow, emptyItem, addLabel }) {
   );
 }
 
-export default function BlockEditorPanel({ block, onChange, userId }) {
-  const { type, content } = block;
-  const set = (patch) => onChange({ ...content, ...patch });
-
+function BlockFields({ type, content, set, userId }) {
   switch (type) {
     case 'hero':
       return (
@@ -285,4 +282,18 @@ export default function BlockEditorPanel({ block, onChange, userId }) {
     default:
       return <p className="text-sm text-surface/50">Aucun réglage pour ce bloc.</p>;
   }
+}
+
+export default function BlockEditorPanel({ block, onChange, userId }) {
+  const { type, content } = block;
+  const set = (patch) => onChange({ ...content, ...patch });
+
+  return (
+    <div>
+      <BlockFields type={type} content={content} set={set} userId={userId} />
+      <p className="pt-4 mt-2 border-t border-surface/10 text-xs text-surface/40">
+        Astuce : cliquez directement sur un titre, un bouton, une image ou une carte dans l'aperçu ci-dessus pour personnaliser sa couleur, sa police et ses effets.
+      </p>
+    </div>
+  );
 }

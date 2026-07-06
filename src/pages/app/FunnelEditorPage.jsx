@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import {
   ArrowLeft, ExternalLink, Plus, X, ChevronUp, ChevronDown,
-  Pencil, Trash2, Users, Check, Lock, Palette,
+  Pencil, Trash2, Users, Check, Lock, Palette, Copy,
 } from 'lucide-react';
 import {
   fetchFunnel, updateFunnel, fetchSteps, addStep, deleteStep, swapStepPositions,
@@ -15,9 +15,10 @@ import { getPlan } from '../../lib/plans';
 import { brandStyleVars } from '../../lib/colorUtils';
 import BlockRenderer from '../../components/blocks/BlockRenderer';
 import BlockEditorPanel from '../../components/blocks/BlockEditorPanel';
+import ElementStylePanel from '../../components/blocks/ElementStylePanel';
 import BrandKitPanel from '../../components/app/BrandKitPanel';
 
-function BlockCard({ block, index, total, onMove, onDelete, isExpanded, onToggle, onChange, userId }) {
+function BlockCard({ block, index, total, onMove, onDelete, onDuplicate, isExpanded, onToggle, onChange, userId, selectedElement, onSelectElement }) {
   const def = BLOCK_TYPES.find((b) => b.type === block.type);
   const Icon = def?.icon;
 
@@ -38,14 +39,23 @@ function BlockCard({ block, index, total, onMove, onDelete, isExpanded, onToggle
           <button onClick={onToggle} className={`p-1.5 rounded-lg ${isExpanded ? 'text-accent' : 'text-surface/40 hover:text-surface'}`}>
             <Pencil className="w-4 h-4" />
           </button>
+          <button onClick={onDuplicate} className="p-1.5 rounded-lg text-surface/40 hover:text-surface" aria-label="Dupliquer">
+            <Copy className="w-4 h-4" />
+          </button>
           <button onClick={onDelete} className="p-1.5 rounded-lg text-surface/40 hover:text-red-500">
             <Trash2 className="w-4 h-4" />
           </button>
         </div>
       </div>
 
-      <div className="pointer-events-none opacity-95 scale-[0.97] origin-top">
-        <BlockRenderer block={block} onAdvance={() => {}} />
+      <div className="opacity-95 scale-[0.97] origin-top">
+        <BlockRenderer
+          block={block}
+          onAdvance={() => {}}
+          editMode
+          selectedElement={selectedElement}
+          onSelectElement={onSelectElement}
+        />
       </div>
 
       {isExpanded && (
@@ -67,6 +77,7 @@ export default function FunnelEditorPage() {
   const [selectedStepId, setSelectedStepId] = useState(null);
   const [blocks, setBlocks] = useState([]);
   const [expandedBlockId, setExpandedBlockId] = useState(null);
+  const [selection, setSelection] = useState(null);
   const [showPalette, setShowPalette] = useState(false);
   const [showBrandKit, setShowBrandKit] = useState(false);
   const [leadsCount, setLeadsCount] = useState(0);
@@ -108,6 +119,7 @@ export default function FunnelEditorPage() {
   const selectStep = async (stepId) => {
     setSelectedStepId(stepId);
     setExpandedBlockId(null);
+    setSelection(null);
     await loadBlocks(stepId);
   };
 
@@ -168,6 +180,12 @@ export default function FunnelEditorPage() {
     if (!window.confirm('Supprimer ce bloc ?')) return;
     await deleteBlock(block.id);
     setBlocks((prev) => prev.filter((b) => b.id !== block.id));
+    setSelection((sel) => (sel?.blockId === block.id ? null : sel));
+  };
+
+  const handleDuplicateBlock = async (block) => {
+    const copy = await addBlock(selectedStepId, block.type, { ...block.content }, blocks.length);
+    setBlocks((prev) => [...prev, copy]);
   };
 
   const moveBlock = async (block, direction) => {
@@ -184,6 +202,10 @@ export default function FunnelEditorPage() {
   const handleBlockChange = async (block, newContent) => {
     setBlocks((prev) => prev.map((b) => (b.id === block.id ? { ...b, content: newContent } : b)));
     await updateBlock(block.id, newContent);
+  };
+
+  const handleElementStyleChange = async (block, newStyles) => {
+    await handleBlockChange(block, { ...block.content, styles: newStyles });
   };
 
   const handleSaveBrand = async (brand) => {
@@ -289,10 +311,13 @@ export default function FunnelEditorPage() {
             total={blocks.length}
             onMove={(dir) => moveBlock(block, dir)}
             onDelete={() => handleDeleteBlock(block)}
+            onDuplicate={() => handleDuplicateBlock(block)}
             isExpanded={expandedBlockId === block.id}
             onToggle={() => setExpandedBlockId(expandedBlockId === block.id ? null : block.id)}
             onChange={(content) => handleBlockChange(block, content)}
             userId={profile?.id}
+            selectedElement={selection?.blockId === block.id ? selection.elementKey : null}
+            onSelectElement={(elementKey, kind, label) => setSelection({ blockId: block.id, elementKey, kind, label })}
           />
         ))}
 
@@ -324,6 +349,17 @@ export default function FunnelEditorPage() {
           )}
         </div>
       </div>
+
+      {selection && (
+        <ElementStylePanel
+          block={blocks.find((b) => b.id === selection.blockId)}
+          elementKey={selection.elementKey}
+          kind={selection.kind}
+          label={selection.label}
+          onChange={(newStyles) => handleElementStyleChange(blocks.find((b) => b.id === selection.blockId), newStyles)}
+          onClose={() => setSelection(null)}
+        />
+      )}
     </div>
   );
 }

@@ -9,8 +9,8 @@ const labelClass = "block text-xs font-semibold text-surface/70 uppercase tracki
 
 export default function BrandKitPanel({ brand, onSave, userId, canUseBrandKit }) {
   const [draft, setDraft] = useState({
-    primaryColor: brand?.primaryColor || '#0A0A14',
-    accentColor: brand?.accentColor || '#7B61FF',
+    primaryColor: brand?.primaryColor || '#0B2818',
+    accentColor: brand?.accentColor || '#22C55E',
     font: brand?.font || 'Sora',
     logoUrl: brand?.logoUrl || '',
   });

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, ArrowRight, Lock, Rocket } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Lock, Rocket, Sparkles } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { fetchUserFunnels, createFunnelFromTemplate } from '../../lib/funnelsApi';
 import { getPlan } from '../../lib/plans';
@@ -69,7 +69,24 @@ export default function NewFunnelPage() {
         </Link>
 
         <h1 className="text-2xl font-sans font-bold text-surface mb-2">Quel type de tunnel veux-tu créer ?</h1>
-        <p className="text-surface/60 mb-8">Choisis la catégorie qui correspond à ton besoin. Tu verras ensuite plusieurs modèles adaptés.</p>
+        <p className="text-surface/60 mb-6">Choisis la catégorie qui correspond à ton besoin. Tu verras ensuite plusieurs modèles adaptés.</p>
+
+        <Link
+          to={plan.aiAccess ? '/app/funnels/ai' : '/app/billing'}
+          className="relative flex items-center gap-4 p-6 rounded-[2rem] border border-accent/20 bg-gradient-to-br from-accent/10 to-transparent mb-8 hover:border-accent/40 transition-colors"
+        >
+          <div className="w-11 h-11 rounded-full gradient-accent flex items-center justify-center shrink-0">
+            <Sparkles className="w-5 h-5 text-background" />
+          </div>
+          <div className="flex-1">
+            <h3 className="font-sans font-semibold text-surface flex items-center gap-2">
+              Générer mon tunnel avec l'IA
+              {!plan.aiAccess && <Lock className="w-3.5 h-3.5 text-surface/40" />}
+            </h3>
+            <p className="text-sm text-surface/60">Décris ton offre, l'IA assemble pages, textes et palette pour toi.</p>
+          </div>
+          <ArrowRight className="w-4 h-4 text-surface/40 shrink-0" />
+        </Link>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {CATEGORIES.map((cat) => {

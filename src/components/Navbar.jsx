@@ -8,51 +8,41 @@ export default function Navbar() {
   const { user } = useAuth() || {};
 
   useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 50);
-    };
+    const handleScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   return (
-    <div className="fixed top-6 left-0 right-0 z-50 flex justify-center px-4 transition-all duration-500">
-      <nav className={`
-        flex items-center justify-between px-6 py-3 rounded-[2rem] w-full max-w-4xl transition-all duration-500
-        ${scrolled
-          ? 'bg-background/80 backdrop-blur-xl border border-surface/10 shadow-lg text-surface'
-          : 'bg-transparent text-background'}
-      `}>
-        <Link to="/" className="font-sans font-bold tracking-tight text-xl">
+    <nav className={`
+      fixed top-0 left-0 right-0 z-50 transition-all duration-300
+      ${scrolled ? 'bg-background/90 backdrop-blur-lg border-b border-surface/10' : 'bg-transparent border-b border-transparent'}
+    `}>
+      <div className="max-w-7xl mx-auto px-6 md:px-10 h-16 flex items-center justify-between">
+        <Link to="/" className="flex items-center gap-2 font-sans font-bold text-lg text-surface">
+          <span className="w-7 h-7 rounded-lg gradient-accent flex items-center justify-center text-background text-sm">V</span>
           Vendeko
         </Link>
-        <div className="hidden md:flex items-center gap-8 text-sm font-medium">
-          <a href="#features" className="hover-lift hover:text-accent transition-colors duration-300 inline-block">Fonctionnalités</a>
-          <a href="#philosophy" className="hover-lift hover:text-accent transition-colors duration-300 inline-block">Philosophie</a>
-          <a href="#protocol" className="hover-lift hover:text-accent transition-colors duration-300 inline-block">Protocole</a>
-          <a href="#pricing" className="hover-lift hover:text-accent transition-colors duration-300 inline-block">Tarifs</a>
+        <div className="hidden md:flex items-center gap-8 text-sm font-medium text-surface/70">
+          <a href="#produit" className="hover:text-surface transition-colors">Produit</a>
+          <a href="#comment-ca-marche" className="hover:text-surface transition-colors">Comment ça marche</a>
+          <a href="#pricing" className="hover:text-surface transition-colors">Tarifs</a>
         </div>
         <div className="flex items-center gap-4">
           {!user && (
-            <Link to="/connexion" className="hidden md:inline-block hover-lift text-sm font-medium hover:text-accent transition-colors duration-300">
+            <Link to="/connexion" className="hidden md:inline-block text-sm font-medium text-surface/70 hover:text-surface transition-colors">
               Connexion
             </Link>
           )}
           <Link
             to={user ? '/app' : '/inscription'}
-            className={`
-              magnetic-btn btn-fill-slide group relative px-5 py-2 rounded-full text-sm font-semibold transition-colors duration-300
-              ${scrolled ? 'bg-accent text-background' : 'bg-background text-primary'}
-            `}
+            className="group inline-flex items-center gap-2 bg-surface text-background px-4 py-2 rounded-lg text-sm font-semibold hover:bg-primary transition-colors"
           >
-            <span className="relative z-10 flex items-center gap-2">
-              {user ? 'Tableau de bord' : 'Essayer gratuitement'}
-              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-            </span>
-            <div className="fill-layer bg-white/20"></div>
+            {user ? 'Tableau de bord' : 'Essayer gratuitement'}
+            <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
           </Link>
         </div>
-      </nav>
-    </div>
+      </div>
+    </nav>
   );
 }

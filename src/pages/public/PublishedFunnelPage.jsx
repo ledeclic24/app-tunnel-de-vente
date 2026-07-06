@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { fetchFunnelBySlug, fetchSteps, fetchBlocks, insertLead } from '../../lib/funnelsApi';
+import { fetchFunnelBySlug, fetchSteps, fetchBlocks, insertLead, incrementStepView } from '../../lib/funnelsApi';
 import { brandStyleVars } from '../../lib/colorUtils';
 import BlockRenderer from '../../components/blocks/BlockRenderer';
 
@@ -24,6 +24,7 @@ export default function PublishedFunnelPage() {
       setFunnel(f);
       setSteps(s);
       setBlocks(b);
+      incrementStepView(currentStep.id).catch(() => {});
     } catch (err) {
       setNotFound(true);
     }

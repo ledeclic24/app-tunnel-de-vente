@@ -13,9 +13,9 @@ export default {
         surface: 'rgb(var(--color-surface) / <alpha-value>)',
       },
       fontFamily: {
-        sans: ['var(--font-sans, Sora)', 'sans-serif'],
-        serif: ['"Instrument Serif"', 'serif'],
-        mono: ['"Fira Code"', 'monospace'],
+        sans: ['var(--font-sans, Manrope)', 'sans-serif'],
+        serif: ['Fraunces', 'serif'],
+        mono: ['"JetBrains Mono"', 'monospace'],
       },
     },
   },

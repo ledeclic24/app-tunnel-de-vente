@@ -12,22 +12,12 @@ export async function fetchUserFunnels(userId) {
   return data;
 }
 
-export async function createFunnelFromTemplate({ userId, name, templateKey, showBranding = true }) {
-  const template = getTemplate(templateKey);
-  const slug = generateFunnelSlug(name);
-
-  const { data: funnel, error: funnelError } = await supabase
-    .from('funnels')
-    .insert({ user_id: userId, name, slug, template: templateKey, show_branding: showBranding })
-    .select()
-    .single();
-  if (funnelError) throw funnelError;
-
-  for (let i = 0; i < template.steps.length; i++) {
-    const step = template.steps[i];
+async function insertSteps(funnelId, steps) {
+  for (let i = 0; i < steps.length; i++) {
+    const step = steps[i];
     const { data: stepRow, error: stepError } = await supabase
       .from('funnel_steps')
-      .insert({ funnel_id: funnel.id, name: step.name, slug: step.slug, step_type: step.step_type, position: i })
+      .insert({ funnel_id: funnelId, name: step.name, slug: step.slug, step_type: step.step_type, position: i })
       .select()
       .single();
     if (stepError) throw stepError;
@@ -40,7 +30,41 @@ export async function createFunnelFromTemplate({ userId, name, templateKey, show
       if (blocksError) throw blocksError;
     }
   }
+}
 
+export async function createFunnelFromTemplate({ userId, name, templateKey, showBranding = true }) {
+  const template = getTemplate(templateKey);
+  const slug = generateFunnelSlug(name);
+
+  const { data: funnel, error: funnelError } = await supabase
+    .from('funnels')
+    .insert({ user_id: userId, name, slug, template: templateKey, show_branding: showBranding })
+    .select()
+    .single();
+  if (funnelError) throw funnelError;
+
+  await insertSteps(funnel.id, template.steps);
+  return funnel;
+}
+
+export async function createFunnelFromAI({ userId, name, generatedFunnel, showBranding = true }) {
+  const slug = generateFunnelSlug(name);
+
+  const { data: funnel, error: funnelError } = await supabase
+    .from('funnels')
+    .insert({
+      user_id: userId,
+      name,
+      slug,
+      template: 'ia',
+      show_branding: showBranding,
+      brand: generatedFunnel.brand || {},
+    })
+    .select()
+    .single();
+  if (funnelError) throw funnelError;
+
+  await insertSteps(funnel.id, generatedFunnel.steps);
   return funnel;
 }
 
@@ -157,4 +181,37 @@ export async function countLeads(funnelId) {
     .eq('funnel_id', funnelId);
   if (error) throw error;
   return count || 0;
+}
+
+export async function incrementStepView(stepId) {
+  await supabase.rpc('increment_step_view', { p_step_id: stepId });
+}
+
+export async function fetchLeadsForUser(userId) {
+  const { data: funnels, error: fErr } = await supabase.from('funnels').select('id, name').eq('user_id', userId);
+  if (fErr) throw fErr;
+  const funnelMap = new Map(funnels.map((f) => [f.id, f.name]));
+  const funnelIds = funnels.map((f) => f.id);
+  if (funnelIds.length === 0) return [];
+  const { data: leads, error } = await supabase
+    .from('leads')
+    .select('*')
+    .in('funnel_id', funnelIds)
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return leads.map((l) => ({ ...l, funnelName: funnelMap.get(l.funnel_id) || '—' }));
+}
+
+export async function fetchFunnelStepsAnalytics(funnelId) {
+  const { data: steps, error } = await supabase
+    .from('funnel_steps')
+    .select('*')
+    .eq('funnel_id', funnelId)
+    .order('position', { ascending: true });
+  if (error) throw error;
+  const { data: leads, error: lErr } = await supabase.from('leads').select('step_id').eq('funnel_id', funnelId);
+  if (lErr) throw lErr;
+  const leadCountByStep = {};
+  leads.forEach((l) => { leadCountByStep[l.step_id] = (leadCountByStep[l.step_id] || 0) + 1; });
+  return steps.map((s) => ({ ...s, leadCount: leadCountByStep[s.id] || 0 }));
 }

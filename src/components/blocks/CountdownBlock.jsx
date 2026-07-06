@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { getEditableProps, cx } from '../../lib/blockStyle';
 
 function getRemaining(targetDate) {
   const diff = Math.max(0, new Date(targetDate).getTime() - Date.now());
@@ -9,9 +10,10 @@ function getRemaining(targetDate) {
   return { days, hours, minutes, seconds };
 }
 
-export default function CountdownBlock({ content }) {
+export default function CountdownBlock({ content, editMode, selectedElement, onSelectElement }) {
   const { headline, targetDate } = content;
   const [remaining, setRemaining] = useState(() => getRemaining(targetDate));
+  const headlineProps = getEditableProps({ elementKey: 'headline', kind: 'text', styles: content.styles, editMode, selectedElement, onSelectElement, label: 'Titre' });
 
   useEffect(() => {
     const interval = setInterval(() => setRemaining(getRemaining(targetDate)), 1000);
@@ -27,7 +29,15 @@ export default function CountdownBlock({ content }) {
 
   return (
     <section className="px-6 py-12 md:px-16 md:py-16 max-w-2xl mx-auto text-center">
-      {headline && <h3 className="font-sans font-semibold text-xl text-surface mb-6">{headline}</h3>}
+      {headline && (
+        <h3
+          className={cx('font-sans font-semibold text-xl text-surface mb-6', headlineProps.className)}
+          style={headlineProps.style}
+          onClick={headlineProps.onClick}
+        >
+          {headline}
+        </h3>
+      )}
       <div className="flex items-center justify-center gap-3 md:gap-4">
         {units.map((u) => (
           <div key={u.label} className="bg-primary text-background rounded-2xl px-4 py-3 md:px-6 md:py-4 min-w-[4.5rem]">

@@ -3,10 +3,10 @@
 @tailwind utilities;
 
 :root {
-  --color-primary: 10 10 20;
-  --color-accent: 123 97 255;
-  --color-background: 240 239 244;
-  --color-surface: 24 24 27;
+  --color-primary: 11 40 24;
+  --color-accent: 34 197 94;
+  --color-background: 246 249 247;
+  --color-surface: 12 31 22;
 }
 
 @layer base {
@@ -25,7 +25,18 @@
 }
 
 .glow-text {
-  text-shadow: 0 0 30px rgba(123, 97, 255, 0.6), 0 0 60px rgba(123, 97, 255, 0.3);
+  text-shadow: 0 0 30px rgba(34, 197, 94, 0.5), 0 0 60px rgba(34, 197, 94, 0.25);
+}
+
+.gradient-accent {
+  background-image: linear-gradient(135deg, rgb(var(--color-accent)) 0%, #86EFAC 100%);
+}
+
+.gradient-text-accent {
+  background-image: linear-gradient(135deg, rgb(var(--color-accent)) 0%, #4ADE80 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 
 .magnetic-btn {

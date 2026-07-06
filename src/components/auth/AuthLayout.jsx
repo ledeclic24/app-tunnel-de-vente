@@ -5,7 +5,7 @@ export default function AuthLayout({ title, subtitle, children, footer }) {
   return (
     <div className="min-h-screen bg-primary flex items-center justify-center p-6 relative overflow-hidden">
       <div className="noise-overlay" aria-hidden="true"></div>
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(123,97,255,0.15),transparent_50%)]"></div>
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(34,197,94,0.18),transparent_50%)]"></div>
 
       <div className="relative z-10 w-full max-w-md">
         <Link to="/" className="flex justify-center mb-8 font-sans font-bold text-2xl text-background">

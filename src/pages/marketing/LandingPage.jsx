@@ -2,7 +2,7 @@ import React from 'react';
 
 import Navbar from '../../components/Navbar';
 import Hero from '../../components/Hero';
-import Features from '../../components/Features';
+import Bento from '../../components/Bento';
 import Philosophy from '../../components/Philosophy';
 import Protocol from '../../components/Protocol';
 import Pricing from '../../components/Pricing';
@@ -15,9 +15,9 @@ export default function LandingPage() {
       <Navbar />
       <main>
         <Hero />
-        <Features />
-        <Philosophy />
+        <Bento />
         <Protocol />
+        <Philosophy />
         <Pricing />
       </main>
       <Footer />

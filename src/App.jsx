@@ -16,9 +16,12 @@ import ForgotPasswordPage from './pages/auth/ForgotPasswordPage';
 import ResetPasswordPage from './pages/auth/ResetPasswordPage';
 import DashboardPage from './pages/app/DashboardPage';
 import NewFunnelPage from './pages/app/NewFunnelPage';
+import AIGeneratorPage from './pages/app/AIGeneratorPage';
 import FunnelEditorPage from './pages/app/FunnelEditorPage';
 import BillingPage from './pages/app/BillingPage';
 import AccountPage from './pages/app/AccountPage';
+import LeadsPage from './pages/app/LeadsPage';
+import AnalyticsPage from './pages/app/AnalyticsPage';
 import AdminOverviewPage from './pages/app/admin/AdminOverviewPage';
 import AdminUsersPage from './pages/app/admin/AdminUsersPage';
 import AdminFunnelsPage from './pages/app/admin/AdminFunnelsPage';
@@ -55,7 +58,10 @@ function App() {
             <Route element={<AppShell />}>
               <Route index element={<DashboardPage />} />
               <Route path="funnels/new" element={<NewFunnelPage />} />
+              <Route path="funnels/ai" element={<AIGeneratorPage />} />
               <Route path="funnels/:funnelId/edit" element={<FunnelEditorPage />} />
+              <Route path="leads" element={<LeadsPage />} />
+              <Route path="analytics" element={<AnalyticsPage />} />
               <Route path="billing" element={<BillingPage />} />
               <Route path="account" element={<AccountPage />} />
             </Route>

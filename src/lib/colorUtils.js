@@ -11,12 +11,12 @@ export function hexToRgbTriplet(hex) {
 }
 
 export const BRAND_FONTS = [
-  { value: 'Sora', label: 'Sora (par défaut)' },
+  { value: 'Manrope', label: 'Manrope (par défaut)' },
   { value: 'Inter', label: 'Inter' },
   { value: 'Poppins', label: 'Poppins' },
   { value: '"Playfair Display"', label: 'Playfair Display' },
   { value: '"Space Grotesk"', label: 'Space Grotesk' },
-  { value: 'Manrope', label: 'Manrope' },
+  { value: 'Sora', label: 'Sora' },
 ];
 
 export function brandStyleVars(brand) {
