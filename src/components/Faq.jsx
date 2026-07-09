@@ -28,8 +28,12 @@ const FAQS = [
     a: "Oui, dès le plan Pro tu as accès à l'historique complet de tes leads et à l'export CSV. Le plan Starter affiche tes 5 derniers leads.",
   },
   {
+    q: 'Puis-je connecter Vendeko à mes autres outils ?',
+    a: "Oui, à partir du plan Pro : chaque nouveau lead peut être envoyé automatiquement vers Zapier, Make, Google Sheets ou ton CRM grâce aux webhooks.",
+  },
+  {
     q: 'Puis-je changer de plan à tout moment ?',
-    a: 'Oui, tu peux passer à un plan supérieur ou revenir au plan gratuit à tout moment depuis ton compte.',
+    a: "Oui, tu peux demander un changement de plan à tout moment depuis ton compte. Le temps que le paiement en ligne soit disponible, chaque demande est validée manuellement sous peu par notre équipe.",
   },
 ];
 

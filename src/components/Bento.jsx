@@ -25,13 +25,13 @@ const FEATURES = [
   },
   {
     id: '03',
-    title: 'Génération par IA',
-    desc: 'Textes et pages assemblés automatiquement, prêts à publier sans relecture interminable.',
+    title: 'Copilote IA conversationnel',
+    desc: "Décris ton offre, discute avec l'IA pour l'ajuster, publie. Pas de relecture interminable.",
   },
   {
     id: '04',
-    title: 'Lancements programmés',
-    desc: 'Planifie tes envois à l’avance, Vendeko s’occupe du reste au bon moment.',
+    title: 'Connecté à tes outils',
+    desc: 'Chaque nouveau lead part automatiquement vers Zapier, Google Sheets ou ton CRM.',
   },
 ];
 

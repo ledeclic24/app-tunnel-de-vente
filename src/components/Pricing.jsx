@@ -7,8 +7,8 @@ import ReactiveDotGrid from './ReactiveDotGrid';
 
 const DESCRIPTIONS = {
   starter: "Pour découvrir Vendeko et publier ton premier tunnel.",
-  createur: "Pour vendre sérieusement, sans jamais toucher au code.",
-  entreprise: "Statistiques avancées et accompagnement pour les équipes.",
+  createur: "Pour vendre sérieusement, avec l'IA et tes outils connectés.",
+  entreprise: "Équipe, pixels publicitaires et statistiques pour passer à l'échelle.",
 };
 
 export default function Pricing() {
