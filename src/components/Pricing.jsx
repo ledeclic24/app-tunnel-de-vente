@@ -76,7 +76,7 @@ export default function Pricing() {
               <Link to="/inscription" className={`
                 magnetic-btn w-full py-4 rounded-full font-semibold transition-colors duration-300 flex items-center justify-center gap-2 group
                 ${plan.highlight
-                  ? 'bg-accent text-background hover:bg-white'
+                  ? 'bg-accent text-background hover:bg-white hover:text-surface'
                   : 'bg-primary text-background hover:bg-surface'}
               `}>
                 Essayer gratuitement
