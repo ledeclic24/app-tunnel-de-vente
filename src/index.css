@@ -70,3 +70,23 @@
 .btn-fill-slide:hover .fill-layer {
   transform: translateY(0);
 }
+
+.marquee-mask {
+  -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+  mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+}
+
+@keyframes testimonialMarquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+.testimonial-marquee-track {
+  display: flex;
+  width: max-content;
+  animation: testimonialMarquee 46s linear infinite;
+}
+
+.testimonial-row:hover .testimonial-marquee-track {
+  animation-play-state: paused;
+}

@@ -1,203 +1,211 @@
 import React, { useState, useEffect, useRef } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { MousePointer2, Layers, Wand2 } from 'lucide-react';
+import ReactiveDotGrid from './ReactiveDotGrid';
 
 gsap.registerPlugin(ScrollTrigger);
 
-const DiagnosticMixer = () => {
-  const [items, setItems] = useState([
-    { id: 1, title: 'Décris ton offre' },
-    { id: 2, title: 'Choisis un modèle' },
-    { id: 3, title: 'Publie en un clic' },
-  ]);
+const STATS = [
+  { id: 'models', value: 19, numeric: true, label: "Modèles prêts à l'emploi" },
+  { id: 'click', value: '1 clic', numeric: false, label: 'Pour générer un tunnel complet' },
+  { id: 'code', value: 0, numeric: true, label: 'Ligne de code requise' },
+  { id: 'time', value: '5 min', numeric: false, label: 'Pour publier ta première page' },
+];
+
+const FEATURES = [
+  {
+    id: '01',
+    title: 'Assistant guidé',
+    desc: 'Vendeko te pose des questions simples et assemble ton tunnel à ta place, zéro vocabulaire marketing.',
+  },
+  {
+    id: '02',
+    title: 'Modèles couvrant 10 catégories',
+    desc: "Du lead magnet au programme premium, un point de départ pour chaque type d'offre.",
+  },
+  {
+    id: '03',
+    title: 'Génération par IA',
+    desc: 'Textes et pages assemblés automatiquement, prêts à publier sans relecture interminable.',
+  },
+  {
+    id: '04',
+    title: 'Lancements programmés',
+    desc: 'Planifie tes envois à l’avance, Vendeko s’occupe du reste au bon moment.',
+  },
+];
+
+const STAT_BORDER = [
+  '',
+  'border-l border-background/10 pl-8 md:pl-10',
+  'md:border-l md:border-background/10 md:pl-10',
+  'border-l border-background/10 pl-8 md:pl-10',
+];
+
+function CountUp({ to }) {
+  const ref = useRef(null);
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setItems((prev) => {
-        const next = [...prev];
-        next.unshift(next.pop());
-        return next;
-      });
-    }, 2600);
-    return () => clearInterval(interval);
-  }, []);
-
-  return (
-    <div className="relative h-40 w-full flex flex-col items-center justify-center">
-      {items.map((item, index) => (
-        <div
-          key={item.id}
-          className={`absolute w-full max-w-[240px] p-4 rounded-xl border font-mono text-sm flex items-center justify-between transition-all duration-700 ${
-            index === 0 ? 'border-accent/30 bg-accent/5' : 'border-surface/10 bg-background'
-          }`}
-          style={{
-            transform: `translateY(${index * 14}px) scale(${1 - index * 0.05})`,
-            zIndex: 3 - index,
-            opacity: 1 - index * 0.25,
-            transitionTimingFunction: 'cubic-bezier(0.34, 1.56, 0.64, 1)',
-          }}
-        >
-          <span className="text-surface/80">{item.title}</span>
-          {index === 0 && <div className="w-2 h-2 rounded-full bg-accent animate-pulse" />}
-        </div>
-      ))}
-    </div>
-  );
-};
-
-const TelemetryTypewriter = () => {
-  const text = '> Page de capture ✓\n> Textes générés ✓\n> Palette appliquée ✓\n> Prêt à publier ✓';
-  const [displayed, setDisplayed] = useState('');
-
-  useEffect(() => {
-    let i = 0;
-    const interval = setInterval(() => {
-      setDisplayed(text.slice(0, i));
-      i++;
-      if (i > text.length) setTimeout(() => { i = 0; setDisplayed(''); }, 2500);
-    }, 45);
-    return () => clearInterval(interval);
-  }, []);
-
-  return (
-    <div className="flex flex-col h-full bg-primary/[0.03] rounded-xl p-4 border border-surface/10">
-      <div className="flex items-center gap-2 mb-3 pb-2 border-b border-surface/10">
-        <div className="w-1.5 h-1.5 rounded-full bg-accent animate-ping" />
-        <span className="font-mono text-[10px] font-semibold tracking-wider text-surface/50 uppercase">Génération en direct</span>
-      </div>
-      <pre className="font-mono text-xs text-surface/80 whitespace-pre-wrap leading-relaxed">
-        {displayed}
-        <span className="inline-block w-1.5 h-3 bg-accent ml-1 animate-pulse align-middle" />
-      </pre>
-    </div>
-  );
-};
-
-const CursorScheduler = () => {
-  const containerRef = useRef(null);
-  const cursorRef = useRef(null);
-  const dayRef = useRef(null);
-  const btnRef = useRef(null);
-
-  useEffect(() => {
-    const tl = gsap.timeline({ repeat: -1, repeatDelay: 1 });
+    const el = ref.current;
+    const counter = { val: 0 };
     const ctx = gsap.context(() => {
-      gsap.set(cursorRef.current, { x: 0, y: 40, opacity: 0 });
-      gsap.set(dayRef.current, { backgroundColor: 'transparent' });
-      tl.to(cursorRef.current, { opacity: 1, duration: 0.3 })
-        .to(cursorRef.current, { x: 70, y: 10, duration: 0.9, ease: 'power2.inOut' })
-        .to(cursorRef.current, { scale: 0.8, duration: 0.1 })
-        .to(dayRef.current, { backgroundColor: '#22C55E', color: '#0B2818', duration: 0.1 }, '<')
-        .to(cursorRef.current, { scale: 1, duration: 0.1 })
-        .to(cursorRef.current, { x: 120, y: 75, duration: 0.7, ease: 'power2.inOut', delay: 0.3 })
-        .to(cursorRef.current, { scale: 0.8, duration: 0.1 })
-        .to(btnRef.current, { scale: 0.95, duration: 0.1 }, '<')
-        .to(btnRef.current, { scale: 1, duration: 0.1 })
-        .to(cursorRef.current, { scale: 1, opacity: 0, duration: 0.3 })
-        .to(dayRef.current, { backgroundColor: 'transparent', color: '#0C1F16', duration: 0.3, delay: 0.5 });
-    }, containerRef);
+      gsap.to(counter, {
+        val: to,
+        duration: 1.4,
+        ease: 'power2.out',
+        onUpdate: () => { el.textContent = Math.round(counter.val); },
+        scrollTrigger: { trigger: el, start: 'top 88%', once: true },
+      });
+    });
     return () => ctx.revert();
-  }, []);
+  }, [to]);
 
-  return (
-    <div ref={containerRef} className="relative h-40 w-full flex flex-col justify-between">
-      <div className="grid grid-cols-7 gap-1">
-        {['L', 'M', 'M', 'J', 'V', 'S', 'D'].map((day, i) => (
-          <div
-            key={i}
-            ref={i === 2 ? dayRef : null}
-            className="aspect-square flex items-center justify-center font-mono text-[10px] rounded-md border border-surface/10 bg-background"
-          >
-            {day}
-          </div>
-        ))}
-      </div>
-      <div className="flex justify-end">
-        <div ref={btnRef} className="px-3 py-1.5 bg-primary text-accent font-sans text-[11px] font-semibold rounded-lg">
-          Sauvegarder
-        </div>
-      </div>
-      <div ref={cursorRef} className="absolute top-0 left-0 z-10 pointer-events-none drop-shadow-md">
-        <MousePointer2 className="w-4 h-4 text-surface fill-background" />
-      </div>
-    </div>
-  );
-};
+  return <span ref={ref}>0</span>;
+}
 
-function Tile({ className = '', children }) {
+function StatItem({ stat, index }) {
   return (
-    <div className={`bento-tile bg-background border border-surface/10 rounded-2xl p-6 flex flex-col ${className}`}>
-      {children}
+    <div className={`stat-item ${STAT_BORDER[index]}`}>
+      <p className="text-4xl md:text-5xl font-serif text-background leading-none">
+        {stat.numeric ? <CountUp to={stat.value} /> : stat.value}
+      </p>
+      <span className="stat-bar block h-[2px] w-8 bg-accent/70 mt-4 origin-left" />
+      <p className="font-mono text-[11px] uppercase tracking-wider text-background/45 leading-relaxed mt-3 max-w-[9rem]">
+        {stat.label}
+      </p>
     </div>
   );
 }
 
 export default function Bento() {
   const containerRef = useRef(null);
+  const [active, setActive] = useState(0);
 
   useEffect(() => {
-    let ctx = gsap.context(() => {
-      gsap.from('.bento-tile', {
-        y: 30,
-        opacity: 0,
-        stagger: 0.08,
-        duration: 0.8,
-        ease: 'power3.out',
-        scrollTrigger: { trigger: containerRef.current, start: 'top 75%' },
-      });
+    const ctx = gsap.context(() => {
+      gsap.fromTo(
+        '.product-header > *',
+        { y: 20, opacity: 0 },
+        { y: 0, opacity: 1, stagger: 0.08, duration: 0.7, ease: 'power3.out', scrollTrigger: { trigger: '.product-header', start: 'top 80%' } }
+      );
+
+      gsap.fromTo(
+        '.stat-item',
+        { y: 24, opacity: 0 },
+        {
+          y: 0,
+          opacity: 1,
+          stagger: 0.1,
+          duration: 0.7,
+          ease: 'power3.out',
+          scrollTrigger: { trigger: '.stats-row', start: 'top 82%', end: 'bottom 20%', toggleActions: 'play reverse play reverse' },
+        }
+      );
+
+      gsap.fromTo(
+        '.stat-bar',
+        { scaleX: 0 },
+        { scaleX: 1, duration: 0.6, stagger: 0.1, delay: 0.3, ease: 'power2.out', scrollTrigger: { trigger: '.stats-row', start: 'top 82%' } }
+      );
+
+      gsap.fromTo(
+        '.divider-line',
+        { scaleX: 0 },
+        { scaleX: 1, duration: 1, ease: 'power2.inOut', scrollTrigger: { trigger: '.divider-line', start: 'top 90%' } }
+      );
+
+      gsap.fromTo(
+        '.feature-item',
+        { x: -16, opacity: 0 },
+        {
+          x: 0,
+          opacity: 1,
+          stagger: 0.08,
+          duration: 0.6,
+          ease: 'power3.out',
+          scrollTrigger: { trigger: '.feature-list', start: 'top 80%', end: 'bottom 30%', toggleActions: 'play reverse play reverse' },
+        }
+      );
+
+      gsap.fromTo(
+        '.quote-block',
+        { y: 24, opacity: 0 },
+        {
+          y: 0,
+          opacity: 1,
+          duration: 0.9,
+          ease: 'power3.out',
+          scrollTrigger: { trigger: '.quote-block', start: 'top 78%', end: 'bottom 20%', toggleActions: 'play reverse play reverse' },
+        }
+      );
+
+      gsap.fromTo(
+        '.quote-underline',
+        { scaleX: 0 },
+        { scaleX: 1, duration: 0.8, delay: 0.4, ease: 'power2.out', scrollTrigger: { trigger: '.quote-block', start: 'top 78%' } }
+      );
     }, containerRef);
+
     return () => ctx.revert();
   }, []);
 
   return (
-    <section id="produit" ref={containerRef} className="py-20 md:py-28 px-6 md:px-10 bg-background">
-      <div className="max-w-7xl mx-auto">
-        <div className="max-w-2xl mb-12">
+    <section id="produit" ref={containerRef} className="relative overflow-hidden bg-primary text-background py-20 md:py-28 px-6 md:px-10">
+      <ReactiveDotGrid color="34,197,94" />
+
+      <div className="max-w-7xl mx-auto relative z-10">
+        <div className="product-header max-w-xl mb-16 md:mb-20">
           <p className="font-mono text-xs uppercase tracking-widest text-accent mb-3">Produit</p>
-          <h2 className="text-3xl md:text-4xl font-sans font-bold text-surface tracking-tight">
+          <h2 className="text-3xl md:text-4xl lg:text-[2.75rem] font-sans font-extrabold tracking-tight text-background">
             Tout ce qu'il faut pour vendre, rien de superflu.
           </h2>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 auto-rows-[minmax(0,auto)]">
-          <Tile className="md:col-span-2">
-            <div className="flex items-center gap-2 mb-6 text-surface/50">
-              <Wand2 className="w-4 h-4" />
-              <span className="text-xs font-mono uppercase tracking-wider">Assistant guidé</span>
-            </div>
-            <DiagnosticMixer />
-            <h3 className="text-lg font-sans font-semibold text-surface mt-6 mb-1">Un assistant qui construit avec toi</h3>
-            <p className="text-sm text-surface/60">Vendeko te pose des questions simples et assemble ton tunnel à ta place, zéro vocabulaire marketing.</p>
-          </Tile>
+        <div className="stats-row grid grid-cols-2 md:grid-cols-4 gap-y-12">
+          {STATS.map((stat, i) => (
+            <StatItem key={stat.id} stat={stat} index={i} />
+          ))}
+        </div>
 
-          <Tile>
-            <div className="flex items-center gap-2 mb-4 text-surface/50">
-              <Layers className="w-4 h-4" />
-              <span className="text-xs font-mono uppercase tracking-wider">19 modèles</span>
-            </div>
-            <div className="flex-1 flex items-center justify-center">
-              <span className="text-6xl font-sans font-bold gradient-text-accent">19</span>
-            </div>
-            <p className="text-sm text-surface/60 mt-4">Répartis en 10 catégories, du lead magnet au programme premium.</p>
-          </Tile>
+        <div className="divider-line h-px bg-background/10 my-16 md:my-20 origin-left" style={{ transform: 'scaleX(0)' }} />
 
-          <Tile>
-            <TelemetryTypewriter />
-            <h3 className="text-lg font-sans font-semibold text-surface mt-6 mb-1">Généré en un clic</h3>
-            <p className="text-sm text-surface/60">Pages et textes assemblés automatiquement, prêts à publier.</p>
-          </Tile>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-14 lg:gap-16">
+          <div className="feature-list lg:col-span-5 flex flex-col gap-1">
+            {FEATURES.map((f, i) => (
+              <div
+                key={f.id}
+                onMouseEnter={() => setActive(i)}
+                className={`feature-item flex gap-4 rounded-xl px-4 py-4 -mx-4 border-l-2 transition-colors duration-300 cursor-default ${
+                  active === i ? 'bg-background/[0.06] border-accent' : 'border-transparent'
+                }`}
+              >
+                <span className="font-mono text-xs text-accent pt-0.5 w-6 shrink-0">{f.id}</span>
+                <div>
+                  <h4 className={`text-base font-sans font-semibold mb-1 transition-colors duration-300 ${active === i ? 'text-background' : 'text-background/65'}`}>
+                    {f.title}
+                  </h4>
+                  <p
+                    className={`text-sm leading-relaxed text-background/55 overflow-hidden transition-all duration-300 ${
+                      active === i ? 'max-h-24 opacity-100 mt-0' : 'max-h-0 opacity-0'
+                    }`}
+                  >
+                    {f.desc}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
 
-          <Tile>
-            <CursorScheduler />
-            <h3 className="text-lg font-sans font-semibold text-surface mt-6 mb-1">Lancements programmés</h3>
-            <p className="text-sm text-surface/60">Planifie tes envois, Vendeko s'occupe du reste au bon moment.</p>
-          </Tile>
-
-          <Tile className="items-center justify-center text-center bg-primary text-background">
-            <span className="text-4xl font-serif italic text-accent mb-2">0 code.</span>
-            <p className="text-sm text-background/60">Tout se construit par blocs, à la souris.</p>
-          </Tile>
+          <div className="quote-block lg:col-span-7 flex items-center">
+            <p className="font-serif italic text-2xl md:text-[2rem] leading-snug text-background/90">
+              Chaque fonctionnalité existe pour une seule raison : te faire{' '}
+              <span className="relative inline-block not-italic font-sans font-bold text-accent">
+                gagner du temps
+                <span className="quote-underline absolute left-0 -bottom-1 h-[2px] w-full bg-accent/60 origin-left" style={{ transform: 'scaleX(0)' }} />
+              </span>
+              , pas te donner plus de boutons à comprendre.
+            </p>
+          </div>
         </div>
       </div>
     </section>

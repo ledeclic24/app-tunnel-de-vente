@@ -1,8 +1,10 @@
 import React from 'react';
+import ReactiveDotGrid from './ReactiveDotGrid';
 
 export default function Footer() {
   return (
     <footer className="bg-primary text-background rounded-t-[4rem] pt-20 pb-10 px-6 md:px-16 mt-12 relative overflow-hidden">
+      <ReactiveDotGrid color="34,197,94" />
       <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-12 mb-16 relative z-10">
 
         {/* Brand & Status */}

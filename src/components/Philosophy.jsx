@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import gsap from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import ReactiveDotGrid from './ReactiveDotGrid';
 
 export default function Philosophy() {
   const sectionRef = useRef(null);
@@ -18,8 +18,9 @@ export default function Philosophy() {
   }, []);
 
   return (
-    <section ref={sectionRef} className="py-20 md:py-28 px-6 md:px-10 bg-primary">
-      <div ref={textRef} className="max-w-4xl mx-auto text-center">
+    <section ref={sectionRef} className="relative overflow-hidden py-20 md:py-28 px-6 md:px-10 bg-primary">
+      <ReactiveDotGrid color="34,197,94" />
+      <div ref={textRef} className="relative z-10 max-w-4xl mx-auto text-center">
         <p className="text-sm font-mono uppercase tracking-widest text-accent mb-6">Notre parti pris</p>
         <p className="text-2xl md:text-4xl font-serif italic text-background leading-snug">
           La plupart des créateurs de tunnels visent les experts du marketing.

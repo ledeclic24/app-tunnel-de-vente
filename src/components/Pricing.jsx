@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Check, ArrowRight } from 'lucide-react';
 import { PLANS, PLAN_ORDER, formatPrice } from '../lib/plans';
 import { getLivePlans } from '../lib/plansApi';
+import ReactiveDotGrid from './ReactiveDotGrid';
 
 const DESCRIPTIONS = {
   starter: "Pour découvrir Vendeko et publier ton premier tunnel.",
@@ -27,8 +28,9 @@ export default function Pricing() {
   }));
 
   return (
-    <section id="pricing" className="py-24 md:py-32 px-6 md:px-16 bg-background">
-      <div className="max-w-7xl mx-auto">
+    <section id="pricing" className="relative overflow-hidden py-24 md:py-32 px-6 md:px-16 bg-background border-t border-surface/5">
+      <ReactiveDotGrid color="34,197,94" />
+      <div className="relative z-10 max-w-7xl mx-auto">
         <div className="text-center mb-16 md:mb-24">
           <h2 className="text-4xl md:text-5xl font-sans font-bold text-surface mb-6">
             Vends <span className="font-serif italic font-normal text-accent">sans barrière</span>

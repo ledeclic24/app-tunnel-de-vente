@@ -2,10 +2,14 @@ import React from 'react';
 
 import Navbar from '../../components/Navbar';
 import Hero from '../../components/Hero';
+import WhoItsFor from '../../components/WhoItsFor';
 import Bento from '../../components/Bento';
 import Philosophy from '../../components/Philosophy';
 import Protocol from '../../components/Protocol';
+import Testimonials from '../../components/Testimonials';
+import Faq from '../../components/Faq';
 import Pricing from '../../components/Pricing';
+import CtaBanner from '../../components/CtaBanner';
 import Footer from '../../components/Footer';
 
 export default function LandingPage() {
@@ -15,10 +19,14 @@ export default function LandingPage() {
       <Navbar />
       <main>
         <Hero />
+        <WhoItsFor />
         <Bento />
         <Protocol />
         <Philosophy />
+        <Testimonials />
+        <Faq />
         <Pricing />
+        <CtaBanner />
       </main>
       <Footer />
     </div>
