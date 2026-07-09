@@ -10,7 +10,7 @@ import CountdownBlock from './CountdownBlock';
 import FaqBlock from './FaqBlock';
 import CtaBlock from './CtaBlock';
 import QuizBlock from './QuizBlock';
-import { getEditableProps } from '../../lib/blockStyle';
+import { getEditableProps, buildDesktopStyleTag } from '../../lib/blockStyle';
 
 const COMPONENTS = {
   hero: HeroBlock,
@@ -31,28 +31,34 @@ export default function BlockRenderer({ block, onAdvance, onSubmitLead, editMode
   if (!Component) return null;
   const sectionProps = getEditableProps({
     elementKey: 'section',
-    kind: 'card',
+    kind: 'section',
     styles: block.content?.styles,
     editMode,
     selectedElement,
     onSelectElement,
     label: 'Section',
+    blockId: block.id,
   });
+  const responsiveCSS = buildDesktopStyleTag(block.id, block.content?.styles);
   return (
-    <div
-      className={sectionProps.className ? `${sectionProps.className} rounded-[2rem]` : undefined}
-      style={sectionProps.style}
-      onClick={sectionProps.onClick}
-      onClickCapture={editMode ? (e) => e.preventDefault() : undefined}
-    >
-      <Component
-        content={block.content}
-        onAdvance={onAdvance}
-        onSubmitLead={onSubmitLead}
-        editMode={editMode}
-        selectedElement={selectedElement}
-        onSelectElement={onSelectElement}
-      />
-    </div>
+    <>
+      {responsiveCSS && <style>{responsiveCSS}</style>}
+      <div
+        data-vk={sectionProps['data-vk']}
+        className={sectionProps.className ? `${sectionProps.className} rounded-[2rem]` : undefined}
+        style={sectionProps.style}
+        onClick={sectionProps.onClick}
+        onClickCapture={editMode ? (e) => e.preventDefault() : undefined}
+      >
+        <Component
+          content={block.content}
+          onAdvance={onAdvance}
+          onSubmitLead={onSubmitLead}
+          editMode={editMode}
+          selectedElement={selectedElement}
+          onSelectElement={onSelectElement}
+        />
+      </div>
+    </>
   );
 }

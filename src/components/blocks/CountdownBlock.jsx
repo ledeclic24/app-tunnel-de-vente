@@ -42,9 +42,9 @@ export default function CountdownBlock({ content, editMode, selectedElement, onS
       {remaining.expired ? (
         <p className="font-mono text-sm uppercase tracking-wider text-surface/50">Offre expirée</p>
       ) : (
-        <div className="flex items-center justify-center gap-3 md:gap-4">
+        <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 md:gap-4">
           {units.map((u) => (
-            <div key={u.label} className="bg-primary text-background rounded-2xl px-4 py-3 md:px-6 md:py-4 min-w-[4.5rem]">
+            <div key={u.label} className="bg-primary text-background rounded-2xl px-3 py-2.5 sm:px-4 sm:py-3 md:px-6 md:py-4 min-w-[3.75rem] sm:min-w-[4.5rem]">
               <div className="font-mono text-2xl md:text-3xl font-bold text-accent">{String(u.value).padStart(2, '0')}</div>
               <div className="text-[10px] uppercase tracking-wider text-background/60">{u.label}</div>
             </div>
