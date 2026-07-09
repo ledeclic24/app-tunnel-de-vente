@@ -152,7 +152,6 @@ export default function Bento() {
   return (
     <section id="produit" ref={containerRef} className="relative overflow-hidden bg-primary text-background py-20 md:py-28 px-6 md:px-10">
       <ReactiveDotGrid color="34,197,94" />
-
       <div className="max-w-7xl mx-auto relative z-10">
         <div className="product-header max-w-xl mb-16 md:mb-20">
           <p className="font-mono text-xs uppercase tracking-widest text-accent mb-3">Produit</p>

@@ -59,7 +59,6 @@ export default function Hero() {
   return (
     <section ref={containerRef} className="relative w-full pt-36 pb-24 md:pt-44 md:pb-28 px-6 md:px-10 bg-primary overflow-hidden text-center">
       <ReactiveDotGrid color="34,197,94" />
-
       <div className="max-w-3xl mx-auto relative z-10">
         <div ref={badgeRef} className="inline-flex items-center gap-2 bg-accent/10 text-accent px-3.5 py-1.5 rounded-full text-sm font-semibold mb-7">
           <Sparkles className="w-4 h-4" />

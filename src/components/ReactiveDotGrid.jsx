@@ -40,8 +40,8 @@ export default function ReactiveDotGrid({ gap = 36, color = '34,197,94', radius 
       for (const d of dots) {
         const dist = Math.hypot(d.x - mouse.x, d.y - mouse.y);
         const influence = Math.max(0, 1 - dist / radius);
-        const r = 1.2 + influence * 3.2;
-        const alpha = 0.12 + influence * 0.65;
+        const r = 0.7 + influence * 1.6;
+        const alpha = 0.06 + influence * 0.3;
         ctx.beginPath();
         ctx.arc(d.x, d.y, r, 0, Math.PI * 2);
         ctx.fillStyle = `rgba(${color},${alpha})`;
