@@ -29,8 +29,12 @@ export default function DashboardPage() {
 
   const handleDelete = async (funnel) => {
     if (!window.confirm(`Supprimer le tunnel "${funnel.name}" ? Cette action est irréversible.`)) return;
-    await deleteFunnel(funnel.id);
-    setFunnels((prev) => prev.filter((f) => f.id !== funnel.id));
+    try {
+      await deleteFunnel(funnel.id);
+      setFunnels((prev) => prev.filter((f) => f.id !== funnel.id));
+    } catch (err) {
+      setError("Impossible de supprimer ce tunnel. Réessaie.");
+    }
   };
 
   return (

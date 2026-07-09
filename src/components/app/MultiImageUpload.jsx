@@ -16,7 +16,7 @@ export default function MultiImageUpload({ userId, images, onChange, max = 5 }) 
       const urls = await Promise.all(files.map((file) => uploadImage(userId, file)));
       onChange([...images, ...urls]);
     } catch (err) {
-      setError("L'envoi d'une image a échoué. Réessaie.");
+      setError(err.message || "L'envoi d'une image a échoué. Réessaie.");
     } finally {
       setUploading(false);
       e.target.value = '';

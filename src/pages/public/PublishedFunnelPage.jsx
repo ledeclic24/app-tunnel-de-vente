@@ -35,6 +35,16 @@ export default function PublishedFunnelPage() {
 
   const currentStep = steps.find((s) => s.slug === (stepSlug || steps[0]?.slug));
 
+  useEffect(() => {
+    if (!funnel) return;
+    const stepLabel = currentStep && steps.length > 1 ? ` — ${currentStep.name}` : '';
+    document.title = `${funnel.name}${stepLabel}`;
+    return () => {
+      document.title = 'Vendeko — Crée ton tunnel de vente sans expertise';
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [funnel, currentStep?.id, steps.length]);
+
   const handleAdvance = () => {
     const idx = steps.findIndex((s) => s.id === currentStep?.id);
     const next = steps[idx + 1];

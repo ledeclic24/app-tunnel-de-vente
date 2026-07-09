@@ -16,7 +16,7 @@ export default function ImageUploadField({ userId, value, onChange }) {
       const url = await uploadImage(userId, file);
       onChange(url);
     } catch (err) {
-      setError("L'envoi de l'image a échoué. Réessaie.");
+      setError(err.message || "L'envoi de l'image a échoué. Réessaie.");
     } finally {
       setUploading(false);
       e.target.value = '';

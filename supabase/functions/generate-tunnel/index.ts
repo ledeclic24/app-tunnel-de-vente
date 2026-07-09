@@ -7,16 +7,22 @@ const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY')!;
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
-const CORS_HEADERS = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-};
+const ALLOWED_ORIGINS = ['https://app-tunnel-de-vente.vercel.app', 'http://localhost:5173'];
 
-function json(obj: unknown, status = 200) {
+function corsHeaders(origin: string | null) {
+  const allowOrigin = origin && ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+  return {
+    'Access-Control-Allow-Origin': allowOrigin,
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    Vary: 'Origin',
+  };
+}
+
+function json(obj: unknown, status = 200, cors: Record<string, string> = {}) {
   return new Response(JSON.stringify(obj), {
     status,
-    headers: { ...CORS_HEADERS, 'content-type': 'application/json' },
+    headers: { ...cors, 'content-type': 'application/json' },
   });
 }
 
@@ -72,22 +78,23 @@ Réponds UNIQUEMENT avec un objet JSON valide, sans texte avant ni après, au fo
 }
 
 Deno.serve(async (req: Request) => {
-  if (req.method === 'OPTIONS') return new Response(null, { headers: CORS_HEADERS });
-  if (req.method !== 'POST') return json({ error: 'method_not_allowed' }, 405);
+  const cors = corsHeaders(req.headers.get('origin'));
+  if (req.method === 'OPTIONS') return new Response(null, { headers: cors });
+  if (req.method !== 'POST') return json({ error: 'method_not_allowed' }, 405, cors);
 
   try {
     const authHeader = req.headers.get('Authorization');
-    if (!authHeader) return json({ error: 'unauthorized' }, 401);
+    if (!authHeader) return json({ error: 'unauthorized' }, 401, cors);
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
     const token = authHeader.replace('Bearer ', '');
     const { data: userData, error: userErr } = await supabase.auth.getUser(token);
-    if (userErr || !userData?.user) return json({ error: 'unauthorized' }, 401);
+    if (userErr || !userData?.user) return json({ error: 'unauthorized' }, 401, cors);
     const user = userData.user;
 
     const { data: profile } = await supabase.from('profiles').select('plan').eq('id', user.id).single();
     const plan = profile?.plan || 'starter';
-    if (plan === 'starter') return json({ error: 'plan_required' }, 403);
+    if (plan === 'starter') return json({ error: 'plan_required' }, 403, cors);
 
     const startOfMonth = new Date();
     startOfMonth.setDate(1);
@@ -99,16 +106,18 @@ Deno.serve(async (req: Request) => {
       .gte('created_at', startOfMonth.toISOString());
 
     const limit = plan === 'entreprise' ? Infinity : 20;
-    if ((count || 0) >= limit) return json({ error: 'limit_reached' }, 429);
+    if ((count || 0) >= limit) return json({ error: 'limit_reached' }, 429, cors);
 
     const body = await req.json();
-    const description: string = (body.description || '').trim();
-    const category: string = body.category || '';
-    const images: string[] = Array.isArray(body.images) ? body.images.slice(0, 5) : [];
-    const price: string = (body.price || '').trim();
-    const paletteHint: string = body.paletteHint || '';
+    const description: string = (body.description || '').trim().slice(0, 800);
+    const category: string = (body.category || '').slice(0, 60);
+    const images: string[] = Array.isArray(body.images)
+      ? body.images.filter((u: unknown) => typeof u === 'string' && u.length <= 2000).slice(0, 5)
+      : [];
+    const price: string = (body.price || '').trim().slice(0, 40);
+    const paletteHint: string = (body.paletteHint || '').slice(0, 120);
 
-    if (description.length < 5) return json({ error: 'invalid_input' }, 400);
+    if (description.length < 5) return json({ error: 'invalid_input' }, 400, cors);
 
     const allowedBlocks = plan === 'entreprise' || plan === 'createur'
       ? ['hero', 'text', 'image', 'form', 'cta', 'features', 'testimonials', 'pricing', 'countdown', 'faq', 'quiz']
@@ -132,26 +141,26 @@ Deno.serve(async (req: Request) => {
 
     if (!aiRes.ok) {
       const errText = await aiRes.text();
-      return json({ error: 'ai_error', detail: errText }, 502);
+      return json({ error: 'ai_error', detail: errText }, 502, cors);
     }
 
     const aiData = await aiRes.json();
     const textBlock = (aiData.content || []).find((block: { type: string }) => block.type === 'text');
     const text = textBlock?.text || '';
     const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) return json({ error: 'parse_error' }, 502);
+    if (!jsonMatch) return json({ error: 'parse_error' }, 502, cors);
 
     let funnel;
     try {
       funnel = JSON.parse(jsonMatch[0]);
     } catch {
-      return json({ error: 'parse_error' }, 502);
+      return json({ error: 'parse_error' }, 502, cors);
     }
 
     await supabase.from('ai_generations').insert({ user_id: user.id });
 
-    return json({ funnel });
+    return json({ funnel }, 200, cors);
   } catch (e) {
-    return json({ error: 'server_error', detail: String(e) }, 500);
+    return json({ error: 'server_error', detail: String(e) }, 500, cors);
   }
 });

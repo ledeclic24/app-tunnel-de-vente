@@ -68,8 +68,9 @@ export default function SignupPage() {
     >
       <form className="space-y-4" onSubmit={handleSubmit}>
         <div>
-          <label className="block text-xs font-semibold text-surface/80 uppercase tracking-wider mb-1">Prénom</label>
+          <label htmlFor="signup-fullname" className="block text-xs font-semibold text-surface/80 uppercase tracking-wider mb-1">Prénom</label>
           <input
+            id="signup-fullname"
             type="text"
             value={fullName}
             onChange={(e) => setFullName(e.target.value)}
@@ -78,8 +79,9 @@ export default function SignupPage() {
           />
         </div>
         <div>
-          <label className="block text-xs font-semibold text-surface/80 uppercase tracking-wider mb-1">Email</label>
+          <label htmlFor="signup-email" className="block text-xs font-semibold text-surface/80 uppercase tracking-wider mb-1">Email</label>
           <input
+            id="signup-email"
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -88,8 +90,8 @@ export default function SignupPage() {
           />
         </div>
         <div>
-          <label className="block text-xs font-semibold text-surface/80 uppercase tracking-wider mb-1">Mot de passe</label>
-          <PasswordInput value={password} onChange={(e) => setPassword(e.target.value)} minLength={6} autoComplete="new-password" />
+          <label htmlFor="signup-password" className="block text-xs font-semibold text-surface/80 uppercase tracking-wider mb-1">Mot de passe</label>
+          <PasswordInput id="signup-password" value={password} onChange={(e) => setPassword(e.target.value)} minLength={6} autoComplete="new-password" />
         </div>
 
         {error && <p className="text-sm text-red-500">{error}</p>}

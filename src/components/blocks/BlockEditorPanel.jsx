@@ -95,6 +95,9 @@ function BlockFields({ type, content, set, userId }) {
           <Field label="Légende (optionnel)">
             <input className={inputClass} value={content.caption || ''} onChange={(e) => set({ caption: e.target.value })} />
           </Field>
+          <Field label="Texte alternatif (pour l'accessibilité et le référencement)">
+            <input className={inputClass} placeholder="Décris ce que montre l'image" value={content.alt || ''} onChange={(e) => set({ alt: e.target.value })} />
+          </Field>
         </div>
       );
 

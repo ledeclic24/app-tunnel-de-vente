@@ -15,6 +15,7 @@ export default function FormBlock({ content, onSubmitLead, onAdvance, editMode, 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -23,11 +24,17 @@ export default function FormBlock({ content, onSubmitLead, onAdvance, editMode, 
       return;
     }
     setSubmitting(true);
-    await onSubmitLead({ name, email });
-    setSubmitting(false);
-    setSubmitted(true);
-    // laisse le visiteur voir le message de succès avant d'avancer à l'étape suivante
-    if (onAdvance) setTimeout(onAdvance, 1500);
+    setError('');
+    try {
+      await onSubmitLead({ name, email });
+      setSubmitted(true);
+      // laisse le visiteur voir le message de succès avant d'avancer à l'étape suivante
+      if (onAdvance) setTimeout(onAdvance, 1500);
+    } catch {
+      setError("Une erreur est survenue, réessaie dans un instant.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -64,6 +71,7 @@ export default function FormBlock({ content, onSubmitLead, onAdvance, editMode, 
               required
               className="w-full bg-primary/5 border border-surface/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-accent transition-colors text-surface"
             />
+            {error && <p className="text-sm text-red-500">{error}</p>}
             <button
               type="submit"
               disabled={submitting}

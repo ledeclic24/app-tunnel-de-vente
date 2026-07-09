@@ -99,12 +99,12 @@ export default function ResetPasswordPage() {
     <AuthLayout title="Choisis un nouveau mot de passe">
       <form className="space-y-4" onSubmit={handleSubmit}>
         <div>
-          <label className="block text-xs font-semibold text-surface/80 uppercase tracking-wider mb-1">Nouveau mot de passe</label>
-          <PasswordInput value={password} onChange={(e) => setPassword(e.target.value)} minLength={6} autoComplete="new-password" />
+          <label htmlFor="reset-password" className="block text-xs font-semibold text-surface/80 uppercase tracking-wider mb-1">Nouveau mot de passe</label>
+          <PasswordInput id="reset-password" value={password} onChange={(e) => setPassword(e.target.value)} minLength={6} autoComplete="new-password" />
         </div>
         <div>
-          <label className="block text-xs font-semibold text-surface/80 uppercase tracking-wider mb-1">Confirme le mot de passe</label>
-          <PasswordInput value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} minLength={6} autoComplete="new-password" />
+          <label htmlFor="reset-confirm-password" className="block text-xs font-semibold text-surface/80 uppercase tracking-wider mb-1">Confirme le mot de passe</label>
+          <PasswordInput id="reset-confirm-password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} minLength={6} autoComplete="new-password" />
         </div>
 
         {error && <p className="text-sm text-red-500">{error}</p>}

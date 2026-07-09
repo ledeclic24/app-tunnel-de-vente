@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
@@ -14,20 +14,21 @@ import LoginPage from './pages/auth/LoginPage';
 import SignupPage from './pages/auth/SignupPage';
 import ForgotPasswordPage from './pages/auth/ForgotPasswordPage';
 import ResetPasswordPage from './pages/auth/ResetPasswordPage';
-import DashboardPage from './pages/app/DashboardPage';
-import NewFunnelPage from './pages/app/NewFunnelPage';
-import AIGeneratorPage from './pages/app/AIGeneratorPage';
-import FunnelEditorPage from './pages/app/FunnelEditorPage';
-import BillingPage from './pages/app/BillingPage';
-import AccountPage from './pages/app/AccountPage';
-import LeadsPage from './pages/app/LeadsPage';
-import AnalyticsPage from './pages/app/AnalyticsPage';
-import AdminOverviewPage from './pages/app/admin/AdminOverviewPage';
-import AdminUsersPage from './pages/app/admin/AdminUsersPage';
-import AdminFunnelsPage from './pages/app/admin/AdminFunnelsPage';
-import AdminPlansPage from './pages/app/admin/AdminPlansPage';
-import AdminAnalyticsPage from './pages/app/admin/AdminAnalyticsPage';
 import PublishedFunnelPage from './pages/public/PublishedFunnelPage';
+
+const DashboardPage = lazy(() => import('./pages/app/DashboardPage'));
+const NewFunnelPage = lazy(() => import('./pages/app/NewFunnelPage'));
+const AIGeneratorPage = lazy(() => import('./pages/app/AIGeneratorPage'));
+const FunnelEditorPage = lazy(() => import('./pages/app/FunnelEditorPage'));
+const BillingPage = lazy(() => import('./pages/app/BillingPage'));
+const AccountPage = lazy(() => import('./pages/app/AccountPage'));
+const LeadsPage = lazy(() => import('./pages/app/LeadsPage'));
+const AnalyticsPage = lazy(() => import('./pages/app/AnalyticsPage'));
+const AdminOverviewPage = lazy(() => import('./pages/app/admin/AdminOverviewPage'));
+const AdminUsersPage = lazy(() => import('./pages/app/admin/AdminUsersPage'));
+const AdminFunnelsPage = lazy(() => import('./pages/app/admin/AdminFunnelsPage'));
+const AdminPlansPage = lazy(() => import('./pages/app/admin/AdminPlansPage'));
+const AdminAnalyticsPage = lazy(() => import('./pages/app/admin/AdminAnalyticsPage'));
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -40,44 +41,54 @@ function NotFoundPage() {
   );
 }
 
+function RouteFallback() {
+  return (
+    <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="w-8 h-8 border-2 border-surface/20 border-t-accent rounded-full animate-spin" />
+    </div>
+  );
+}
+
 function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <Routes>
-          <Route path="/" element={<LandingPage />} />
-          <Route path="/connexion" element={<LoginPage />} />
-          <Route path="/inscription" element={<SignupPage />} />
-          <Route path="/mot-de-passe-oublie" element={<ForgotPasswordPage />} />
-          <Route path="/reinitialiser-mot-de-passe" element={<ResetPasswordPage />} />
+        <Suspense fallback={<RouteFallback />}>
+          <Routes>
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/connexion" element={<LoginPage />} />
+            <Route path="/inscription" element={<SignupPage />} />
+            <Route path="/mot-de-passe-oublie" element={<ForgotPasswordPage />} />
+            <Route path="/reinitialiser-mot-de-passe" element={<ResetPasswordPage />} />
 
-          <Route path="/f/:funnelSlug" element={<PublishedFunnelPage />} />
-          <Route path="/f/:funnelSlug/:stepSlug" element={<PublishedFunnelPage />} />
+            <Route path="/f/:funnelSlug" element={<PublishedFunnelPage />} />
+            <Route path="/f/:funnelSlug/:stepSlug" element={<PublishedFunnelPage />} />
 
-          <Route path="/app" element={<ProtectedRoute />}>
-            <Route element={<AppShell />}>
-              <Route index element={<DashboardPage />} />
-              <Route path="funnels/new" element={<NewFunnelPage />} />
-              <Route path="funnels/ai" element={<AIGeneratorPage />} />
-              <Route path="funnels/:funnelId/edit" element={<FunnelEditorPage />} />
-              <Route path="leads" element={<LeadsPage />} />
-              <Route path="analytics" element={<AnalyticsPage />} />
-              <Route path="billing" element={<BillingPage />} />
-              <Route path="account" element={<AccountPage />} />
-            </Route>
-            <Route path="admin" element={<AdminRoute />}>
-              <Route element={<AdminShell />}>
-                <Route index element={<AdminOverviewPage />} />
-                <Route path="users" element={<AdminUsersPage />} />
-                <Route path="funnels" element={<AdminFunnelsPage />} />
-                <Route path="plans" element={<AdminPlansPage />} />
-                <Route path="analytics" element={<AdminAnalyticsPage />} />
+            <Route path="/app" element={<ProtectedRoute />}>
+              <Route element={<AppShell />}>
+                <Route index element={<DashboardPage />} />
+                <Route path="funnels/new" element={<NewFunnelPage />} />
+                <Route path="funnels/ai" element={<AIGeneratorPage />} />
+                <Route path="funnels/:funnelId/edit" element={<FunnelEditorPage />} />
+                <Route path="leads" element={<LeadsPage />} />
+                <Route path="analytics" element={<AnalyticsPage />} />
+                <Route path="billing" element={<BillingPage />} />
+                <Route path="account" element={<AccountPage />} />
+              </Route>
+              <Route path="admin" element={<AdminRoute />}>
+                <Route element={<AdminShell />}>
+                  <Route index element={<AdminOverviewPage />} />
+                  <Route path="users" element={<AdminUsersPage />} />
+                  <Route path="funnels" element={<AdminFunnelsPage />} />
+                  <Route path="plans" element={<AdminPlansPage />} />
+                  <Route path="analytics" element={<AdminAnalyticsPage />} />
+                </Route>
               </Route>
             </Route>
-          </Route>
 
-          <Route path="*" element={<NotFoundPage />} />
-        </Routes>
+            <Route path="*" element={<NotFoundPage />} />
+          </Routes>
+        </Suspense>
       </AuthProvider>
     </BrowserRouter>
   );

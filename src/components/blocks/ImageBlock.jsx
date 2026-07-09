@@ -2,7 +2,7 @@ import React from 'react';
 import { getEditableProps, cx } from '../../lib/blockStyle';
 
 export default function ImageBlock({ content, editMode, selectedElement, onSelectElement }) {
-  const { url, caption } = content;
+  const { url, caption, alt } = content;
   if (!url) return null;
   const imageProps = getEditableProps({ elementKey: 'image', kind: 'image', styles: content.styles, editMode, selectedElement, onSelectElement, label: 'Image' });
 
@@ -10,7 +10,7 @@ export default function ImageBlock({ content, editMode, selectedElement, onSelec
     <section className="px-6 py-8 md:px-16 max-w-4xl mx-auto">
       <img
         src={url}
-        alt={caption || ''}
+        alt={alt || caption || ''}
         className={cx('w-full h-auto rounded-[2rem] object-cover', imageProps.className)}
         style={imageProps.style}
         onClick={imageProps.onClick}

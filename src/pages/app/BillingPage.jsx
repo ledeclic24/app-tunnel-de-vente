@@ -1,16 +1,20 @@
 import React, { useEffect, useState } from 'react';
-import { Check, Info } from 'lucide-react';
+import { Check, Info, Mail } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { supabase } from '../../lib/supabaseClient';
 import { PLANS, PLAN_ORDER, getPlan, formatPrice } from '../../lib/plans';
 import { updateBrandingForUser } from '../../lib/funnelsApi';
 import { getLivePlans, logPlanChange } from '../../lib/plansApi';
 
+const SUPPORT_EMAIL = 'jeanpaulden24@gmail.com';
+
 export default function BillingPage() {
-  const { profile, refreshProfile } = useAuth();
+  const { user, profile, refreshProfile } = useAuth();
   const [changing, setChanging] = useState(null);
+  const [error, setError] = useState('');
   const [livePlans, setLivePlans] = useState(PLANS);
   const currentPlan = profile?.plan || 'starter';
+  const isAdmin = Boolean(profile?.is_admin);
 
   useEffect(() => {
     getLivePlans().then(setLivePlans).catch(() => setLivePlans(PLANS));
@@ -19,11 +23,26 @@ export default function BillingPage() {
   const handleChange = async (planKey) => {
     if (planKey === currentPlan) return;
     setChanging(planKey);
-    await supabase.from('profiles').update({ plan: planKey }).eq('id', profile.id);
+    setError('');
+    const { error: updateError } = await supabase.from('profiles').update({ plan: planKey }).eq('id', profile.id);
+    if (updateError) {
+      setError("Impossible de changer de plan pour le moment. Réessaie.");
+      setChanging(null);
+      return;
+    }
     await updateBrandingForUser(profile.id, getPlan(planKey).showBranding);
     await logPlanChange(profile.id, currentPlan, planKey).catch(() => {});
     await refreshProfile();
     setChanging(null);
+  };
+
+  const requestUpgradeLink = (planKey) => {
+    const plan = livePlans[planKey];
+    const subject = encodeURIComponent(`Changement de plan Vendeko — ${plan.name}`);
+    const body = encodeURIComponent(
+      `Bonjour,\n\nJe souhaite passer au plan ${plan.name}.\nMon email de connexion : ${user?.email || ''}\n\nMerci !`
+    );
+    return `mailto:${SUPPORT_EMAIL}?subject=${subject}&body=${body}`;
   };
 
   return (
@@ -33,8 +52,13 @@ export default function BillingPage() {
 
       <div className="flex items-start gap-3 bg-accent/5 border border-accent/20 rounded-2xl p-4 mb-8 text-sm text-surface/70">
         <Info className="w-4 h-4 text-accent shrink-0 mt-0.5" />
-        <p>Mode simulation : changer de plan met à jour ton compte immédiatement, sans paiement réel. Le paiement par carte sera branché ultérieurement.</p>
+        <p>
+          Le paiement en ligne n'est pas encore disponible. Pour changer de plan, envoie-nous une demande
+          par email ci-dessous — on l'active manuellement de notre côté.
+        </p>
       </div>
+
+      {error && <p className="text-sm text-red-500 mb-4">{error}</p>}
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {PLAN_ORDER.map((key) => {
@@ -60,13 +84,26 @@ export default function BillingPage() {
                   </div>
                 ))}
               </div>
-              <button
-                onClick={() => handleChange(key)}
-                disabled={isCurrent || changing === key}
-                className={`magnetic-btn w-full py-3 rounded-full font-semibold disabled:opacity-50 ${isCurrent ? 'bg-background/10 text-background' : 'bg-accent text-background'}`}
-              >
-                {isCurrent ? 'Plan actuel' : changing === key ? 'Changement...' : 'Choisir ce plan'}
-              </button>
+              {isAdmin ? (
+                <button
+                  onClick={() => handleChange(key)}
+                  disabled={isCurrent || changing === key}
+                  className={`magnetic-btn w-full py-3 rounded-full font-semibold disabled:opacity-50 ${isCurrent ? 'bg-background/10 text-background' : 'bg-accent text-background'}`}
+                >
+                  {isCurrent ? 'Plan actuel' : changing === key ? 'Changement...' : 'Choisir ce plan'}
+                </button>
+              ) : isCurrent ? (
+                <button disabled className="w-full py-3 rounded-full font-semibold opacity-50 bg-background/10 text-background">
+                  Plan actuel
+                </button>
+              ) : (
+                <a
+                  href={requestUpgradeLink(key)}
+                  className="magnetic-btn w-full py-3 rounded-full font-semibold bg-accent text-background flex items-center justify-center gap-2"
+                >
+                  <Mail className="w-4 h-4" /> Demander ce plan
+                </a>
+              )}
             </div>
           );
         })}
