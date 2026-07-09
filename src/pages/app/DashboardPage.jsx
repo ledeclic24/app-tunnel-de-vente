@@ -1,31 +1,111 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, ExternalLink, Pencil, Trash2, Rocket } from 'lucide-react';
+import { Plus, ExternalLink, Pencil, Trash2, Rocket, Mail, Eye, Layers, CheckCircle2, Circle } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { fetchUserFunnels, deleteFunnel } from '../../lib/funnelsApi';
+import { fetchUserFunnels, deleteFunnel, fetchLeadsForUser, fetchFunnelStepsAnalytics } from '../../lib/funnelsApi';
 import { getPlan } from '../../lib/plans';
 
+function KpiCard({ icon: Icon, label, value }) {
+  return (
+    <div className="bg-background border border-surface/10 rounded-xl p-4">
+      <div className="flex items-center gap-2 text-surface/40 mb-2">
+        <Icon className="w-4 h-4" />
+        <p className="text-[10px] uppercase tracking-wider font-mono">{label}</p>
+      </div>
+      <p className="text-2xl font-sans font-bold text-surface">{value}</p>
+    </div>
+  );
+}
+
+function OnboardingChecklist({ funnels, profileId }) {
+  const dismissedKey = profileId ? `vendeko_onboarding_dismissed_${profileId}` : null;
+  const [dismissed, setDismissed] = useState(() => {
+    if (!dismissedKey) return false;
+    try {
+      return window.localStorage.getItem(dismissedKey) === '1';
+    } catch {
+      return false;
+    }
+  });
+
+  const hasFunnel = !!funnels && funnels.length > 0;
+  // Heuristique : un tunnel est considéré "modifié" si sa dernière mise à jour a eu lieu
+  // plus d'une minute après sa création (signe probable d'un ajout de bloc/étape).
+  const hasModified = hasFunnel && funnels.some((f) => new Date(f.updated_at).getTime() - new Date(f.created_at).getTime() > 60000);
+  const hasPublished = hasFunnel && funnels.some((f) => f.is_published === true);
+
+  const steps = [
+    { label: 'Créer un tunnel', done: hasFunnel },
+    { label: 'Ajouter un bloc', done: hasModified },
+    { label: 'Publier', done: hasPublished },
+  ];
+  const allDone = steps.every((s) => s.done);
+
+  useEffect(() => {
+    if (!allDone || !dismissedKey || dismissed) return;
+    try {
+      window.localStorage.setItem(dismissedKey, '1');
+    } catch {
+      // stockage indisponible, tant pis pour la persistance
+    }
+    setDismissed(true);
+  }, [allDone, dismissedKey, dismissed]);
+
+  if (!funnels || dismissed || allDone) return null;
+
+  return (
+    <div className="bg-primary text-background rounded-[2rem] p-6 mb-8">
+      <h2 className="font-sans font-semibold text-lg mb-1">Bien démarrer avec Vendeko</h2>
+      <p className="text-sm text-background/60 mb-5">Trois étapes pour lancer ton premier tunnel de vente.</p>
+      <div className="flex flex-col gap-3">
+        {steps.map((step) => (
+          <div key={step.label} className="flex items-center gap-3">
+            {step.done ? (
+              <CheckCircle2 className="w-5 h-5 text-accent shrink-0" />
+            ) : (
+              <Circle className="w-5 h-5 text-background/30 shrink-0" />
+            )}
+            <span className={`text-sm ${step.done ? 'text-background/50 line-through' : 'text-background'}`}>{step.label}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function DashboardPage() {
-  const { profile } = useAuth();
+  const { profile, effectiveOwnerId, effectiveProfile } = useAuth();
   const [funnels, setFunnels] = useState(null);
+  const [leads7d, setLeads7d] = useState(0);
+  const [totalViews, setTotalViews] = useState(0);
   const [error, setError] = useState('');
 
-  const plan = getPlan(profile?.plan);
+  const plan = getPlan(effectiveProfile?.plan);
   const atLimit = funnels && funnels.length >= plan.maxFunnels;
+  const publishedCount = funnels ? funnels.filter((f) => f.is_published).length : 0;
 
   const load = async () => {
     try {
-      const data = await fetchUserFunnels(profile.id);
+      const data = await fetchUserFunnels(effectiveOwnerId);
       setFunnels(data);
+
+      const [leadsData, viewsPerFunnel] = await Promise.all([
+        fetchLeadsForUser(effectiveOwnerId),
+        Promise.all(data.map((f) => fetchFunnelStepsAnalytics(f.id))),
+      ]);
+
+      const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+      setLeads7d(leadsData.filter((l) => new Date(l.created_at).getTime() >= sevenDaysAgo).length);
+      setTotalViews(viewsPerFunnel.flat().reduce((sum, step) => sum + (step.views || 0), 0));
     } catch (err) {
       setError("Impossible de charger tes tunnels.");
     }
   };
 
   useEffect(() => {
-    if (profile) load();
+    if (effectiveOwnerId) load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [profile]);
+  }, [effectiveOwnerId]);
 
   const handleDelete = async (funnel) => {
     if (!window.confirm(`Supprimer le tunnel "${funnel.name}" ? Cette action est irréversible.`)) return;
@@ -57,6 +137,16 @@ export default function DashboardPage() {
           </Link>
         )}
       </div>
+
+      {funnels && (
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+          <KpiCard icon={Mail} label="Leads (7 derniers jours)" value={leads7d} />
+          <KpiCard icon={Eye} label="Vues totales" value={totalViews} />
+          <KpiCard icon={Layers} label="Tunnels actifs" value={`${publishedCount} / ${funnels.length}`} />
+        </div>
+      )}
+
+      <OnboardingChecklist funnels={funnels} profileId={profile?.id} />
 
       {error && <p className="text-sm text-red-500 mb-4">{error}</p>}
 

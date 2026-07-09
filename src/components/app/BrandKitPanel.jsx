@@ -6,13 +6,17 @@ import { BRAND_FONTS } from '../../lib/colorUtils';
 
 const inputClass = "w-full bg-primary/5 border border-surface/10 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-accent transition-colors text-surface";
 const labelClass = "block text-xs font-semibold text-surface/70 uppercase tracking-wider mb-1";
+const META_PIXEL_RE = /^[0-9]{5,20}$/;
+const GA_ID_RE = /^(G|UA|AW)-[A-Z0-9-]{4,20}$/i;
 
-export default function BrandKitPanel({ brand, onSave, userId, canUseBrandKit }) {
+export default function BrandKitPanel({ brand, onSave, userId, canUseBrandKit, canUseAdPixels }) {
   const [draft, setDraft] = useState({
     primaryColor: brand?.primaryColor || '#0B2818',
     accentColor: brand?.accentColor || '#22C55E',
     font: brand?.font || 'Sora',
     logoUrl: brand?.logoUrl || '',
+    metaPixelId: brand?.metaPixelId || '',
+    googleAnalyticsId: brand?.googleAnalyticsId || '',
   });
   const [saving, setSaving] = useState(false);
 
@@ -70,6 +74,36 @@ export default function BrandKitPanel({ brand, onSave, userId, canUseBrandKit })
       <div>
         <label className={labelClass}>Logo</label>
         <ImageUploadField userId={userId} value={draft.logoUrl} onChange={(logoUrl) => set({ logoUrl })} />
+      </div>
+
+      <div className="pt-5 border-t border-surface/10">
+        <h4 className="font-sans font-semibold text-surface text-sm mb-1">Pixels publicitaires</h4>
+        {canUseAdPixels ? (
+          <>
+            <p className="text-xs text-surface/50 mb-4">Ces identifiants ne s'appliquent qu'aux pages publiques de ce tunnel, pour suivre vos campagnes publicitaires.</p>
+            <div className="space-y-4">
+              <div>
+                <label className={labelClass}>Meta Pixel — identifiant</label>
+                <input className={`${inputClass} font-mono`} placeholder="1234567890123456" value={draft.metaPixelId} onChange={(e) => set({ metaPixelId: e.target.value.trim() })} />
+                {draft.metaPixelId && !META_PIXEL_RE.test(draft.metaPixelId) && (
+                  <p className="text-xs text-red-500 mt-1">Un identifiant Meta Pixel ne contient que des chiffres.</p>
+                )}
+              </div>
+              <div>
+                <label className={labelClass}>Google Analytics / Ads — identifiant</label>
+                <input className={`${inputClass} font-mono`} placeholder="G-XXXXXXXXXX" value={draft.googleAnalyticsId} onChange={(e) => set({ googleAnalyticsId: e.target.value.trim() })} />
+                {draft.googleAnalyticsId && !GA_ID_RE.test(draft.googleAnalyticsId) && (
+                  <p className="text-xs text-red-500 mt-1">Format attendu : G-XXXXXXXXXX, UA-XXXXX-X ou AW-XXXXXXXXX.</p>
+                )}
+              </div>
+            </div>
+          </>
+        ) : (
+          <div className="flex items-center gap-3 bg-surface/[0.03] rounded-xl px-4 py-3">
+            <Lock className="w-4 h-4 text-surface/30 shrink-0" />
+            <p className="text-xs text-surface/50">Réservés au plan Entreprise — connectez Meta Pixel et Google Analytics/Ads à vos tunnels. <Link to="/app/billing" className="text-accent font-semibold hover:underline">Voir les offres</Link></p>
+          </div>
+        )}
       </div>
 
       <button

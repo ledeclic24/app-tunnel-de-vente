@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { supabase, isSupabaseConfigured } from '../lib/supabaseClient';
+import { activatePendingMembership } from '../lib/growthApi';
 
 const AuthContext = createContext(null);
 
@@ -7,14 +8,36 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
+  // effectiveOwnerId / effectiveProfile : pour un membre d'équipe (éditeur), c'est
+  // le compte du propriétaire de l'organisation — c'est ce compte-là qui possède
+  // les tunnels, le plan et les limites. Pour un propriétaire, c'est lui-même.
+  const [effectiveOwnerId, setEffectiveOwnerId] = useState(null);
+  const [effectiveProfile, setEffectiveProfile] = useState(null);
 
   const loadProfile = useCallback(async (userId) => {
     if (!userId) {
       setProfile(null);
+      setEffectiveOwnerId(null);
+      setEffectiveProfile(null);
       return;
     }
     const { data } = await supabase.from('profiles').select('*').eq('id', userId).single();
     setProfile(data || null);
+
+    if (data?.email) {
+      try { await activatePendingMembership(userId, data.email); } catch { /* aucune invitation en attente */ }
+    }
+
+    const { data: ownerId } = await supabase.rpc('effective_owner', { uid: userId });
+    const resolvedOwnerId = ownerId || userId;
+    setEffectiveOwnerId(resolvedOwnerId);
+
+    if (resolvedOwnerId === userId) {
+      setEffectiveProfile(data || null);
+    } else {
+      const { data: ownerProfile } = await supabase.from('profiles').select('*').eq('id', resolvedOwnerId).single();
+      setEffectiveProfile(ownerProfile || data || null);
+    }
   }, []);
 
   useEffect(() => {
@@ -72,7 +95,10 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, profile, loading, signUp, signIn, signOut, refreshProfile, resetPassword, updatePassword }}>
+    <AuthContext.Provider value={{
+      user, profile, loading, effectiveOwnerId, effectiveProfile,
+      signUp, signIn, signOut, refreshProfile, resetPassword, updatePassword,
+    }}>
       {children}
     </AuthContext.Provider>
   );

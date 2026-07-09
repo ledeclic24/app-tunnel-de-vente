@@ -24,11 +24,14 @@ const BillingPage = lazy(() => import('./pages/app/BillingPage'));
 const AccountPage = lazy(() => import('./pages/app/AccountPage'));
 const LeadsPage = lazy(() => import('./pages/app/LeadsPage'));
 const AnalyticsPage = lazy(() => import('./pages/app/AnalyticsPage'));
+const IntegrationsPage = lazy(() => import('./pages/app/IntegrationsPage'));
+const OrganisationPage = lazy(() => import('./pages/app/OrganisationPage'));
 const AdminOverviewPage = lazy(() => import('./pages/app/admin/AdminOverviewPage'));
 const AdminUsersPage = lazy(() => import('./pages/app/admin/AdminUsersPage'));
 const AdminFunnelsPage = lazy(() => import('./pages/app/admin/AdminFunnelsPage'));
 const AdminPlansPage = lazy(() => import('./pages/app/admin/AdminPlansPage'));
 const AdminAnalyticsPage = lazy(() => import('./pages/app/admin/AdminAnalyticsPage'));
+const AdminAuditLogPage = lazy(() => import('./pages/app/admin/AdminAuditLogPage'));
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -72,6 +75,8 @@ function App() {
                 <Route path="funnels/:funnelId/edit" element={<FunnelEditorPage />} />
                 <Route path="leads" element={<LeadsPage />} />
                 <Route path="analytics" element={<AnalyticsPage />} />
+                <Route path="integrations" element={<IntegrationsPage />} />
+                <Route path="organisation" element={<OrganisationPage />} />
                 <Route path="billing" element={<BillingPage />} />
                 <Route path="account" element={<AccountPage />} />
               </Route>
@@ -82,6 +87,7 @@ function App() {
                   <Route path="funnels" element={<AdminFunnelsPage />} />
                   <Route path="plans" element={<AdminPlansPage />} />
                   <Route path="analytics" element={<AdminAnalyticsPage />} />
+                  <Route path="audit" element={<AdminAuditLogPage />} />
                 </Route>
               </Route>
             </Route>

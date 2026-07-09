@@ -39,6 +39,13 @@ Deno.serve(async (req: Request) => {
     const { data: userData, error: userErr } = await supabase.auth.getUser(token);
     if (userErr || !userData?.user) return json({ error: 'unauthorized' }, 401, cors);
 
+    await supabase.from('audit_log').insert({
+      actor_id: userData.user.id,
+      action: 'account.delete',
+      target: userData.user.email,
+      meta: { self_service: true },
+    });
+
     const { error: deleteErr } = await supabase.auth.admin.deleteUser(userData.user.id);
     if (deleteErr) return json({ error: 'delete_failed', detail: deleteErr.message }, 500, cors);
 

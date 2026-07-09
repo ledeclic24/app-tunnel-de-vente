@@ -7,7 +7,7 @@ import { getPlan } from '../../lib/plans';
 import { CATEGORIES, getTemplatesByCategory } from '../../lib/funnelTemplates';
 
 export default function NewFunnelPage() {
-  const { profile } = useAuth();
+  const { effectiveOwnerId, effectiveProfile } = useAuth();
   const navigate = useNavigate();
   const [funnelCount, setFunnelCount] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState(null);
@@ -16,13 +16,13 @@ export default function NewFunnelPage() {
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState('');
 
-  const plan = getPlan(profile?.plan);
+  const plan = getPlan(effectiveProfile?.plan);
   const atLimit = funnelCount !== null && funnelCount >= plan.maxFunnels;
 
   useEffect(() => {
-    if (!profile) return;
-    fetchUserFunnels(profile.id).then((data) => setFunnelCount(data.length)).catch(() => setFunnelCount(0));
-  }, [profile]);
+    if (!effectiveOwnerId) return;
+    fetchUserFunnels(effectiveOwnerId).then((data) => setFunnelCount(data.length)).catch(() => setFunnelCount(0));
+  }, [effectiveOwnerId]);
 
   if (atLimit) {
     return (
@@ -48,7 +48,7 @@ export default function NewFunnelPage() {
     setError('');
     try {
       const funnel = await createFunnelFromTemplate({
-        userId: profile.id,
+        userId: effectiveOwnerId,
         name: name.trim(),
         templateKey: selectedTemplate,
         showBranding: plan.showBranding,

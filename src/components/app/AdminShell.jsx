@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { LayoutGrid, Users, Layers, CreditCard, LineChart, LogOut, ArrowLeftCircle } from 'lucide-react';
+import { LayoutGrid, Users, Layers, CreditCard, LineChart, LogOut, ArrowLeftCircle, ScrollText } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
 const TABS = [
@@ -9,6 +9,7 @@ const TABS = [
   { to: '/app/admin/funnels', label: 'Tunnels', icon: Layers },
   { to: '/app/admin/plans', label: 'Tarifs', icon: CreditCard },
   { to: '/app/admin/analytics', label: 'Analytique', icon: LineChart },
+  { to: '/app/admin/audit', label: "Journal d'audit", icon: ScrollText },
 ];
 
 export default function AdminShell() {

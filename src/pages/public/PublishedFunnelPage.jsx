@@ -4,6 +4,42 @@ import { fetchFunnelBySlug, fetchSteps, fetchBlocks, insertLead, incrementStepVi
 import { brandStyleVars } from '../../lib/colorUtils';
 import BlockRenderer from '../../components/blocks/BlockRenderer';
 
+const META_PIXEL_RE = /^[0-9]{5,20}$/;
+const GA_ID_RE = /^(G|UA|AW)-[A-Z0-9-]{4,20}$/i;
+
+function useAdPixels(brand) {
+  useEffect(() => {
+    const metaPixelId = brand?.metaPixelId;
+    const gaId = brand?.googleAnalyticsId;
+    const injected = [];
+
+    if (metaPixelId && META_PIXEL_RE.test(metaPixelId)) {
+      const script = document.createElement('script');
+      script.setAttribute('data-vendeko-pixel', 'meta');
+      script.text = `!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init','${metaPixelId}');fbq('track','PageView');`;
+      document.head.appendChild(script);
+      injected.push(script);
+    }
+
+    if (gaId && GA_ID_RE.test(gaId)) {
+      const loader = document.createElement('script');
+      loader.async = true;
+      loader.src = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(gaId)}`;
+      loader.setAttribute('data-vendeko-pixel', 'ga-loader');
+      document.head.appendChild(loader);
+      injected.push(loader);
+
+      const inline = document.createElement('script');
+      inline.setAttribute('data-vendeko-pixel', 'ga-inline');
+      inline.text = `window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${gaId}');`;
+      document.head.appendChild(inline);
+      injected.push(inline);
+    }
+
+    return () => injected.forEach((el) => el.remove());
+  }, [brand?.metaPixelId, brand?.googleAnalyticsId]);
+}
+
 export default function PublishedFunnelPage() {
   const { funnelSlug, stepSlug } = useParams();
   const navigate = useNavigate();
@@ -44,6 +80,8 @@ export default function PublishedFunnelPage() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [funnel, currentStep?.id, steps.length]);
+
+  useAdPixels(funnel?.brand);
 
   const handleAdvance = () => {
     const idx = steps.findIndex((s) => s.id === currentStep?.id);

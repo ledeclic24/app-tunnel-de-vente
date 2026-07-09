@@ -1,8 +1,11 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Search, ExternalLink, Trash2 } from 'lucide-react';
 import { fetchAllProfiles, fetchAllFunnels, fetchAllLeadCounts, deleteFunnelAsAdmin } from '../../../lib/adminApi';
+import { logAuditEvent } from '../../../lib/growthApi';
+import { useAuth } from '../../../context/AuthContext';
 
 export default function AdminFunnelsPage() {
+  const { user } = useAuth();
   const [profiles, setProfiles] = useState(null);
   const [funnels, setFunnels] = useState(null);
   const [leadCounts, setLeadCounts] = useState(null);
@@ -40,6 +43,12 @@ export default function AdminFunnelsPage() {
     if (!window.confirm(`Supprimer définitivement "${funnel.name}" ? Cette action est irréversible.`)) return;
     setBusyId(funnel.id);
     await deleteFunnelAsAdmin(funnel.id);
+    await logAuditEvent({
+      actorId: user?.id,
+      action: 'funnel.delete',
+      target: funnel.name,
+      meta: { funnelId: funnel.id },
+    }).catch(() => {});
     await load();
     setBusyId(null);
   };

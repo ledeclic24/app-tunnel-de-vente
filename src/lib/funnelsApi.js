@@ -38,7 +38,10 @@ export async function createFunnelFromTemplate({ userId, name, templateKey, show
 
   const { data: funnel, error: funnelError } = await supabase
     .from('funnels')
-    .insert({ user_id: userId, name, slug, template: templateKey, show_branding: showBranding })
+    .insert({
+      user_id: userId, name, slug, template: templateKey, show_branding: showBranding,
+      category: template.categoryKey || 'personnalise',
+    })
     .select()
     .single();
   if (funnelError) throw funnelError;
@@ -47,7 +50,7 @@ export async function createFunnelFromTemplate({ userId, name, templateKey, show
   return funnel;
 }
 
-export async function createFunnelFromAI({ userId, name, generatedFunnel, showBranding = true }) {
+export async function createFunnelFromAI({ userId, name, generatedFunnel, showBranding = true, category = 'personnalise' }) {
   const slug = generateFunnelSlug(name);
 
   const { data: funnel, error: funnelError } = await supabase
@@ -59,6 +62,7 @@ export async function createFunnelFromAI({ userId, name, generatedFunnel, showBr
       template: 'ia',
       show_branding: showBranding,
       brand: generatedFunnel.brand || {},
+      category,
     })
     .select()
     .single();
@@ -167,6 +171,14 @@ export async function swapStepPositions(stepA, stepB) {
     supabase.from('funnel_steps').update({ position: stepB.position }).eq('id', stepA.id),
     supabase.from('funnel_steps').update({ position: stepA.position }).eq('id', stepB.id),
   ]);
+}
+
+export async function reorderBlocks(blockIdsInOrder) {
+  await Promise.all(blockIdsInOrder.map((id, index) => supabase.from('blocks').update({ position: index }).eq('id', id)));
+}
+
+export async function reorderSteps(stepIdsInOrder) {
+  await Promise.all(stepIdsInOrder.map((id, index) => supabase.from('funnel_steps').update({ position: index }).eq('id', id)));
 }
 
 export async function insertLead({ funnelId, stepId, name, email }) {

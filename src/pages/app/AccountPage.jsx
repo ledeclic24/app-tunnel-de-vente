@@ -9,13 +9,13 @@ import PasswordInput from '../../components/auth/PasswordInput';
 const DELETE_CONFIRM_WORD = 'SUPPRIMER';
 
 export default function AccountPage() {
-  const { user, profile, signOut, refreshProfile, updatePassword } = useAuth();
+  const { user, profile, effectiveProfile, signOut, refreshProfile, updatePassword } = useAuth();
   const navigate = useNavigate();
   const [fullName, setFullName] = useState(profile?.full_name || '');
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [profileError, setProfileError] = useState('');
-  const plan = getPlan(profile?.plan);
+  const plan = getPlan(effectiveProfile?.plan);
 
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');

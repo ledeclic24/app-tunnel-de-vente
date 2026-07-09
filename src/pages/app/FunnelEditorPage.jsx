@@ -1,46 +1,71 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import {
-  ArrowLeft, ExternalLink, Plus, X, ChevronUp, ChevronDown,
-  Pencil, Trash2, Users, Check, Lock, Palette, Copy,
+  ArrowLeft, ExternalLink, Plus, X, Pencil, Trash2, Users, Check, Lock, Palette, Copy,
+  GripVertical, Undo2, Redo2, Eye, Settings, BookmarkPlus,
 } from 'lucide-react';
 import {
-  fetchFunnel, updateFunnel, fetchSteps, addStep, deleteStep, swapStepPositions,
-  fetchBlocks, addBlock, updateBlock, deleteBlock, swapBlockPositions, countLeads,
+  DndContext, closestCenter, PointerSensor, KeyboardSensor, useSensor, useSensors,
+} from '@dnd-kit/core';
+import {
+  SortableContext, arrayMove, sortableKeyboardCoordinates, useSortable,
+  verticalListSortingStrategy, horizontalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import {
+  fetchFunnel, updateFunnel, fetchSteps, addStep, deleteStep, reorderSteps,
+  fetchBlocks, addBlock, updateBlock, deleteBlock, reorderBlocks, countLeads,
 } from '../../lib/funnelsApi';
 import { BLOCK_TYPES, createDefaultContent } from '../../lib/blockTypes';
 import { slugify } from '../../lib/slug';
 import { useAuth } from '../../context/AuthContext';
 import { getPlan } from '../../lib/plans';
 import { brandStyleVars } from '../../lib/colorUtils';
+import { computeHealthScore } from '../../lib/healthScore';
+import { fetchReusableBlocks, saveReusableBlock, deleteReusableBlock, incrementReusableBlockUsage } from '../../lib/growthApi';
 import BlockRenderer from '../../components/blocks/BlockRenderer';
 import BlockEditorPanel from '../../components/blocks/BlockEditorPanel';
 import ElementStylePanel from '../../components/blocks/ElementStylePanel';
 import BrandKitPanel from '../../components/app/BrandKitPanel';
+import FunnelSettingsPanel from '../../components/app/FunnelSettingsPanel';
+import FunnelPreviewModal from '../../components/app/FunnelPreviewModal';
+import HealthScoreCard from '../../components/app/HealthScoreCard';
 
-function BlockCard({ block, index, total, onMove, onDelete, onDuplicate, isExpanded, onToggle, onChange, userId, selectedElement, onSelectElement }) {
+const HISTORY_LIMIT = 20;
+
+function BlockCard({ block, onDelete, onDuplicate, isExpanded, onToggle, onChange, userId, selectedElement, onSelectElement, dragHandleProps, onSaveToLibrary, canUseLibrary }) {
   const def = BLOCK_TYPES.find((b) => b.type === block.type);
   const Icon = def?.icon;
 
   return (
     <div className="bg-background border border-surface/10 rounded-[2rem] overflow-hidden">
       <div className="flex items-center justify-between px-5 py-3 border-b border-surface/10 bg-surface/[0.02]">
-        <div className="flex items-center gap-2 text-sm font-medium text-surface/70">
-          {Icon && <Icon className="w-4 h-4 text-accent" />}
-          {def?.label || block.type}
+        <div className="flex items-center gap-2 text-sm font-medium text-surface/70 min-w-0">
+          <button
+            type="button"
+            {...dragHandleProps}
+            className="p-1.5 -ml-1.5 rounded-lg text-surface/30 hover:text-surface cursor-grab active:cursor-grabbing touch-none shrink-0"
+            aria-label="Réordonner ce bloc"
+          >
+            <GripVertical className="w-4 h-4" />
+          </button>
+          {Icon && <Icon className="w-4 h-4 text-accent shrink-0" />}
+          <span className="truncate">{def?.label || block.type}</span>
         </div>
-        <div className="flex items-center gap-1">
-          <button disabled={index === 0} onClick={() => onMove(-1)} className="p-1.5 rounded-lg text-surface/40 hover:text-surface disabled:opacity-20 disabled:hover:text-surface/40">
-            <ChevronUp className="w-4 h-4" />
-          </button>
-          <button disabled={index === total - 1} onClick={() => onMove(1)} className="p-1.5 rounded-lg text-surface/40 hover:text-surface disabled:opacity-20 disabled:hover:text-surface/40">
-            <ChevronDown className="w-4 h-4" />
-          </button>
+        <div className="flex items-center gap-1 shrink-0">
           <button onClick={onToggle} className={`p-1.5 rounded-lg ${isExpanded ? 'text-accent' : 'text-surface/40 hover:text-surface'}`}>
             <Pencil className="w-4 h-4" />
           </button>
           <button onClick={onDuplicate} className="p-1.5 rounded-lg text-surface/40 hover:text-surface" aria-label="Dupliquer">
             <Copy className="w-4 h-4" />
+          </button>
+          <button
+            onClick={onSaveToLibrary}
+            className={`p-1.5 rounded-lg ${canUseLibrary ? 'text-surface/40 hover:text-accent' : 'text-surface/20 hover:text-surface/40'}`}
+            aria-label="Enregistrer dans ma bibliothèque"
+            title={canUseLibrary ? 'Enregistrer dans ma bibliothèque' : 'Bibliothèque réservée aux plans payants'}
+          >
+            <BookmarkPlus className="w-4 h-4" />
           </button>
           <button onClick={onDelete} className="p-1.5 rounded-lg text-surface/40 hover:text-red-500">
             <Trash2 className="w-4 h-4" />
@@ -67,29 +92,81 @@ function BlockCard({ block, index, total, onMove, onDelete, onDuplicate, isExpan
   );
 }
 
+function SortableBlockCard(props) {
+  const { block } = props;
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: block.id });
+  const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 };
+  return (
+    <div ref={setNodeRef} style={style}>
+      <BlockCard {...props} dragHandleProps={{ ...attributes, ...listeners }} />
+    </div>
+  );
+}
+
+function SortableStepChip({ step, isSelected, onSelect, onDelete }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: step.id });
+  const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`group flex items-center gap-0.5 shrink-0 rounded-full pl-1.5 pr-1.5 py-1.5 border ${isSelected ? 'bg-primary text-background border-primary' : 'bg-background text-surface/70 border-surface/10'}`}
+    >
+      <button
+        type="button"
+        {...attributes}
+        {...listeners}
+        className="p-1 opacity-50 hover:opacity-100 cursor-grab active:cursor-grabbing touch-none"
+        aria-label="Réordonner cette page"
+      >
+        <GripVertical className="w-3.5 h-3.5" />
+      </button>
+      <button onClick={onSelect} className="text-sm font-medium whitespace-nowrap px-1.5">
+        {step.name}
+      </button>
+      <button onClick={onDelete} className="p-1 opacity-50 hover:opacity-100 hover:text-red-400" aria-label="Supprimer cette page">
+        <X className="w-3 h-3" />
+      </button>
+    </div>
+  );
+}
+
 export default function FunnelEditorPage() {
   const { funnelId } = useParams();
   const navigate = useNavigate();
-  const { profile } = useAuth();
-  const plan = getPlan(profile?.plan);
+  const { effectiveOwnerId, effectiveProfile } = useAuth();
+  const plan = getPlan(effectiveProfile?.plan);
   const [funnel, setFunnel] = useState(null);
   const [steps, setSteps] = useState([]);
   const [selectedStepId, setSelectedStepId] = useState(null);
   const [blocks, setBlocks] = useState([]);
+  const [blocksByStepId, setBlocksByStepId] = useState({});
   const [expandedBlockId, setExpandedBlockId] = useState(null);
   const [selection, setSelection] = useState(null);
   const [showPalette, setShowPalette] = useState(false);
+  const [paletteTab, setPaletteTab] = useState('new');
   const [showBrandKit, setShowBrandKit] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
   const [leadsCount, setLeadsCount] = useState(0);
   const [nameDraft, setNameDraft] = useState('');
   const [editingName, setEditingName] = useState(false);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const [actionError, setActionError] = useState('');
+  const [libraryBlocks, setLibraryBlocks] = useState([]);
+  const [libraryLoading, setLibraryLoading] = useState(false);
+  const [libraryError, setLibraryError] = useState('');
+  const [historyState, setHistoryState] = useState({ stack: [], index: -1 });
 
-  const loadBlocks = useCallback(async (stepId) => {
-    if (!stepId) { setBlocks([]); return; }
-    const data = await fetchBlocks(stepId);
-    setBlocks(data);
+  const contentHistoryTimer = useRef(null);
+
+  const loadAllBlocks = useCallback(async (stepList) => {
+    const entries = await Promise.all(stepList.map(async (s) => [s.id, await fetchBlocks(s.id)]));
+    const map = Object.fromEntries(entries);
+    setBlocksByStepId(map);
+    return map;
   }, []);
 
   const loadAll = useCallback(async () => {
@@ -97,7 +174,7 @@ export default function FunnelEditorPage() {
     let f;
     try {
       f = await fetchFunnel(funnelId);
-    } catch (err) {
+    } catch {
       setNotFound(true);
       setLoading(false);
       return;
@@ -106,63 +183,136 @@ export default function FunnelEditorPage() {
     setNameDraft(f.name);
     const s = await fetchSteps(funnelId);
     setSteps(s);
+    const map = await loadAllBlocks(s);
     const firstStep = s[0]?.id || null;
     setSelectedStepId(firstStep);
-    await loadBlocks(firstStep);
+    const initialBlocks = map[firstStep] || [];
+    setBlocks(initialBlocks);
+    setHistoryState({ stack: [initialBlocks], index: 0 });
     const count = await countLeads(funnelId);
     setLeadsCount(count);
     setLoading(false);
-  }, [funnelId, loadBlocks]);
+  }, [funnelId, loadAllBlocks]);
 
   useEffect(() => { loadAll(); }, [loadAll]);
+
+  const applyBlocks = useCallback((updater) => {
+    setBlocks((prev) => {
+      const next = typeof updater === 'function' ? updater(prev) : updater;
+      setBlocksByStepId((map) => ({ ...map, [selectedStepId]: next }));
+      return next;
+    });
+  }, [selectedStepId]);
+
+  const pushHistory = useCallback((snapshot) => {
+    setHistoryState(({ stack, index }) => {
+      let newStack = stack.slice(0, index + 1).concat([snapshot]);
+      if (newStack.length > HISTORY_LIMIT) newStack = newStack.slice(newStack.length - HISTORY_LIMIT);
+      return { stack: newStack, index: newStack.length - 1 };
+    });
+  }, []);
 
   const selectStep = async (stepId) => {
     setSelectedStepId(stepId);
     setExpandedBlockId(null);
     setSelection(null);
-    await loadBlocks(stepId);
+    const stepBlocks = blocksByStepId[stepId] || [];
+    setBlocks(stepBlocks);
+    setHistoryState({ stack: [stepBlocks], index: 0 });
   };
 
   const handleSaveName = async () => {
     setEditingName(false);
     if (nameDraft.trim() && nameDraft !== funnel.name) {
-      await updateFunnel(funnelId, { name: nameDraft.trim() });
-      setFunnel((f) => ({ ...f, name: nameDraft.trim() }));
+      try {
+        await updateFunnel(funnelId, { name: nameDraft.trim() });
+        setFunnel((f) => ({ ...f, name: nameDraft.trim() }));
+      } catch {
+        setActionError('Le renommage a échoué. Réessaie.');
+      }
     }
   };
 
   const togglePublish = async () => {
     const next = !funnel.is_published;
-    await updateFunnel(funnelId, { is_published: next });
-    setFunnel((f) => ({ ...f, is_published: next }));
+    try {
+      await updateFunnel(funnelId, { is_published: next });
+      setFunnel((f) => ({ ...f, is_published: next }));
+    } catch {
+      setActionError('La publication a échoué. Réessaie.');
+    }
   };
 
   const handleAddStep = async () => {
     const name = window.prompt('Nom de la nouvelle page :');
     if (!name || !name.trim()) return;
-    const step = await addStep(funnelId, { name: name.trim(), slug: slugify(name), position: steps.length });
-    setSteps((prev) => [...prev, step]);
-    selectStep(step.id);
+    try {
+      const step = await addStep(funnelId, { name: name.trim(), slug: slugify(name), position: steps.length });
+      setSteps((prev) => [...prev, step]);
+      setBlocksByStepId((map) => ({ ...map, [step.id]: [] }));
+      selectStep(step.id);
+    } catch {
+      setActionError("L'ajout de la page a échoué. Réessaie.");
+    }
   };
 
   const handleDeleteStep = async (step) => {
     if (steps.length <= 1) { window.alert('Un tunnel doit garder au moins une page.'); return; }
     if (!window.confirm(`Supprimer la page "${step.name}" ?`)) return;
-    await deleteStep(step.id);
-    const remaining = steps.filter((s) => s.id !== step.id);
-    setSteps(remaining);
-    if (selectedStepId === step.id) selectStep(remaining[0]?.id || null);
+    try {
+      await deleteStep(step.id);
+      const remaining = steps.filter((s) => s.id !== step.id);
+      setSteps(remaining);
+      setBlocksByStepId((map) => {
+        const next = { ...map };
+        delete next[step.id];
+        return next;
+      });
+      if (selectedStepId === step.id) selectStep(remaining[0]?.id || null);
+    } catch {
+      setActionError('La suppression de la page a échoué. Réessaie.');
+    }
   };
 
-  const moveStep = async (step, direction) => {
-    const idx = steps.findIndex((s) => s.id === step.id);
-    const swapIdx = idx + direction;
-    if (swapIdx < 0 || swapIdx >= steps.length) return;
-    const other = steps[swapIdx];
-    await swapStepPositions(step, other);
-    const next = [...steps];
-    [next[idx], next[swapIdx]] = [next[swapIdx], next[idx]];
+  const stepSensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
+
+  const handleStepDragEnd = async (event) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIndex = steps.findIndex((s) => s.id === active.id);
+    const newIndex = steps.findIndex((s) => s.id === over.id);
+    if (oldIndex === -1 || newIndex === -1) return;
+    const next = arrayMove(steps, oldIndex, newIndex);
     setSteps(next);
+    try {
+      await reorderSteps(next.map((s) => s.id));
+    } catch {
+      setActionError("Le réordonnancement des pages n'a pas pu être enregistré.");
+    }
+  };
+
+  const blockSensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
+
+  const handleBlockDragEnd = async (event) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIndex = blocks.findIndex((b) => b.id === active.id);
+    const newIndex = blocks.findIndex((b) => b.id === over.id);
+    if (oldIndex === -1 || newIndex === -1) return;
+    const next = arrayMove(blocks, oldIndex, newIndex);
+    applyBlocks(next);
+    pushHistory(next);
+    try {
+      await reorderBlocks(next.map((b) => b.id));
+    } catch {
+      setActionError("Le réordonnancement des blocs n'a pas pu être enregistré.");
+    }
   };
 
   const handleAddBlock = async (type) => {
@@ -171,37 +321,52 @@ export default function FunnelEditorPage() {
       navigate('/app/billing');
       return;
     }
-    const block = await addBlock(selectedStepId, type, createDefaultContent(type), blocks.length);
-    setBlocks((prev) => [...prev, block]);
-    setExpandedBlockId(block.id);
+    try {
+      const block = await addBlock(selectedStepId, type, createDefaultContent(type), blocks.length);
+      const next = [...blocks, block];
+      applyBlocks(next);
+      pushHistory(next);
+      setExpandedBlockId(block.id);
+    } catch {
+      setActionError("L'ajout du bloc a échoué. Réessaie.");
+    }
   };
 
   const handleDeleteBlock = async (block) => {
     if (!window.confirm('Supprimer ce bloc ?')) return;
-    await deleteBlock(block.id);
-    setBlocks((prev) => prev.filter((b) => b.id !== block.id));
-    setSelection((sel) => (sel?.blockId === block.id ? null : sel));
+    try {
+      await deleteBlock(block.id);
+      const next = blocks.filter((b) => b.id !== block.id);
+      applyBlocks(next);
+      pushHistory(next);
+      setSelection((sel) => (sel?.blockId === block.id ? null : sel));
+    } catch {
+      setActionError('La suppression du bloc a échoué. Réessaie.');
+    }
   };
 
   const handleDuplicateBlock = async (block) => {
-    const copy = await addBlock(selectedStepId, block.type, { ...block.content }, blocks.length);
-    setBlocks((prev) => [...prev, copy]);
-  };
-
-  const moveBlock = async (block, direction) => {
-    const idx = blocks.findIndex((b) => b.id === block.id);
-    const swapIdx = idx + direction;
-    if (swapIdx < 0 || swapIdx >= blocks.length) return;
-    const other = blocks[swapIdx];
-    await swapBlockPositions(block, other);
-    const next = [...blocks];
-    [next[idx], next[swapIdx]] = [next[swapIdx], next[idx]];
-    setBlocks(next);
+    try {
+      const copy = await addBlock(selectedStepId, block.type, { ...block.content }, blocks.length);
+      const next = [...blocks, copy];
+      applyBlocks(next);
+      pushHistory(next);
+    } catch {
+      setActionError('La duplication a échoué. Réessaie.');
+    }
   };
 
   const handleBlockChange = async (block, newContent) => {
-    setBlocks((prev) => prev.map((b) => (b.id === block.id ? { ...b, content: newContent } : b)));
-    await updateBlock(block.id, newContent);
+    const next = blocks.map((b) => (b.id === block.id ? { ...b, content: newContent } : b));
+    applyBlocks(next);
+    try {
+      await updateBlock(block.id, newContent);
+    } catch {
+      setActionError("L'enregistrement du bloc a échoué. Réessaie.");
+      return;
+    }
+    if (contentHistoryTimer.current) clearTimeout(contentHistoryTimer.current);
+    contentHistoryTimer.current = setTimeout(() => pushHistory(next), 600);
   };
 
   const handleElementStyleChange = async (block, newStyles) => {
@@ -209,10 +374,149 @@ export default function FunnelEditorPage() {
   };
 
   const handleSaveBrand = async (brand) => {
-    await updateFunnel(funnelId, { brand });
-    setFunnel((f) => ({ ...f, brand }));
-    setShowBrandKit(false);
+    try {
+      await updateFunnel(funnelId, { brand });
+      setFunnel((f) => ({ ...f, brand }));
+      setShowBrandKit(false);
+    } catch {
+      setActionError('L\'enregistrement du Brand Kit a échoué. Réessaie.');
+    }
   };
+
+  const handleSaveSettings = async (patch) => {
+    await updateFunnel(funnelId, patch);
+    setFunnel((f) => ({ ...f, ...patch }));
+  };
+
+  const reconcileToSnapshot = useCallback(async (snapshot) => {
+    const currentIds = new Set(blocks.map((b) => b.id));
+    const snapshotIds = new Set(snapshot.map((b) => b.id));
+
+    const toDelete = blocks.filter((b) => !snapshotIds.has(b.id));
+    const toRecreate = snapshot.filter((b) => !currentIds.has(b.id));
+    const toUpdate = snapshot.filter((b) => currentIds.has(b.id));
+
+    try {
+      await Promise.all(toDelete.map((b) => deleteBlock(b.id)));
+
+      const idMap = {};
+      for (const b of toRecreate) {
+        const created = await addBlock(selectedStepId, b.type, b.content, b.position);
+        idMap[b.id] = created.id;
+      }
+
+      await Promise.all(toUpdate.map((b) => updateBlock(b.id, b.content)));
+
+      const resolvedSnapshot = snapshot.map((b) => (idMap[b.id] ? { ...b, id: idMap[b.id] } : b));
+      await reorderBlocks(resolvedSnapshot.map((b) => b.id));
+
+      if (Object.keys(idMap).length > 0) {
+        setHistoryState((s) => ({
+          ...s,
+          stack: s.stack.map((snap) => snap.map((b) => (idMap[b.id] ? { ...b, id: idMap[b.id] } : b))),
+        }));
+      }
+
+      applyBlocks(resolvedSnapshot);
+    } catch {
+      setActionError("L'annulation/rétablissement n'a pas pu être appliqué entièrement.");
+    }
+  }, [blocks, selectedStepId, applyBlocks]);
+
+  const undo = useCallback(() => {
+    if (historyState.index <= 0) return;
+    const targetIndex = historyState.index - 1;
+    const snapshot = historyState.stack[targetIndex];
+    setHistoryState((s) => ({ ...s, index: targetIndex }));
+    reconcileToSnapshot(snapshot);
+  }, [historyState, reconcileToSnapshot]);
+
+  const redo = useCallback(() => {
+    if (historyState.index >= historyState.stack.length - 1) return;
+    const targetIndex = historyState.index + 1;
+    const snapshot = historyState.stack[targetIndex];
+    setHistoryState((s) => ({ ...s, index: targetIndex }));
+    reconcileToSnapshot(snapshot);
+  }, [historyState, reconcileToSnapshot]);
+
+  useEffect(() => {
+    const handler = (e) => {
+      const mod = e.ctrlKey || e.metaKey;
+      if (!mod) return;
+      const tag = document.activeElement?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || document.activeElement?.isContentEditable) return;
+      if (e.key.toLowerCase() === 'z' && !e.shiftKey) {
+        e.preventDefault();
+        undo();
+      } else if ((e.key.toLowerCase() === 'z' && e.shiftKey) || e.key.toLowerCase() === 'y') {
+        e.preventDefault();
+        redo();
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [undo, redo]);
+
+  const handleOpenLibraryTab = async () => {
+    setPaletteTab('library');
+    if (!plan.blockLibrary || libraryBlocks.length > 0) return;
+    setLibraryLoading(true);
+    setLibraryError('');
+    try {
+      const data = await fetchReusableBlocks(effectiveOwnerId);
+      setLibraryBlocks(data);
+    } catch {
+      setLibraryError('Impossible de charger ta bibliothèque de blocs.');
+    } finally {
+      setLibraryLoading(false);
+    }
+  };
+
+  const handleInsertFromLibrary = async (savedBlock) => {
+    setShowPalette(false);
+    try {
+      const block = await addBlock(selectedStepId, savedBlock.type, savedBlock.content, blocks.length);
+      const next = [...blocks, block];
+      applyBlocks(next);
+      pushHistory(next);
+      setExpandedBlockId(block.id);
+      incrementReusableBlockUsage(savedBlock.id, savedBlock.usage_count || 0).catch(() => {});
+      setLibraryBlocks((prev) => prev.map((b) => (b.id === savedBlock.id ? { ...b, usage_count: (b.usage_count || 0) + 1 } : b)));
+    } catch {
+      setActionError("L'insertion depuis la bibliothèque a échoué.");
+    }
+  };
+
+  const handleDeleteLibraryBlock = async (id) => {
+    if (!window.confirm('Supprimer ce bloc de ta bibliothèque ?')) return;
+    try {
+      await deleteReusableBlock(id);
+      setLibraryBlocks((prev) => prev.filter((b) => b.id !== id));
+    } catch {
+      setActionError('La suppression depuis la bibliothèque a échoué.');
+    }
+  };
+
+  const handleSaveToLibrary = async (block) => {
+    if (!plan.blockLibrary) {
+      navigate('/app/billing');
+      return;
+    }
+    const def = BLOCK_TYPES.find((b) => b.type === block.type);
+    const name = window.prompt('Nom du bloc pour ta bibliothèque :', def?.label || block.type);
+    if (!name || !name.trim()) return;
+    try {
+      const saved = await saveReusableBlock({ userId: effectiveOwnerId, name: name.trim(), type: block.type, content: block.content });
+      setLibraryBlocks((prev) => [saved, ...prev]);
+    } catch {
+      setActionError("L'enregistrement dans la bibliothèque a échoué.");
+    }
+  };
+
+  const { score, checks } = useMemo(() => computeHealthScore(steps, blocksByStepId), [steps, blocksByStepId]);
+
+  const canUndo = historyState.index > 0;
+  const canRedo = historyState.index < historyState.stack.length - 1;
 
   if (loading) {
     return (
@@ -234,7 +538,6 @@ export default function FunnelEditorPage() {
 
   return (
     <div>
-      {/* Top bar */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
         <div className="flex items-center gap-3 min-w-0">
           <Link to="/app" className="p-2 rounded-lg text-surface/50 hover:text-surface shrink-0"><ArrowLeft className="w-5 h-5" /></Link>
@@ -254,9 +557,29 @@ export default function FunnelEditorPage() {
           )}
         </div>
 
-        <div className="flex items-center gap-3 shrink-0">
+        <div className="flex items-center gap-2 md:gap-3 shrink-0 flex-wrap">
           <div className="hidden sm:flex items-center gap-1.5 text-sm text-surface/50">
             <Users className="w-4 h-4" /> {leadsCount} lead(s)
+          </div>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={undo}
+              disabled={!canUndo}
+              className="p-2.5 rounded-xl border border-surface/10 text-surface/60 hover:text-surface disabled:opacity-30 disabled:hover:text-surface/60"
+              aria-label="Annuler"
+              title="Annuler (Ctrl+Z)"
+            >
+              <Undo2 className="w-4 h-4" />
+            </button>
+            <button
+              onClick={redo}
+              disabled={!canRedo}
+              className="p-2.5 rounded-xl border border-surface/10 text-surface/60 hover:text-surface disabled:opacity-30 disabled:hover:text-surface/60"
+              aria-label="Rétablir"
+              title="Rétablir (Ctrl+Y)"
+            >
+              <Redo2 className="w-4 h-4" />
+            </button>
           </div>
           {funnel.is_published && (
             <a href={`/f/${funnel.slug}`} target="_blank" rel="noreferrer" className="hover-lift p-2.5 rounded-xl border border-surface/10 text-surface/60" aria-label="Voir la page publique">
@@ -264,7 +587,19 @@ export default function FunnelEditorPage() {
             </a>
           )}
           <button
-            onClick={() => setShowBrandKit((v) => !v)}
+            onClick={() => setShowPreview(true)}
+            className="magnetic-btn flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-semibold border border-surface/10 text-surface/70"
+          >
+            <Eye className="w-4 h-4" /> Aperçu
+          </button>
+          <button
+            onClick={() => { setShowSettings((v) => !v); setShowBrandKit(false); }}
+            className={`magnetic-btn flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-semibold border ${showSettings ? 'bg-accent/10 border-accent text-accent' : 'border-surface/10 text-surface/70'}`}
+          >
+            <Settings className="w-4 h-4" /> Réglages
+          </button>
+          <button
+            onClick={() => { setShowBrandKit((v) => !v); setShowSettings(false); }}
             className={`magnetic-btn flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-semibold border ${showBrandKit ? 'bg-accent/10 border-accent text-accent' : 'border-surface/10 text-surface/70'}`}
           >
             <Palette className="w-4 h-4" /> Design
@@ -278,48 +613,71 @@ export default function FunnelEditorPage() {
         </div>
       </div>
 
-      {showBrandKit && (
-        <div className="mb-6 max-w-2xl">
-          <BrandKitPanel brand={funnel.brand} onSave={handleSaveBrand} userId={profile?.id} canUseBrandKit={plan.brandKit} />
+      {actionError && (
+        <div className="mb-6 flex items-center justify-between gap-3 bg-red-500/10 border border-red-500/20 text-red-500 text-sm rounded-2xl px-4 py-3">
+          <span>{actionError}</span>
+          <button onClick={() => setActionError('')} className="shrink-0 hover:opacity-70"><X className="w-4 h-4" /></button>
         </div>
       )}
 
-      {/* Steps chips */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-2 mb-6 -mx-1 px-1">
-        {steps.map((step) => (
-          <div key={step.id} className={`group flex items-center gap-1 shrink-0 rounded-full pl-4 pr-1.5 py-1.5 border ${selectedStepId === step.id ? 'bg-primary text-background border-primary' : 'bg-background text-surface/70 border-surface/10'}`}>
-            <button onClick={() => selectStep(step.id)} className="text-sm font-medium whitespace-nowrap">
-              {step.name}
+      {showBrandKit && (
+        <div className="mb-6 max-w-2xl">
+          <BrandKitPanel brand={funnel.brand} onSave={handleSaveBrand} userId={effectiveOwnerId} canUseBrandKit={plan.brandKit} canUseAdPixels={plan.adPixels} />
+        </div>
+      )}
+
+      {showSettings && (
+        <div className="mb-6 max-w-2xl">
+          <FunnelSettingsPanel funnel={funnel} plan={plan} onSave={handleSaveSettings} />
+        </div>
+      )}
+
+      <DndContext sensors={stepSensors} collisionDetection={closestCenter} onDragEnd={handleStepDragEnd}>
+        <SortableContext items={steps.map((s) => s.id)} strategy={horizontalListSortingStrategy}>
+          <div className="flex items-center gap-2 overflow-x-auto pb-2 mb-6 -mx-1 px-1">
+            {steps.map((step) => (
+              <SortableStepChip
+                key={step.id}
+                step={step}
+                isSelected={selectedStepId === step.id}
+                onSelect={() => selectStep(step.id)}
+                onDelete={() => handleDeleteStep(step)}
+              />
+            ))}
+            <button onClick={handleAddStep} className="shrink-0 flex items-center gap-1 rounded-full px-4 py-2 border border-dashed border-surface/20 text-sm text-surface/50 hover:border-accent hover:text-accent transition-colors">
+              <Plus className="w-3.5 h-3.5" /> Page
             </button>
-            <button onClick={() => moveStep(step, -1)} className="p-1 opacity-50 hover:opacity-100"><ChevronUp className="w-3 h-3 -rotate-90" /></button>
-            <button onClick={() => moveStep(step, 1)} className="p-1 opacity-50 hover:opacity-100"><ChevronUp className="w-3 h-3 rotate-90" /></button>
-            <button onClick={() => handleDeleteStep(step)} className="p-1 opacity-50 hover:opacity-100 hover:text-red-400"><X className="w-3 h-3" /></button>
           </div>
-        ))}
-        <button onClick={handleAddStep} className="shrink-0 flex items-center gap-1 rounded-full px-4 py-2 border border-dashed border-surface/20 text-sm text-surface/50 hover:border-accent hover:text-accent transition-colors">
-          <Plus className="w-3.5 h-3.5" /> Page
-        </button>
+        </SortableContext>
+      </DndContext>
+
+      <div className="max-w-2xl">
+        <HealthScoreCard score={score} checks={checks} />
       </div>
 
-      {/* Blocks */}
       <div className="space-y-4 max-w-2xl" style={brandStyleVars(funnel.brand)}>
-        {blocks.map((block, i) => (
-          <BlockCard
-            key={block.id}
-            block={block}
-            index={i}
-            total={blocks.length}
-            onMove={(dir) => moveBlock(block, dir)}
-            onDelete={() => handleDeleteBlock(block)}
-            onDuplicate={() => handleDuplicateBlock(block)}
-            isExpanded={expandedBlockId === block.id}
-            onToggle={() => setExpandedBlockId(expandedBlockId === block.id ? null : block.id)}
-            onChange={(content) => handleBlockChange(block, content)}
-            userId={profile?.id}
-            selectedElement={selection?.blockId === block.id ? selection.elementKey : null}
-            onSelectElement={(elementKey, kind, label) => setSelection({ blockId: block.id, elementKey, kind, label })}
-          />
-        ))}
+        <DndContext sensors={blockSensors} collisionDetection={closestCenter} onDragEnd={handleBlockDragEnd}>
+          <SortableContext items={blocks.map((b) => b.id)} strategy={verticalListSortingStrategy}>
+            <div className="space-y-4">
+              {blocks.map((block) => (
+                <SortableBlockCard
+                  key={block.id}
+                  block={block}
+                  onDelete={() => handleDeleteBlock(block)}
+                  onDuplicate={() => handleDuplicateBlock(block)}
+                  isExpanded={expandedBlockId === block.id}
+                  onToggle={() => setExpandedBlockId(expandedBlockId === block.id ? null : block.id)}
+                  onChange={(content) => handleBlockChange(block, content)}
+                  userId={effectiveOwnerId}
+                  selectedElement={selection?.blockId === block.id ? selection.elementKey : null}
+                  onSelectElement={(elementKey, kind, label) => setSelection({ blockId: block.id, elementKey, kind, label })}
+                  onSaveToLibrary={() => handleSaveToLibrary(block)}
+                  canUseLibrary={plan.blockLibrary}
+                />
+              ))}
+            </div>
+          </SortableContext>
+        </DndContext>
 
         <div className="relative">
           <button
@@ -329,22 +687,76 @@ export default function FunnelEditorPage() {
             <Plus className="w-4 h-4" /> Ajouter un bloc
           </button>
           {showPalette && (
-            <div className="absolute z-20 mt-2 w-full bg-background border border-surface/10 rounded-2xl shadow-xl p-2 grid grid-cols-2 gap-1">
-              {BLOCK_TYPES.map(({ type, label, icon: Icon }) => {
-                const unlocked = plan.blocks.includes(type);
-                return (
-                  <button
-                    key={type}
-                    onClick={() => handleAddBlock(type)}
-                    className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm transition-colors text-left ${
-                      unlocked ? 'text-surface/80 hover:bg-accent/10 hover:text-accent' : 'text-surface/30 hover:bg-surface/5'
-                    }`}
-                  >
-                    <Icon className="w-4 h-4 shrink-0" /> {label}
-                    {!unlocked && <Lock className="w-3 h-3 shrink-0 ml-auto" />}
-                  </button>
-                );
-              })}
+            <div className="absolute z-20 mt-2 w-full bg-background border border-surface/10 rounded-2xl shadow-xl p-3">
+              <div className="flex items-center gap-1 mb-2 bg-surface/5 rounded-full p-1 w-fit">
+                <button
+                  onClick={() => setPaletteTab('new')}
+                  className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${paletteTab === 'new' ? 'bg-primary text-background' : 'text-surface/60'}`}
+                >
+                  Nouveau bloc
+                </button>
+                <button
+                  onClick={handleOpenLibraryTab}
+                  className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${paletteTab === 'library' ? 'bg-primary text-background' : 'text-surface/60'}`}
+                >
+                  Depuis ma bibliothèque
+                </button>
+              </div>
+
+              {paletteTab === 'new' ? (
+                <div className="grid grid-cols-2 gap-1 max-h-80 overflow-y-auto">
+                  {BLOCK_TYPES.map(({ type, label, icon: Icon }) => {
+                    const unlocked = plan.blocks.includes(type);
+                    return (
+                      <button
+                        key={type}
+                        onClick={() => handleAddBlock(type)}
+                        className={`flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm transition-colors text-left ${
+                          unlocked ? 'text-surface/80 hover:bg-accent/10 hover:text-accent' : 'text-surface/30 hover:bg-surface/5'
+                        }`}
+                      >
+                        <Icon className="w-4 h-4 shrink-0" /> {label}
+                        {!unlocked && <Lock className="w-3 h-3 shrink-0 ml-auto" />}
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : !plan.blockLibrary ? (
+                <div className="text-center py-6 px-2">
+                  <Lock className="w-6 h-6 text-surface/30 mx-auto mb-2" />
+                  <p className="text-xs text-surface/60 mb-3">La bibliothèque de blocs est réservée aux plans Pro et Entreprise.</p>
+                  <Link to="/app/billing" className="text-accent text-xs font-semibold hover:underline">Voir les offres</Link>
+                </div>
+              ) : libraryLoading ? (
+                <div className="flex justify-center py-6">
+                  <div className="w-5 h-5 border-2 border-surface/20 border-t-accent rounded-full animate-spin" />
+                </div>
+              ) : libraryError ? (
+                <p className="text-xs text-red-500 text-center py-4">{libraryError}</p>
+              ) : libraryBlocks.length === 0 ? (
+                <p className="text-xs text-surface/40 text-center py-6 px-2">Ta bibliothèque est vide. Enregistre un bloc depuis l'icône marque-page sur un bloc existant pour le retrouver ici.</p>
+              ) : (
+                <div className="max-h-80 overflow-y-auto space-y-1">
+                  {libraryBlocks.map((lb) => {
+                    const def = BLOCK_TYPES.find((b) => b.type === lb.type);
+                    const Icon = def?.icon;
+                    return (
+                      <div key={lb.id} className="flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl hover:bg-accent/5">
+                        <button onClick={() => handleInsertFromLibrary(lb)} className="flex items-center gap-2 text-left min-w-0 flex-1">
+                          {Icon && <Icon className="w-4 h-4 shrink-0 text-accent" />}
+                          <span className="min-w-0 truncate">
+                            <span className="block text-sm text-surface/80 truncate">{lb.name}</span>
+                            <span className="block text-xs text-surface/40">{def?.label || lb.type}</span>
+                          </span>
+                        </button>
+                        <button onClick={() => handleDeleteLibraryBlock(lb.id)} className="p-1 text-surface/30 hover:text-red-500 shrink-0" aria-label="Supprimer de la bibliothèque">
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -358,6 +770,15 @@ export default function FunnelEditorPage() {
           label={selection.label}
           onChange={(newStyles) => handleElementStyleChange(blocks.find((b) => b.id === selection.blockId), newStyles)}
           onClose={() => setSelection(null)}
+        />
+      )}
+
+      {showPreview && (
+        <FunnelPreviewModal
+          funnel={funnel}
+          steps={steps}
+          blocksByStepId={blocksByStepId}
+          onClose={() => setShowPreview(false)}
         />
       )}
     </div>

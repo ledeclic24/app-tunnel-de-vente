@@ -19,14 +19,14 @@ function exportToCsv(leads) {
 }
 
 export default function LeadsPage() {
-  const { profile } = useAuth();
+  const { effectiveOwnerId, effectiveProfile } = useAuth();
   const [leads, setLeads] = useState(null);
-  const plan = getPlan(profile?.plan);
+  const plan = getPlan(effectiveProfile?.plan);
 
   useEffect(() => {
-    if (!profile) return;
-    fetchLeadsForUser(profile.id).then(setLeads).catch(() => setLeads([]));
-  }, [profile]);
+    if (!effectiveOwnerId) return;
+    fetchLeadsForUser(effectiveOwnerId).then(setLeads).catch(() => setLeads([]));
+  }, [effectiveOwnerId]);
 
   if (leads === null) {
     return (

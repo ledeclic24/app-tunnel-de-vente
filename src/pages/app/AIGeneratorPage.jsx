@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Sparkles, Lock, Wand2 } from 'lucide-react';
+import { ArrowLeft, Sparkles, Lock, Wand2, SlidersHorizontal, ArrowRight } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { getPlan } from '../../lib/plans';
 import { CATEGORIES } from '../../lib/funnelTemplates';
@@ -17,34 +17,62 @@ const ERROR_MESSAGES = {
   server_error: "Une erreur est survenue. Réessaie.",
 };
 
+function Bubble({ role, children }) {
+  const isUser = role === 'user';
+  return (
+    <div className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}>
+      <div
+        className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
+          isUser ? 'bg-primary text-background rounded-br-sm' : 'bg-background border border-surface/10 text-surface rounded-bl-sm'
+        }`}
+      >
+        {children}
+      </div>
+    </div>
+  );
+}
+
 export default function AIGeneratorPage() {
-  const { profile } = useAuth();
+  const { effectiveOwnerId, effectiveProfile } = useAuth();
   const navigate = useNavigate();
-  const plan = getPlan(profile?.plan);
+  const plan = getPlan(effectiveProfile?.plan);
 
   const [name, setName] = useState('');
-  const [category, setCategory] = useState('');
-  const [description, setDescription] = useState('');
+  const [categoryKey, setCategoryKey] = useState('');
   const [price, setPrice] = useState('');
   const [images, setImages] = useState([]);
   const [customPalette, setCustomPalette] = useState(false);
   const [primaryColor, setPrimaryColor] = useState('#0B2818');
   const [accentColor, setAccentColor] = useState('#22C55E');
+  const [showOptions, setShowOptions] = useState(false);
+
   const [usage, setUsage] = useState(null);
+  const [messages, setMessages] = useState([
+    { role: 'assistant', text: 'Décrivez votre offre (ce que vous vendez, le public visé, ce qui la rend unique) et je construis un tunnel complet — textes, pages et couleurs inclus.' },
+  ]);
+  const [brief, setBrief] = useState('');
+  const [draftFunnel, setDraftFunnel] = useState(null);
+  const [input, setInput] = useState('');
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState('');
+  const [saving, setSaving] = useState(false);
+  const scrollRef = useRef(null);
 
   useEffect(() => {
-    if (profile && plan.aiAccess) fetchAIUsageThisMonth(profile.id).then(setUsage).catch(() => {});
+    if (effectiveOwnerId && plan.aiAccess) fetchAIUsageThisMonth(effectiveOwnerId).then(setUsage).catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [profile]);
+  }, [effectiveOwnerId]);
+
+  useEffect(() => {
+    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
+  }, [messages, generating]);
 
   if (!plan.aiAccess) {
     return (
       <div className="max-w-lg mx-auto text-center py-16">
         <Lock className="w-10 h-10 text-surface/30 mx-auto mb-4" />
-        <h1 className="text-xl font-sans font-bold text-surface mb-2">Génération par IA réservée aux plans Pro et Entreprise</h1>
-        <p className="text-surface/60 mb-6">Décris ton offre, l'IA construit ton tunnel à ta place — textes, mise en page et palette inclus.</p>
+        <h1 className="text-xl font-sans font-bold text-surface mb-2">Le copilote IA est réservé aux plans Pro et Entreprise</h1>
+        <p className="text-surface/60 mb-6">Décrivez votre offre, l'IA construit votre tunnel à votre place — textes, mise en page et palette inclus.</p>
         <Link to="/app/billing" className="magnetic-btn inline-flex bg-accent text-background px-6 py-3 rounded-full font-semibold">
           Voir les offres
         </Link>
@@ -54,30 +82,63 @@ export default function AIGeneratorPage() {
 
   const remaining = plan.aiMonthlyLimit === Infinity || usage === null ? null : Math.max(plan.aiMonthlyLimit - usage, 0);
   const atLimit = remaining !== null && remaining <= 0;
+  const categoryLabel = categoryKey ? CATEGORIES.find((c) => c.key === categoryKey)?.label || '' : '';
 
-  const handleGenerate = async (e) => {
-    e.preventDefault();
-    if (!name.trim() || description.trim().length < 5 || generating || atLimit) return;
+  const runGeneration = async (nextBrief) => {
     setGenerating(true);
     setError('');
     try {
       const generatedFunnel = await generateTunnelWithAI({
-        description: description.trim(),
-        category,
+        description: nextBrief,
+        category: categoryLabel,
         images,
         price: price.trim(),
         paletteHint: customPalette ? `couleur principale ${primaryColor}, couleur d'accent ${accentColor}` : '',
       });
+      setDraftFunnel(generatedFunnel);
+      const stepCount = generatedFunnel.steps?.length || 0;
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: 'assistant',
+          text: `C'est fait — ${stepCount} étape${stepCount > 1 ? 's' : ''} générée${stepCount > 1 ? 's' : ''}${price.trim() ? `, avec le prix ${price.trim()} repris tel quel` : ''}. Vous pouvez ouvrir le tunnel pour le voir, ou m'écrire ce que vous voulez ajuster (ex. « rends le titre plus percutant »).`,
+        },
+      ]);
+    } catch (err) {
+      setError(ERROR_MESSAGES[err.message] || ERROR_MESSAGES.server_error);
+      setMessages((prev) => [...prev, { role: 'assistant', text: "Je n'ai pas réussi à générer le tunnel. " + (ERROR_MESSAGES[err.message] || ERROR_MESSAGES.server_error) }]);
+    }
+    setGenerating(false);
+  };
+
+  const handleSend = async (e) => {
+    e.preventDefault();
+    if (!input.trim() || generating || atLimit || !name.trim()) return;
+    const message = input.trim();
+    setInput('');
+    setMessages((prev) => [...prev, { role: 'user', text: message }]);
+
+    const nextBrief = draftFunnel ? `${brief}\n\nAjustement demandé : ${message}` : message;
+    setBrief(nextBrief);
+    await runGeneration(nextBrief);
+  };
+
+  const handleOpenInEditor = async () => {
+    if (!draftFunnel || saving) return;
+    setSaving(true);
+    setError('');
+    try {
       const funnel = await createFunnelFromAI({
-        userId: profile.id,
+        userId: effectiveOwnerId,
         name: name.trim(),
-        generatedFunnel,
+        generatedFunnel: draftFunnel,
         showBranding: plan.showBranding,
+        category: categoryKey || 'personnalise',
       });
       navigate(`/app/funnels/${funnel.id}/edit`);
     } catch (err) {
-      setError(ERROR_MESSAGES[err.message] || ERROR_MESSAGES.server_error);
-      setGenerating(false);
+      setError(ERROR_MESSAGES.server_error);
+      setSaving(false);
     }
   };
 
@@ -88,106 +149,135 @@ export default function AIGeneratorPage() {
       </Link>
 
       <div className="inline-flex items-center gap-2 bg-accent/10 text-accent px-3 py-1.5 rounded-full text-xs font-semibold mb-4">
-        <Sparkles className="w-3.5 h-3.5" /> Génération par IA
+        <Sparkles className="w-3.5 h-3.5" /> Copilote IA
       </div>
-      <h1 className="text-2xl font-sans font-bold text-surface mb-2">Décris ton offre, l'IA construit ton tunnel</h1>
-      <p className="text-surface/60 mb-2">
-        Plus ta description est précise (offre, prix, public visé), meilleur sera le résultat. Tu pourras tout modifier ensuite, à la main ou avec l'IA.
-      </p>
+      <h1 className="text-2xl font-sans font-bold text-surface mb-2">Discutez avec le copilote pour construire votre tunnel</h1>
       {remaining !== null && (
-        <p className="text-xs text-surface/40 mb-8 font-mono">{remaining} génération{remaining > 1 ? 's' : ''} restante{remaining > 1 ? 's' : ''} ce mois-ci</p>
+        <p className="text-xs text-surface/40 mb-6 font-mono">{remaining} génération{remaining > 1 ? 's' : ''} restante{remaining > 1 ? 's' : ''} ce mois-ci</p>
       )}
-      {remaining === null && <div className="mb-8" />}
+      {remaining === null && <div className="mb-6" />}
 
-      <form onSubmit={handleGenerate} className="space-y-5 bg-background border border-surface/10 rounded-[2rem] p-6 md:p-8">
-        <div>
-          <label className="block text-xs font-semibold text-surface/70 uppercase tracking-wider mb-2">Nom du tunnel</label>
-          <input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Ex : Lancement de mon ebook"
-            className="w-full bg-primary/5 border border-surface/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-accent transition-colors text-surface"
-            required
-          />
-        </div>
+      <div className="bg-background border border-surface/10 rounded-[2rem] p-4 md:p-6 mb-4">
+        <label className="block text-xs font-semibold text-surface/70 uppercase tracking-wider mb-2">Nom du tunnel</label>
+        <input
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="Ex : Lancement de mon ebook"
+          className="w-full bg-primary/5 border border-surface/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-accent transition-colors text-surface"
+        />
+      </div>
 
-        <div>
-          <label className="block text-xs font-semibold text-surface/70 uppercase tracking-wider mb-2">Type de tunnel (optionnel)</label>
-          <select
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-            className="w-full bg-primary/5 border border-surface/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-accent transition-colors text-surface"
-          >
-            <option value="">Laisser l'IA choisir</option>
-            {CATEGORIES.map((c) => (
-              <option key={c.key} value={c.label}>{c.label}</option>
-            ))}
-          </select>
-        </div>
+      <div ref={scrollRef} className="bg-background border border-surface/10 rounded-[2rem] p-4 md:p-6 space-y-3 max-h-[420px] overflow-y-auto mb-4">
+        {messages.map((m, i) => <Bubble key={i} role={m.role}>{m.text}</Bubble>)}
+        {generating && (
+          <Bubble role="assistant">
+            <span className="inline-flex items-center gap-2 text-surface/60">
+              <span className="w-3.5 h-3.5 border-2 border-surface/20 border-t-accent rounded-full animate-spin" /> Génération en cours…
+            </span>
+          </Bubble>
+        )}
+        {draftFunnel && !generating && (
+          <div className="flex justify-start">
+            <button
+              onClick={handleOpenInEditor}
+              disabled={saving || !name.trim()}
+              className="magnetic-btn inline-flex items-center gap-2 bg-accent text-background px-4 py-2.5 rounded-full text-sm font-semibold disabled:opacity-50"
+            >
+              {saving ? 'Ouverture...' : 'Ouvrir dans l\'éditeur'} <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        )}
+        {draftFunnel && !name.trim() && !generating && (
+          <p className="text-xs text-red-500">Ajoutez un nom au tunnel ci-dessus pour pouvoir l'ouvrir dans l'éditeur.</p>
+        )}
+      </div>
 
-        <div>
-          <label className="block text-xs font-semibold text-surface/70 uppercase tracking-wider mb-2">Décris ton offre en détail</label>
-          <textarea
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            rows={5}
-            placeholder="Ex : Je vends un ebook à 19€ qui apprend aux débutants à cuisiner en 15 minutes. Mon public : parents pressés qui veulent manger sainement sans y passer des heures."
-            className="w-full bg-primary/5 border border-surface/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-accent transition-colors text-surface resize-none"
-            required
-          />
-        </div>
+      <button
+        type="button"
+        onClick={() => setShowOptions((v) => !v)}
+        className="flex items-center gap-2 text-xs font-semibold text-surface/50 hover:text-surface mb-3"
+      >
+        <SlidersHorizontal className="w-3.5 h-3.5" /> Réglages avancés (catégorie, prix, images, palette)
+      </button>
 
-        <div>
-          <label className="block text-xs font-semibold text-surface/70 uppercase tracking-wider mb-2">Prix de ton offre (optionnel)</label>
-          <input
-            value={price}
-            onChange={(e) => setPrice(e.target.value)}
-            placeholder="Ex : 19 000 FCFA, 49€/mois, 29$..."
-            className="w-full bg-primary/5 border border-surface/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-accent transition-colors text-surface"
-          />
-          <p className="text-xs text-surface/40 mt-1.5">Précise-le pour que l'IA l'utilise partout où un prix est affiché, sans en inventer un autre.</p>
-        </div>
+      {showOptions && (
+        <div className="bg-background border border-surface/10 rounded-[2rem] p-4 md:p-6 space-y-5 mb-4">
+          <div>
+            <label className="block text-xs font-semibold text-surface/70 uppercase tracking-wider mb-2">Type de tunnel (optionnel)</label>
+            <select
+              value={categoryKey}
+              onChange={(e) => setCategoryKey(e.target.value)}
+              className="w-full bg-primary/5 border border-surface/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-accent transition-colors text-surface"
+            >
+              <option value="">Laisser l'IA choisir</option>
+              {CATEGORIES.map((c) => (
+                <option key={c.key} value={c.key}>{c.label}</option>
+              ))}
+            </select>
+          </div>
 
-        <div>
-          <label className="block text-xs font-semibold text-surface/70 uppercase tracking-wider mb-2">Tes images (optionnel)</label>
-          <MultiImageUpload userId={profile?.id} images={images} onChange={setImages} />
-        </div>
+          <div>
+            <label className="block text-xs font-semibold text-surface/70 uppercase tracking-wider mb-2">Prix de votre offre (optionnel)</label>
+            <input
+              value={price}
+              onChange={(e) => setPrice(e.target.value)}
+              placeholder="Ex : 19 000 FCFA, 49€/mois, 29$..."
+              className="w-full bg-primary/5 border border-surface/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-accent transition-colors text-surface"
+            />
+            <p className="text-xs text-surface/40 mt-1.5">Précisez-le pour que l'IA l'utilise partout où un prix est affiché, sans en inventer un autre.</p>
+          </div>
 
-        <div>
-          <label className="flex items-center gap-2 text-sm text-surface/70 mb-3">
-            <input type="checkbox" checked={customPalette} onChange={(e) => setCustomPalette(e.target.checked)} />
-            Choisir ma propre palette de couleurs
-          </label>
-          {customPalette && (
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs text-surface/50 mb-1">Couleur principale</label>
-                <div className="flex items-center gap-2">
-                  <input type="color" value={primaryColor} onChange={(e) => setPrimaryColor(e.target.value)} className="w-10 h-10 rounded-lg border border-surface/10 cursor-pointer" />
-                  <input value={primaryColor} onChange={(e) => setPrimaryColor(e.target.value)} className="flex-1 bg-primary/5 border border-surface/10 rounded-xl px-3 py-2 text-sm text-surface" />
+          <div>
+            <label className="block text-xs font-semibold text-surface/70 uppercase tracking-wider mb-2">Vos images (optionnel)</label>
+            <MultiImageUpload userId={effectiveOwnerId} images={images} onChange={setImages} />
+          </div>
+
+          <div>
+            <label className="flex items-center gap-2 text-sm text-surface/70 mb-3">
+              <input type="checkbox" checked={customPalette} onChange={(e) => setCustomPalette(e.target.checked)} />
+              Choisir ma propre palette de couleurs
+            </label>
+            {customPalette && (
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs text-surface/50 mb-1">Couleur principale</label>
+                  <div className="flex items-center gap-2">
+                    <input type="color" value={primaryColor} onChange={(e) => setPrimaryColor(e.target.value)} className="w-10 h-10 rounded-lg border border-surface/10 cursor-pointer" />
+                    <input value={primaryColor} onChange={(e) => setPrimaryColor(e.target.value)} className="flex-1 bg-primary/5 border border-surface/10 rounded-xl px-3 py-2 text-sm text-surface" />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs text-surface/50 mb-1">Couleur d'accent</label>
+                  <div className="flex items-center gap-2">
+                    <input type="color" value={accentColor} onChange={(e) => setAccentColor(e.target.value)} className="w-10 h-10 rounded-lg border border-surface/10 cursor-pointer" />
+                    <input value={accentColor} onChange={(e) => setAccentColor(e.target.value)} className="flex-1 bg-primary/5 border border-surface/10 rounded-xl px-3 py-2 text-sm text-surface" />
+                  </div>
                 </div>
               </div>
-              <div>
-                <label className="block text-xs text-surface/50 mb-1">Couleur d'accent</label>
-                <div className="flex items-center gap-2">
-                  <input type="color" value={accentColor} onChange={(e) => setAccentColor(e.target.value)} className="w-10 h-10 rounded-lg border border-surface/10 cursor-pointer" />
-                  <input value={accentColor} onChange={(e) => setAccentColor(e.target.value)} className="flex-1 bg-primary/5 border border-surface/10 rounded-xl px-3 py-2 text-sm text-surface" />
-                </div>
-              </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
+      )}
 
-        {error && <p className="text-sm text-red-500">{error}</p>}
-        {atLimit && !error && <p className="text-sm text-red-500">{ERROR_MESSAGES.limit_reached}</p>}
+      {error && <p className="text-sm text-red-500 mb-3">{error}</p>}
+      {atLimit && <p className="text-sm text-red-500 mb-3">{ERROR_MESSAGES.limit_reached}</p>}
+      {!name.trim() && <p className="text-xs text-surface/40 mb-3">Ajoutez un nom au tunnel ci-dessus avant de discuter avec le copilote.</p>}
 
+      <form onSubmit={handleSend} className="flex items-center gap-3">
+        <input
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          placeholder={draftFunnel ? "Ex : rends le titre plus percutant" : "Ex : Je vends un ebook à 19 000 FCFA qui apprend aux débutants à cuisiner en 15 minutes..."}
+          disabled={generating || atLimit || !name.trim()}
+          className="flex-1 bg-background border border-surface/10 rounded-full px-5 py-3.5 text-sm focus:outline-none focus:border-accent transition-colors text-surface disabled:opacity-50"
+        />
         <button
           type="submit"
-          disabled={!name.trim() || description.trim().length < 5 || generating || atLimit}
-          className="magnetic-btn w-full flex items-center justify-center gap-2 gradient-accent text-background px-6 py-4 rounded-xl text-sm font-semibold disabled:opacity-50"
+          disabled={!input.trim() || generating || atLimit || !name.trim()}
+          className="magnetic-btn shrink-0 flex items-center justify-center gap-2 gradient-accent text-background w-12 h-12 rounded-full disabled:opacity-50"
+          aria-label="Envoyer"
         >
           <Wand2 className="w-4 h-4" />
-          {generating ? 'Génération en cours...' : 'Générer mon tunnel'}
         </button>
       </form>
     </div>
