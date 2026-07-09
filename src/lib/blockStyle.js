@@ -100,6 +100,35 @@ export const BORDER_WIDTH_OPTIONS = [
   { value: '4', label: 'Épaisse' },
 ];
 
+// Un <br> ou une nouvelle ligne de bloc (<div>) tapée dans un champ multi-ligne doit devenir
+// un vrai retour à la ligne "\n" — sinon .textContent recolle tout sur une seule ligne.
+function extractEditableText(el, multiline) {
+  if (!multiline) return el.textContent ?? '';
+  const clone = el.cloneNode(true);
+  clone.querySelectorAll('br').forEach((br) => br.replaceWith('\n'));
+  clone.querySelectorAll('div, p').forEach((node) => { node.after('\n'); });
+  return (clone.textContent ?? '').replace(/\n{2,}/g, '\n').trim();
+}
+
+// Rend un élément de texte directement modifiable au clic dans l'éditeur (comme Elementor) :
+// pas besoin d'ouvrir le panneau de contenu pour changer un titre ou un libellé de bouton.
+export function getContentEditableProps({ editMode, onContentChange, content, field, multiline = false }) {
+  if (!editMode || typeof onContentChange !== 'function') return {};
+  return {
+    contentEditable: true,
+    suppressContentEditableWarning: true,
+    onBlur: (e) => {
+      const next = extractEditableText(e.currentTarget, multiline);
+      if (next !== (content?.[field] || '')) onContentChange({ ...content, [field]: next });
+    },
+    ...(multiline ? {} : {
+      onKeyDown: (e) => {
+        if (e.key === 'Enter') { e.preventDefault(); e.currentTarget.blur(); }
+      },
+    }),
+  };
+}
+
 export function getShadowClass(style) {
   return SHADOW_CLASSES[style?.shadow] || '';
 }

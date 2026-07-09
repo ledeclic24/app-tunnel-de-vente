@@ -1,16 +1,26 @@
 import React, { useState } from 'react';
 import { ArrowRight } from 'lucide-react';
-import { getEditableProps, cx } from '../../lib/blockStyle';
+import { getEditableProps, getContentEditableProps, cx } from '../../lib/blockStyle';
 
-export default function QuizBlock({ content, onAdvance, editMode, selectedElement, onSelectElement }) {
+export default function QuizBlock({ content, onAdvance, editMode, selectedElement, onSelectElement, onContentChange }) {
   const { heading, questions = [], resultButtonText } = content;
   const [step, setStep] = useState(0);
   const editable = (elementKey, kind, label) =>
     getEditableProps({ elementKey, kind, styles: content.styles, editMode, selectedElement, onSelectElement, label });
+  const editableText = (field) => getContentEditableProps({ editMode, onContentChange, content, field });
 
   const headingProps = editable('heading', 'text', 'Titre');
   const questionProps = editable('question', 'text', 'Question');
   const buttonProps = editable('button', 'button', 'Bouton résultat');
+
+  const updateCurrentQuestion = (patch) => {
+    const nextQuestions = questions.map((q, idx) => (idx === step ? { ...q, ...patch } : q));
+    onContentChange?.({ ...content, questions: nextQuestions });
+  };
+  const updateOption = (optIndex, text) => {
+    const nextOptions = (questions[step]?.options || []).map((o, idx) => (idx === optIndex ? text : o));
+    updateCurrentQuestion({ options: nextOptions });
+  };
 
   const isDone = step >= questions.length;
   const progress = questions.length ? (Math.min(step, questions.length) / questions.length) * 100 : 0;
@@ -21,9 +31,10 @@ export default function QuizBlock({ content, onAdvance, editMode, selectedElemen
     <section className="px-6 py-12 md:px-16 md:py-16 max-w-2xl mx-auto">
       {heading && (
         <h2
-          className={cx('font-sans font-bold text-2xl md:text-3xl text-surface text-center mb-8', headingProps.className)}
+          className={cx('font-sans font-bold text-2xl md:text-3xl text-surface text-center mb-8 outline-none', headingProps.className)}
           style={headingProps.style}
           onClick={headingProps.onClick}
+          {...editableText('heading')}
         >
           {heading}
         </h2>
@@ -42,9 +53,13 @@ export default function QuizBlock({ content, onAdvance, editMode, selectedElemen
               Question {step + 1} / {questions.length}
             </p>
             <h3
-              className={cx('text-xl font-sans font-semibold text-surface mb-6', questionProps.className)}
+              className={cx('text-xl font-sans font-semibold text-surface mb-6 outline-none', questionProps.className)}
               style={questionProps.style}
               onClick={questionProps.onClick}
+              contentEditable={editMode}
+              suppressContentEditableWarning
+              onBlur={(e) => editMode && updateCurrentQuestion({ question: e.currentTarget.textContent ?? '' })}
+              onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); e.currentTarget.blur(); } }}
             >
               {questions[step].question}
             </h3>
@@ -52,8 +67,12 @@ export default function QuizBlock({ content, onAdvance, editMode, selectedElemen
               {(questions[step].options || []).map((opt, i) => (
                 <button
                   key={i}
-                  onClick={editMode ? undefined : handleSelect}
-                  className="hover-lift w-full text-left px-5 py-3.5 rounded-xl border border-surface/10 bg-primary/5 hover:border-accent hover:bg-accent/5 transition-colors duration-200 text-surface"
+                  onClick={editMode ? (e) => e.stopPropagation() : handleSelect}
+                  className="hover-lift w-full text-left px-5 py-3.5 rounded-xl border border-surface/10 bg-primary/5 hover:border-accent hover:bg-accent/5 transition-colors duration-200 text-surface outline-none"
+                  contentEditable={editMode}
+                  suppressContentEditableWarning
+                  onBlur={(e) => editMode && updateOption(i, e.currentTarget.textContent ?? '')}
+                  onKeyDownCapture={(e) => { if (editMode && e.key === 'Enter') { e.preventDefault(); e.currentTarget.blur(); } }}
                 >
                   {opt}
                 </button>
@@ -66,12 +85,10 @@ export default function QuizBlock({ content, onAdvance, editMode, selectedElemen
             <button
               onClick={editMode ? buttonProps.onClick : onAdvance}
               style={buttonProps.style}
-              className={cx('magnetic-btn btn-fill-slide group relative bg-accent text-background px-8 py-4 rounded-full text-base font-medium', buttonProps.className)}
+              className={cx('magnetic-btn btn-fill-slide group relative inline-flex items-center gap-2 bg-accent text-background px-8 py-4 rounded-full text-base font-medium', buttonProps.className)}
             >
-              <span className="relative z-10 flex items-center gap-2">
-                {resultButtonText || 'Voir mon résultat'}
-                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-              </span>
+              <span className="relative z-10 outline-none" {...editableText('resultButtonText')}>{resultButtonText || 'Voir mon résultat'}</span>
+              <ArrowRight className="relative z-10 w-4 h-4 group-hover:translate-x-1 transition-transform" />
               <div className="fill-layer bg-white/30 rounded-full"></div>
             </button>
           </div>

@@ -80,6 +80,8 @@ function BlockCard({ block, onDelete, onDuplicate, isExpanded, onToggle, onChang
           editMode
           selectedElement={selectedElement}
           onSelectElement={onSelectElement}
+          onContentChange={onChange}
+          userId={userId}
         />
       </div>
 

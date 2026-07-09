@@ -26,7 +26,7 @@ const COMPONENTS = {
   quiz: QuizBlock,
 };
 
-export default function BlockRenderer({ block, onAdvance, onSubmitLead, editMode, selectedElement, onSelectElement }) {
+export default function BlockRenderer({ block, onAdvance, onSubmitLead, editMode, selectedElement, onSelectElement, onContentChange, userId }) {
   const Component = COMPONENTS[block.type];
   if (!Component) return null;
   const sectionProps = getEditableProps({
@@ -57,6 +57,8 @@ export default function BlockRenderer({ block, onAdvance, onSubmitLead, editMode
           editMode={editMode}
           selectedElement={selectedElement}
           onSelectElement={onSelectElement}
+          onContentChange={onContentChange}
+          userId={userId}
         />
       </div>
     </>

@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { ArrowRight, CheckCircle2 } from 'lucide-react';
-import { getButtonStyle, getEditableProps, cx } from '../../lib/blockStyle';
+import { getButtonStyle, getEditableProps, getContentEditableProps, cx } from '../../lib/blockStyle';
 
-export default function FormBlock({ content, onSubmitLead, onAdvance, editMode, selectedElement, onSelectElement }) {
+export default function FormBlock({ content, onSubmitLead, onAdvance, editMode, selectedElement, onSelectElement, onContentChange }) {
   const { headline, buttonText, successMessage } = content;
   const editable = (elementKey, kind, label) =>
     getEditableProps({ elementKey, kind, styles: content.styles, editMode, selectedElement, onSelectElement, label });
+  const editableText = (field) => getContentEditableProps({ editMode, onContentChange, content, field });
 
   const headlineProps = editable('headline', 'text', 'Titre');
   const buttonProps = editable('button', 'button', 'Bouton');
@@ -49,9 +50,10 @@ export default function FormBlock({ content, onSubmitLead, onAdvance, editMode, 
           <form onSubmit={handleSubmit} className="space-y-4">
             {headline && (
               <h3
-                className={cx('font-sans font-bold text-xl text-surface mb-2', headlineProps.className)}
+                className={cx('font-sans font-bold text-xl text-surface mb-2 outline-none', headlineProps.className)}
                 style={headlineProps.style}
                 onClick={headlineProps.onClick}
+                {...editableText('headline')}
               >
                 {headline}
               </h3>
@@ -80,7 +82,11 @@ export default function FormBlock({ content, onSubmitLead, onAdvance, editMode, 
               onClick={editMode ? buttonProps.onClick : undefined}
             >
               <span className="relative z-10 flex items-center justify-center gap-2">
-                {submitting ? 'Envoi...' : (buttonText || 'Envoyer')}
+                {submitting ? (
+                  'Envoi...'
+                ) : (
+                  <span className="outline-none" {...editableText('buttonText')}>{buttonText || 'Envoyer'}</span>
+                )}
                 {!submitting && <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />}
               </span>
               <div className="fill-layer bg-white/30 rounded-xl"></div>
