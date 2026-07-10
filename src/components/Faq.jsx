@@ -33,7 +33,7 @@ const FAQS = [
   },
   {
     q: 'Puis-je changer de plan à tout moment ?',
-    a: "Oui, tu peux demander un changement de plan à tout moment depuis ton compte. Le temps que le paiement en ligne soit disponible, chaque demande est validée manuellement sous peu par notre équipe.",
+    a: "Oui. Le paiement est sécurisé (Mobile Money ou carte bancaire) et ton plan s'active automatiquement dès la confirmation, pour 30 jours renouvelables.",
   },
 ];
 

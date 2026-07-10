@@ -1,23 +1,40 @@
 import React, { useEffect, useState } from 'react';
-import { Check, Info, Mail } from 'lucide-react';
+import { Check, Info, CreditCard, Loader2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { supabase } from '../../lib/supabaseClient';
 import { PLANS, PLAN_ORDER, getPlan, formatPrice } from '../../lib/plans';
 import { updateBrandingForUser } from '../../lib/funnelsApi';
 import { getLivePlans, logPlanChange } from '../../lib/plansApi';
+import { createPayment } from '../../lib/paymentsApi';
 
-const SUPPORT_EMAIL = 'jeanpaulden24@gmail.com';
+const PAYMENT_STATUS_MESSAGES = {
+  success: { tone: 'ok', text: 'Paiement reçu ! Ton nouveau plan sera actif dans quelques instants (rafraîchis si besoin).' },
+  failed: { tone: 'error', text: "Le paiement n'a pas abouti. Tu peux réessayer ci-dessous." },
+  cancelled: { tone: 'error', text: 'Paiement annulé. Tu peux réessayer quand tu veux.' },
+};
 
 export default function BillingPage() {
-  const { user, profile, refreshProfile } = useAuth();
+  const { profile, refreshProfile } = useAuth();
   const [changing, setChanging] = useState(null);
+  const [payingKey, setPayingKey] = useState(null);
   const [error, setError] = useState('');
   const [livePlans, setLivePlans] = useState(PLANS);
+  const [returnStatus, setReturnStatus] = useState(null);
   const currentPlan = profile?.plan || 'starter';
   const isAdmin = Boolean(profile?.is_admin);
 
   useEffect(() => {
     getLivePlans().then(setLivePlans).catch(() => setLivePlans(PLANS));
+  }, []);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('payment') !== 'retour') return;
+    const status = params.get('paymentStatus');
+    setReturnStatus(PAYMENT_STATUS_MESSAGES[status] || PAYMENT_STATUS_MESSAGES.success);
+    refreshProfile();
+    window.history.replaceState({}, '', '/app/billing');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleChange = async (planKey) => {
@@ -36,13 +53,16 @@ export default function BillingPage() {
     setChanging(null);
   };
 
-  const requestUpgradeLink = (planKey) => {
-    const plan = livePlans[planKey];
-    const subject = encodeURIComponent(`Changement de plan Vendeko — ${plan.name}`);
-    const body = encodeURIComponent(
-      `Bonjour,\n\nJe souhaite passer au plan ${plan.name}.\nMon email de connexion : ${user?.email || ''}\n\nMerci !`
-    );
-    return `mailto:${SUPPORT_EMAIL}?subject=${subject}&body=${body}`;
+  const handlePay = async (planKey) => {
+    setPayingKey(planKey);
+    setError('');
+    try {
+      const checkoutUrl = await createPayment(planKey);
+      window.location.href = checkoutUrl;
+    } catch (err) {
+      setError(err.message === 'already_on_plan' ? 'Tu es déjà sur ce plan.' : "Impossible de démarrer le paiement pour le moment. Réessaie dans un instant.");
+      setPayingKey(null);
+    }
   };
 
   return (
@@ -50,13 +70,22 @@ export default function BillingPage() {
       <h1 className="text-2xl font-sans font-bold text-surface mb-2">Facturation</h1>
       <p className="text-surface/60 mb-6">Choisis le plan adapté à ton usage.</p>
 
-      <div className="flex items-start gap-3 bg-accent/5 border border-accent/20 rounded-2xl p-4 mb-8 text-sm text-surface/70">
-        <Info className="w-4 h-4 text-accent shrink-0 mt-0.5" />
-        <p>
-          Le paiement en ligne n'est pas encore disponible. Pour changer de plan, envoie-nous une demande
-          par email ci-dessous — on l'active manuellement de notre côté.
-        </p>
-      </div>
+      {returnStatus && (
+        <div className={`flex items-start gap-3 rounded-2xl p-4 mb-6 text-sm ${returnStatus.tone === 'ok' ? 'bg-accent/5 border border-accent/20 text-surface/70' : 'bg-red-500/5 border border-red-500/20 text-red-600'}`}>
+          <Info className="w-4 h-4 shrink-0 mt-0.5" />
+          <p>{returnStatus.text}</p>
+        </div>
+      )}
+
+      {!isAdmin && (
+        <div className="flex items-start gap-3 bg-accent/5 border border-accent/20 rounded-2xl p-4 mb-8 text-sm text-surface/70">
+          <CreditCard className="w-4 h-4 text-accent shrink-0 mt-0.5" />
+          <p>
+            Paiement sécurisé par Mobile Money ou carte bancaire (Moneroo). Ton plan s'active automatiquement
+            dès la confirmation du paiement, pour 30 jours renouvelables.
+          </p>
+        </div>
+      )}
 
       {error && <p className="text-sm text-red-500 mb-4">{error}</p>}
 
@@ -90,19 +119,32 @@ export default function BillingPage() {
                   disabled={isCurrent || changing === key}
                   className={`magnetic-btn w-full py-3 rounded-full font-semibold disabled:opacity-50 ${isCurrent ? 'bg-background/10 text-background' : 'bg-accent text-background'}`}
                 >
-                  {isCurrent ? 'Plan actuel' : changing === key ? 'Changement...' : 'Choisir ce plan'}
+                  {isCurrent ? 'Plan actuel' : changing === key ? 'Changement...' : 'Choisir ce plan (admin)'}
                 </button>
               ) : isCurrent ? (
                 <button disabled className="w-full py-3 rounded-full font-semibold opacity-50 bg-background/10 text-background">
                   Plan actuel
                 </button>
+              ) : key === 'starter' ? (
+                <button disabled className="w-full py-3 rounded-full font-semibold opacity-50 bg-primary/10 text-surface">
+                  Plan gratuit
+                </button>
               ) : (
-                <a
-                  href={requestUpgradeLink(key)}
-                  className="magnetic-btn w-full py-3 rounded-full font-semibold bg-accent text-background flex items-center justify-center gap-2"
+                <button
+                  onClick={() => handlePay(key)}
+                  disabled={payingKey === key}
+                  className="magnetic-btn w-full py-3 rounded-full font-semibold bg-accent text-background flex items-center justify-center gap-2 disabled:opacity-60"
                 >
-                  <Mail className="w-4 h-4" /> Demander ce plan
-                </a>
+                  {payingKey === key ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" /> Redirection...
+                    </>
+                  ) : (
+                    <>
+                      <CreditCard className="w-4 h-4" /> Payer avec Moneroo
+                    </>
+                  )}
+                </button>
               )}
             </div>
           );
