@@ -28,6 +28,7 @@ export const PLANS = {
     scheduledPublish: false,
     benchmark: false,
     adPixels: false,
+    adsManagement: false,
     teamSeats: 1,
     features: [
       '1 tunnel de vente',
@@ -59,6 +60,7 @@ export const PLANS = {
     scheduledPublish: true,
     benchmark: true,
     adPixels: false,
+    adsManagement: false,
     teamSeats: 1,
     features: [
       'Tunnels illimités',
@@ -91,12 +93,14 @@ export const PLANS = {
     scheduledPublish: true,
     benchmark: true,
     adPixels: true,
+    adsManagement: true,
     teamSeats: 5,
     features: [
       'Tout le plan Pro',
       'Génération de tunnel par IA illimitée',
       'Statistiques et taux de conversion par tunnel',
       'Pixels publicitaires (Meta, Google Ads/Analytics)',
+      'Gestion des campagnes Meta Ads depuis Vendeko',
       "Jusqu'à 5 membres d'équipe",
       'Support prioritaire 24/7',
       'Onboarding personnalisé',

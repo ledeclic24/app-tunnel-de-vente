@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { NavLink, Link, Outlet, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, User, LogOut, Menu, X, Shield, Mail, BarChart3, Lock, Sparkles, ArrowRight,
-  Search, Bell, Building2, Webhook,
+  Search, Bell, Building2, Webhook, Megaphone,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { getPlan, PLAN_ORDER } from '../../lib/plans';
@@ -22,6 +22,7 @@ const NAV_GROUPS = [
       { to: '/app/leads', label: 'Leads', icon: Mail },
       { to: '/app/analytics', label: 'Analytique', icon: BarChart3, requires: 'analytics' },
       { to: '/app/integrations', label: 'Intégrations', icon: Webhook, requires: 'webhooks' },
+      { to: '/app/ads', label: 'Publicité', icon: Megaphone, requires: 'adsManagement' },
     ],
   },
   {
