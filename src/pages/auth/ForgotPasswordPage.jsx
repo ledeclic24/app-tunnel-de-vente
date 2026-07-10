@@ -3,7 +3,7 @@ import { Link, Navigate } from 'react-router-dom';
 import { ArrowRight, MailCheck } from 'lucide-react';
 import AuthLayout from '../../components/auth/AuthLayout';
 import { useAuth } from '../../context/AuthContext';
-import { isSupabaseConfigured } from '../../lib/supabaseClient';
+import { isApiConfigured } from '../../lib/apiClient';
 import SetupRequired from '../../components/app/SetupRequired';
 
 export default function ForgotPasswordPage() {
@@ -13,7 +13,7 @@ export default function ForgotPasswordPage() {
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
 
-  if (!isSupabaseConfigured) return <SetupRequired />;
+  if (!isApiConfigured) return <SetupRequired />;
   if (user) return <Navigate to="/app" replace />;
 
   const handleSubmit = async (e) => {

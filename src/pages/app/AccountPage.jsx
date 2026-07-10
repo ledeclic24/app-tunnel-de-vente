@@ -2,14 +2,13 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LogOut, Trash2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { supabase } from '../../lib/supabaseClient';
 import { getPlan } from '../../lib/plans';
 import PasswordInput from '../../components/auth/PasswordInput';
 
 const DELETE_CONFIRM_WORD = 'SUPPRIMER';
 
 export default function AccountPage() {
-  const { user, profile, effectiveProfile, signOut, refreshProfile, updatePassword } = useAuth();
+  const { user, profile, effectiveProfile, signOut, updateProfile, updatePassword, deleteAccount } = useAuth();
   const navigate = useNavigate();
   const [fullName, setFullName] = useState(profile?.full_name || '');
   const [saving, setSaving] = useState(false);
@@ -27,13 +26,12 @@ export default function AccountPage() {
     e.preventDefault();
     setSaving(true);
     setProfileError('');
-    const { error } = await supabase.from('profiles').update({ full_name: fullName }).eq('id', user.id);
+    const { error } = await updateProfile(fullName);
     setSaving(false);
     if (error) {
       setProfileError("Impossible d'enregistrer. Réessaie.");
       return;
     }
-    await refreshProfile();
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
   };
@@ -74,13 +72,12 @@ export default function AccountPage() {
   const handleDeleteAccount = async () => {
     setDeleting(true);
     setDeleteError('');
-    const { data, error } = await supabase.functions.invoke('delete-account');
-    if (error || data?.error) {
+    const { error } = await deleteAccount();
+    if (error) {
       setDeleteError("Impossible de supprimer ton compte pour le moment. Réessaie ou contacte-nous.");
       setDeleting(false);
       return;
     }
-    await signOut();
     navigate('/');
   };
 

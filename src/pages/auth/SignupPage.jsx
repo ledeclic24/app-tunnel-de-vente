@@ -4,7 +4,7 @@ import { ArrowRight, MailCheck } from 'lucide-react';
 import AuthLayout from '../../components/auth/AuthLayout';
 import PasswordInput from '../../components/auth/PasswordInput';
 import { useAuth } from '../../context/AuthContext';
-import { isSupabaseConfigured } from '../../lib/supabaseClient';
+import { isApiConfigured } from '../../lib/apiClient';
 import SetupRequired from '../../components/app/SetupRequired';
 
 export default function SignupPage() {
@@ -17,7 +17,7 @@ export default function SignupPage() {
   const [loading, setLoading] = useState(false);
   const [confirmationPending, setConfirmationPending] = useState(false);
 
-  if (!isSupabaseConfigured) return <SetupRequired />;
+  if (!isApiConfigured) return <SetupRequired />;
   if (user) return <Navigate to="/app" replace />;
 
   const handleSubmit = async (e) => {

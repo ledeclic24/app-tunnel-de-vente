@@ -4,7 +4,7 @@ import { ArrowRight } from 'lucide-react';
 import AuthLayout from '../../components/auth/AuthLayout';
 import PasswordInput from '../../components/auth/PasswordInput';
 import { useAuth } from '../../context/AuthContext';
-import { isSupabaseConfigured } from '../../lib/supabaseClient';
+import { isApiConfigured } from '../../lib/apiClient';
 import SetupRequired from '../../components/app/SetupRequired';
 
 export default function LoginPage() {
@@ -15,7 +15,7 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  if (!isSupabaseConfigured) return <SetupRequired />;
+  if (!isApiConfigured) return <SetupRequired />;
   if (user) return <Navigate to="/app" replace />;
 
   const handleSubmit = async (e) => {

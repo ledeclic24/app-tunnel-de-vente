@@ -1,13 +1,13 @@
 import React from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { isSupabaseConfigured } from '../../lib/supabaseClient';
+import { isApiConfigured } from '../../lib/apiClient';
 import SetupRequired from './SetupRequired';
 
 export default function ProtectedRoute() {
   const { user, loading } = useAuth();
 
-  if (!isSupabaseConfigured) return <SetupRequired />;
+  if (!isApiConfigured) return <SetupRequired />;
 
   if (loading) {
     return (

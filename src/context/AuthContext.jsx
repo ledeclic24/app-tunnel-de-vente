@@ -1,103 +1,162 @@
-import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import { supabase, isSupabaseConfigured } from '../lib/supabaseClient';
-import { activatePendingMembership } from '../lib/growthApi';
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import { isApiConfigured, ApiError } from '../lib/apiClient';
+import * as authApi from '../lib/authApi';
+import { updateOwnProfile, deleteOwnAccount } from '../lib/usersApi';
 
 const AuthContext = createContext(null);
 
+// Le nouveau backend fusionne auth.users + profiles Supabase en une seule
+// entité User (camelCase, cf. TypeORM). On la traduit ici vers les noms de
+// champs snake_case qu'utilisaient déjà les ~40 pages/composants de l'app,
+// pour n'avoir à toucher qu'à cette couche pendant la migration.
+function normalizeUser(apiUser) {
+  if (!apiUser) return null;
+  return {
+    id: apiUser.id,
+    email: apiUser.email,
+    full_name: apiUser.fullName,
+    plan: apiUser.plan,
+    is_admin: apiUser.isAdmin,
+    plan_expires_at: apiUser.planExpiresAt,
+    created_at: apiUser.createdAt,
+  };
+}
+
+// Traduit les erreurs de l'API en une forme proche de celle de Supabase, que
+// les pages d'auth existantes savent déjà interpréter (error.message,
+// error.status).
+function mapAuthError(err) {
+  if (err instanceof ApiError) {
+    if (err.status === 409) return { message: 'User already registered', status: err.status };
+    return { message: err.message, status: err.status };
+  }
+  return { message: err?.message || 'Une erreur est survenue.', status: undefined };
+}
+
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
-  // effectiveOwnerId / effectiveProfile : pour un membre d'équipe (éditeur), c'est
-  // le compte du propriétaire de l'organisation — c'est ce compte-là qui possède
-  // les tunnels, le plan et les limites. Pour un propriétaire, c'est lui-même.
-  const [effectiveOwnerId, setEffectiveOwnerId] = useState(null);
-  const [effectiveProfile, setEffectiveProfile] = useState(null);
 
-  const loadProfile = useCallback(async (userId) => {
-    if (!userId) {
-      setProfile(null);
-      setEffectiveOwnerId(null);
-      setEffectiveProfile(null);
-      return;
-    }
-    const { data } = await supabase.from('profiles').select('*').eq('id', userId).single();
-    setProfile(data || null);
+  // Avec la fusion user/profile, les deux notions pointent maintenant sur le
+  // même enregistrement.
+  const user = profile;
 
-    if (data?.email) {
-      try { await activatePendingMembership(userId, data.email); } catch { /* aucune invitation en attente */ }
-    }
-
-    const { data: ownerId } = await supabase.rpc('effective_owner', { uid: userId });
-    const resolvedOwnerId = ownerId || userId;
-    setEffectiveOwnerId(resolvedOwnerId);
-
-    if (resolvedOwnerId === userId) {
-      setEffectiveProfile(data || null);
-    } else {
-      const { data: ownerProfile } = await supabase.from('profiles').select('*').eq('id', resolvedOwnerId).single();
-      setEffectiveProfile(ownerProfile || data || null);
-    }
-  }, []);
+  // Pas encore de comptes équipe/organisation côté nouveau backend (prévu en
+  // phase 3 de la migration) : chaque compte est propriétaire de ses propres
+  // tunnels pour l'instant, donc effectiveOwnerId === son propre id.
+  const effectiveOwnerId = profile?.id || null;
+  const effectiveProfile = profile;
 
   useEffect(() => {
-    if (!isSupabaseConfigured) {
+    if (!isApiConfigured) {
       setLoading(false);
       return;
     }
-
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      setUser(session?.user || null);
-      if (session?.user) await loadProfile(session.user.id);
-      setLoading(false);
-    });
-
-    const { data: listener } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      setUser(session?.user || null);
-      if (session?.user) await loadProfile(session.user.id);
-      else setProfile(null);
-    });
-
-    return () => listener.subscription.unsubscribe();
-  }, [loadProfile]);
+    let cancelled = false;
+    authApi.restoreSession()
+      .then((apiUser) => {
+        if (!cancelled) setProfile(normalizeUser(apiUser));
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => { cancelled = true; };
+  }, []);
 
   const signUp = async (email, password, fullName) => {
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: { data: { full_name: fullName } },
-    });
-    if (!error && data.user && fullName) {
-      await supabase.from('profiles').update({ full_name: fullName }).eq('id', data.user.id);
+    try {
+      const apiUser = await authApi.signUp(email, password, fullName);
+      setProfile(normalizeUser(apiUser));
+      // session toujours présente immédiatement (pas de confirmation email
+      // côté nouveau backend) — data.session sert juste de flag de succès
+      // pour les pages qui le testent.
+      return { data: { user: apiUser, session: true }, error: null };
+    } catch (err) {
+      return { data: null, error: mapAuthError(err) };
     }
-    return { data, error };
   };
 
   const signIn = async (email, password) => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    return { error };
+    try {
+      const apiUser = await authApi.signIn(email, password);
+      setProfile(normalizeUser(apiUser));
+      return { error: null };
+    } catch (err) {
+      return { error: mapAuthError(err) };
+    }
   };
 
-  const signOut = () => supabase.auth.signOut();
+  const signOut = async () => {
+    await authApi.signOut().catch(() => {});
+    setProfile(null);
+  };
 
-  const refreshProfile = () => user && loadProfile(user.id);
+  const refreshProfile = async () => {
+    if (!profile) return;
+    try {
+      const apiUser = await authApi.getCurrentUser();
+      setProfile(normalizeUser(apiUser));
+    } catch {
+      // erreur transitoire : on garde le profil précédent affiché
+    }
+  };
 
   const resetPassword = async (email) => {
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/reinitialiser-mot-de-passe`,
-    });
-    return { error };
+    try {
+      await authApi.forgotPassword(email);
+      return { error: null };
+    } catch (err) {
+      return { error: mapAuthError(err) };
+    }
   };
 
+  // Confirmation du mot de passe oublié via le token reçu par email
+  // (remplace le flux de session de récupération Supabase).
+  const confirmPasswordReset = async (token, newPassword) => {
+    try {
+      await authApi.confirmPasswordReset(token, newPassword);
+      return { error: null };
+    } catch (err) {
+      return { error: mapAuthError(err) };
+    }
+  };
+
+  // Changement de mot de passe depuis le compte connecté.
   const updatePassword = async (newPassword) => {
-    const { error } = await supabase.auth.updateUser({ password: newPassword });
-    return { error };
+    try {
+      await authApi.updatePassword(newPassword);
+      return { error: null };
+    } catch (err) {
+      return { error: mapAuthError(err) };
+    }
+  };
+
+  const updateProfile = async (fullName) => {
+    try {
+      const apiUser = await updateOwnProfile(fullName);
+      setProfile(normalizeUser(apiUser));
+      return { error: null };
+    } catch (err) {
+      return { error: mapAuthError(err) };
+    }
+  };
+
+  const deleteAccount = async () => {
+    try {
+      await deleteOwnAccount();
+      await authApi.signOut().catch(() => {});
+      setProfile(null);
+      return { error: null };
+    } catch (err) {
+      return { error: mapAuthError(err) };
+    }
   };
 
   return (
     <AuthContext.Provider value={{
       user, profile, loading, effectiveOwnerId, effectiveProfile,
       signUp, signIn, signOut, refreshProfile, resetPassword, updatePassword,
+      confirmPasswordReset, updateProfile, deleteAccount,
     }}>
       {children}
     </AuthContext.Provider>

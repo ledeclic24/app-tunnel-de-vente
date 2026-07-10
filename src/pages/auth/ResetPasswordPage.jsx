@@ -1,76 +1,26 @@
-import React, { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowRight, CheckCircle2 } from 'lucide-react';
 import AuthLayout from '../../components/auth/AuthLayout';
 import PasswordInput from '../../components/auth/PasswordInput';
 import { useAuth } from '../../context/AuthContext';
-import { supabase, isSupabaseConfigured } from '../../lib/supabaseClient';
+import { isApiConfigured } from '../../lib/apiClient';
 import SetupRequired from '../../components/app/SetupRequired';
 
 export default function ResetPasswordPage() {
-  const { updatePassword } = useAuth();
+  const { confirmPasswordReset } = useAuth();
   const navigate = useNavigate();
-  const [status, setStatus] = useState('checking'); // checking | ready | invalid
+  const [searchParams] = useSearchParams();
+  const token = searchParams.get('token');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
 
-  useEffect(() => {
-    if (!isSupabaseConfigured) return;
+  if (!isApiConfigured) return <SetupRequired />;
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) setStatus('ready');
-    });
-
-    const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'PASSWORD_RECOVERY' || session) setStatus('ready');
-    });
-
-    const timeout = setTimeout(() => {
-      setStatus((s) => (s === 'checking' ? 'invalid' : s));
-    }, 4000);
-
-    return () => {
-      listener.subscription.unsubscribe();
-      clearTimeout(timeout);
-    };
-  }, []);
-
-  if (!isSupabaseConfigured) return <SetupRequired />;
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError('');
-    if (password.length < 6) {
-      setError('Le mot de passe doit contenir au moins 6 caractères.');
-      return;
-    }
-    if (password !== confirmPassword) {
-      setError('Les mots de passe ne correspondent pas.');
-      return;
-    }
-    setLoading(true);
-    const { error } = await updatePassword(password);
-    setLoading(false);
-    if (error) {
-      setError("Impossible de mettre à jour le mot de passe. Réessaie.");
-      return;
-    }
-    setDone(true);
-    setTimeout(() => navigate('/app'), 1500);
-  };
-
-  if (status === 'checking') {
-    return (
-      <div className="min-h-screen bg-primary flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-background/20 border-t-accent rounded-full animate-spin" />
-      </div>
-    );
-  }
-
-  if (status === 'invalid') {
+  if (!token) {
     return (
       <AuthLayout
         title="Lien invalide ou expiré"
@@ -84,12 +34,36 @@ export default function ResetPasswordPage() {
     );
   }
 
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    if (password.length < 6) {
+      setError('Le mot de passe doit contenir au moins 6 caractères.');
+      return;
+    }
+    if (password !== confirmPassword) {
+      setError('Les mots de passe ne correspondent pas.');
+      return;
+    }
+    setLoading(true);
+    const { error } = await confirmPasswordReset(token, password);
+    setLoading(false);
+    if (error) {
+      setError(error.status === 400
+        ? 'Ce lien de réinitialisation a expiré ou a déjà été utilisé.'
+        : "Impossible de mettre à jour le mot de passe. Réessaie.");
+      return;
+    }
+    setDone(true);
+    setTimeout(() => navigate('/connexion'), 1500);
+  };
+
   if (done) {
     return (
       <AuthLayout title="Mot de passe mis à jour">
         <div className="flex flex-col items-center text-center gap-3 py-4">
           <CheckCircle2 className="w-10 h-10 text-accent" />
-          <p className="text-surface/80">Ton mot de passe a été changé. Redirection vers ton tableau de bord...</p>
+          <p className="text-surface/80">Ton mot de passe a été changé. Redirection vers la connexion...</p>
         </div>
       </AuthLayout>
     );

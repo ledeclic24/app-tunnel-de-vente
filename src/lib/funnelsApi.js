@@ -1,229 +1,186 @@
-import { supabase } from './supabaseClient';
+import { apiGet, apiPost, apiPatch, apiDelete } from './apiClient';
 import { getTemplate } from './funnelTemplates';
 import { generateFunnelSlug } from './slug';
 
-export async function fetchUserFunnels(userId) {
-  const { data, error } = await supabase
-    .from('funnels')
-    .select('*')
-    .eq('user_id', userId)
-    .order('created_at', { ascending: false });
-  if (error) throw error;
-  return data;
+// Le backend NestJS/TypeORM renvoie des champs camelCase (fullName,
+// isPublished...) là où Supabase/Postgres renvoyait du snake_case
+// (full_name, is_published...). On traduit ici pour que les pages/composants
+// déjà écrits contre l'ancien format n'aient rien à changer.
+function normalizeFunnel(f) {
+  if (!f) return null;
+  return {
+    id: f.id,
+    user_id: f.userId,
+    name: f.name,
+    slug: f.slug,
+    template: f.template,
+    is_published: f.isPublished,
+    show_branding: f.showBranding,
+    brand: f.brand,
+    category: f.category,
+    seo_title: f.seoTitle,
+    seo_description: f.seoDescription,
+    seo_image_url: f.seoImageUrl,
+    publish_at: f.publishAt,
+    unpublish_at: f.unpublishAt,
+    created_at: f.createdAt,
+    updated_at: f.updatedAt,
+  };
 }
 
-async function insertSteps(funnelId, steps) {
-  for (let i = 0; i < steps.length; i++) {
-    const step = steps[i];
-    const { data: stepRow, error: stepError } = await supabase
-      .from('funnel_steps')
-      .insert({ funnel_id: funnelId, name: step.name, slug: step.slug, step_type: step.step_type, position: i })
-      .select()
-      .single();
-    if (stepError) throw stepError;
-
-    if (step.blocks.length > 0) {
-      const blockRows = step.blocks.map((b, j) => ({
-        step_id: stepRow.id, type: b.type, content: b.content, position: j,
-      }));
-      const { error: blocksError } = await supabase.from('blocks').insert(blockRows);
-      if (blocksError) throw blocksError;
-    }
-  }
+function normalizeLead(l) {
+  if (!l) return null;
+  return {
+    id: l.id,
+    funnel_id: l.funnelId,
+    step_id: l.stepId,
+    email: l.email,
+    name: l.name,
+    created_at: l.createdAt,
+    funnelName: l.funnelName,
+  };
 }
 
-export async function createFunnelFromTemplate({ userId, name, templateKey, showBranding = true }) {
+const FUNNEL_PATCH_KEY_MAP = {
+  name: 'name',
+  is_published: 'isPublished',
+  show_branding: 'showBranding',
+  brand: 'brand',
+  category: 'category',
+  seo_title: 'seoTitle',
+  seo_description: 'seoDescription',
+  seo_image_url: 'seoImageUrl',
+  publish_at: 'publishAt',
+  unpublish_at: 'unpublishAt',
+};
+
+function buildStepsPayload(steps) {
+  return steps.map((step) => ({
+    name: step.name,
+    slug: step.slug,
+    stepType: step.step_type || step.stepType || 'custom',
+    blocks: (step.blocks || []).map((b) => ({ type: b.type, content: b.content || {} })),
+  }));
+}
+
+export async function fetchUserFunnels(_userId) {
+  const rows = await apiGet('/funnels');
+  return rows.map(normalizeFunnel);
+}
+
+export async function createFunnelFromTemplate({ name, templateKey, showBranding = true }) {
   const template = getTemplate(templateKey);
   const slug = generateFunnelSlug(name);
-
-  const { data: funnel, error: funnelError } = await supabase
-    .from('funnels')
-    .insert({
-      user_id: userId, name, slug, template: templateKey, show_branding: showBranding,
-      category: template.categoryKey || 'personnalise',
-    })
-    .select()
-    .single();
-  if (funnelError) throw funnelError;
-
-  await insertSteps(funnel.id, template.steps);
-  return funnel;
+  const funnel = await apiPost('/funnels', {
+    name,
+    slug,
+    template: templateKey,
+    showBranding,
+    category: template.categoryKey || 'personnalise',
+    steps: buildStepsPayload(template.steps),
+  });
+  return normalizeFunnel(funnel);
 }
 
-export async function createFunnelFromAI({ userId, name, generatedFunnel, showBranding = true, category = 'personnalise' }) {
+export async function createFunnelFromAI({ name, generatedFunnel, showBranding = true, category = 'personnalise' }) {
   const slug = generateFunnelSlug(name);
-
-  const { data: funnel, error: funnelError } = await supabase
-    .from('funnels')
-    .insert({
-      user_id: userId,
-      name,
-      slug,
-      template: 'ia',
-      show_branding: showBranding,
-      brand: generatedFunnel.brand || {},
-      category,
-    })
-    .select()
-    .single();
-  if (funnelError) throw funnelError;
-
-  await insertSteps(funnel.id, generatedFunnel.steps);
-  return funnel;
+  const funnel = await apiPost('/funnels', {
+    name,
+    slug,
+    template: 'ia',
+    showBranding,
+    category,
+    brand: generatedFunnel.brand || {},
+    steps: buildStepsPayload(generatedFunnel.steps),
+  });
+  return normalizeFunnel(funnel);
 }
 
 export async function fetchFunnel(funnelId) {
-  const { data, error } = await supabase.from('funnels').select('*').eq('id', funnelId).single();
-  if (error) throw error;
-  return data;
+  const funnel = await apiGet(`/funnels/${funnelId}`);
+  return normalizeFunnel(funnel);
 }
 
 export async function fetchFunnelBySlug(slug) {
-  const { data, error } = await supabase.from('funnels').select('*').eq('slug', slug).single();
-  if (error) throw error;
-  return data;
+  const funnel = await apiGet(`/funnels/slug/${encodeURIComponent(slug)}`);
+  return normalizeFunnel(funnel);
 }
 
 export async function updateFunnel(funnelId, patch) {
-  const { error } = await supabase.from('funnels').update({ ...patch, updated_at: new Date().toISOString() }).eq('id', funnelId);
-  if (error) throw error;
+  const body = {};
+  for (const [key, value] of Object.entries(patch)) {
+    const mapped = FUNNEL_PATCH_KEY_MAP[key];
+    if (mapped) body[mapped] = value;
+  }
+  await apiPatch(`/funnels/${funnelId}`, body);
 }
 
 export async function deleteFunnel(funnelId) {
-  const { error } = await supabase.from('funnels').delete().eq('id', funnelId);
-  if (error) throw error;
+  await apiDelete(`/funnels/${funnelId}`);
 }
 
-export async function updateBrandingForUser(userId, showBranding) {
-  const { error } = await supabase.from('funnels').update({ show_branding: showBranding }).eq('user_id', userId);
-  if (error) throw error;
+export async function updateBrandingForUser(_userId, showBranding) {
+  await apiPatch('/funnels/branding', { showBranding });
 }
 
 export async function fetchSteps(funnelId) {
-  const { data, error } = await supabase
-    .from('funnel_steps')
-    .select('*')
-    .eq('funnel_id', funnelId)
-    .order('position', { ascending: true });
-  if (error) throw error;
-  return data;
+  return apiGet(`/funnels/${funnelId}/steps`);
 }
 
 export async function addStep(funnelId, { name, slug, position }) {
-  const { data, error } = await supabase
-    .from('funnel_steps')
-    .insert({ funnel_id: funnelId, name, slug, step_type: 'custom', position })
-    .select()
-    .single();
-  if (error) throw error;
-  return data;
+  return apiPost(`/funnels/${funnelId}/steps`, { name, slug, position });
 }
 
 export async function updateStep(stepId, patch) {
-  const { error } = await supabase.from('funnel_steps').update(patch).eq('id', stepId);
-  if (error) throw error;
+  await apiPatch(`/steps/${stepId}`, patch);
 }
 
 export async function deleteStep(stepId) {
-  const { error } = await supabase.from('funnel_steps').delete().eq('id', stepId);
-  if (error) throw error;
+  await apiDelete(`/steps/${stepId}`);
 }
 
 export async function fetchBlocks(stepId) {
-  const { data, error } = await supabase
-    .from('blocks')
-    .select('*')
-    .eq('step_id', stepId)
-    .order('position', { ascending: true });
-  if (error) throw error;
-  return data;
+  return apiGet(`/steps/${stepId}/blocks`);
 }
 
 export async function addBlock(stepId, type, content, position) {
-  const { data, error } = await supabase
-    .from('blocks')
-    .insert({ step_id: stepId, type, content, position })
-    .select()
-    .single();
-  if (error) throw error;
-  return data;
+  return apiPost(`/steps/${stepId}/blocks`, { type, content, position });
 }
 
 export async function updateBlock(blockId, content) {
-  const { error } = await supabase.from('blocks').update({ content }).eq('id', blockId);
-  if (error) throw error;
+  await apiPatch(`/blocks/${blockId}`, { content });
 }
 
 export async function deleteBlock(blockId) {
-  const { error } = await supabase.from('blocks').delete().eq('id', blockId);
-  if (error) throw error;
-}
-
-export async function swapBlockPositions(blockA, blockB) {
-  await Promise.all([
-    supabase.from('blocks').update({ position: blockB.position }).eq('id', blockA.id),
-    supabase.from('blocks').update({ position: blockA.position }).eq('id', blockB.id),
-  ]);
-}
-
-export async function swapStepPositions(stepA, stepB) {
-  await Promise.all([
-    supabase.from('funnel_steps').update({ position: stepB.position }).eq('id', stepA.id),
-    supabase.from('funnel_steps').update({ position: stepA.position }).eq('id', stepB.id),
-  ]);
+  await apiDelete(`/blocks/${blockId}`);
 }
 
 export async function reorderBlocks(blockIdsInOrder) {
-  await Promise.all(blockIdsInOrder.map((id, index) => supabase.from('blocks').update({ position: index }).eq('id', id)));
+  await apiPost('/blocks/reorder', { blockIds: blockIdsInOrder });
 }
 
 export async function reorderSteps(stepIdsInOrder) {
-  await Promise.all(stepIdsInOrder.map((id, index) => supabase.from('funnel_steps').update({ position: index }).eq('id', id)));
+  await apiPost('/steps/reorder', { stepIds: stepIdsInOrder });
 }
 
 export async function insertLead({ funnelId, stepId, name, email }) {
-  const { error } = await supabase.from('leads').insert({ funnel_id: funnelId, step_id: stepId, name, email });
-  if (error) throw error;
+  await apiPost('/leads', { funnelId, stepId, name, email });
 }
 
 export async function countLeads(funnelId) {
-  const { count, error } = await supabase
-    .from('leads')
-    .select('id', { count: 'exact', head: true })
-    .eq('funnel_id', funnelId);
-  if (error) throw error;
+  const { count } = await apiGet(`/funnels/${funnelId}/leads/count`);
   return count || 0;
 }
 
 export async function incrementStepView(stepId) {
-  await supabase.rpc('increment_step_view', { p_step_id: stepId });
+  await apiPost(`/steps/${stepId}/view`);
 }
 
-export async function fetchLeadsForUser(userId) {
-  const { data: funnels, error: fErr } = await supabase.from('funnels').select('id, name').eq('user_id', userId);
-  if (fErr) throw fErr;
-  const funnelMap = new Map(funnels.map((f) => [f.id, f.name]));
-  const funnelIds = funnels.map((f) => f.id);
-  if (funnelIds.length === 0) return [];
-  const { data: leads, error } = await supabase
-    .from('leads')
-    .select('*')
-    .in('funnel_id', funnelIds)
-    .order('created_at', { ascending: false });
-  if (error) throw error;
-  return leads.map((l) => ({ ...l, funnelName: funnelMap.get(l.funnel_id) || '—' }));
+export async function fetchLeadsForUser(_userId) {
+  const rows = await apiGet('/leads/mine');
+  return rows.map(normalizeLead);
 }
 
 export async function fetchFunnelStepsAnalytics(funnelId) {
-  const { data: steps, error } = await supabase
-    .from('funnel_steps')
-    .select('*')
-    .eq('funnel_id', funnelId)
-    .order('position', { ascending: true });
-  if (error) throw error;
-  const { data: leads, error: lErr } = await supabase.from('leads').select('step_id').eq('funnel_id', funnelId);
-  if (lErr) throw lErr;
-  const leadCountByStep = {};
-  leads.forEach((l) => { leadCountByStep[l.step_id] = (leadCountByStep[l.step_id] || 0) + 1; });
-  return steps.map((s) => ({ ...s, leadCount: leadCountByStep[s.id] || 0 }));
+  return apiGet(`/funnels/${funnelId}/analytics`);
 }
