@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import {
   ArrowLeft, ExternalLink, Plus, X, Pencil, Trash2, Users, Check, Lock, Palette, Copy,
-  GripVertical, Undo2, Redo2, Eye, Settings, BookmarkPlus,
+  GripVertical, Undo2, Redo2, Eye, Settings, BookmarkPlus, Sparkles, Wand2,
 } from 'lucide-react';
 import {
   DndContext, closestCenter, PointerSensor, KeyboardSensor, useSensor, useSensors,
@@ -23,6 +23,7 @@ import { getPlan } from '../../lib/plans';
 import { brandStyleVars } from '../../lib/colorUtils';
 import { computeHealthScore } from '../../lib/healthScore';
 import { fetchReusableBlocks, saveReusableBlock, deleteReusableBlock, incrementReusableBlockUsage } from '../../lib/growthApi';
+import { editFunnelWithAI } from '../../lib/aiApi';
 import BlockRenderer from '../../components/blocks/BlockRenderer';
 import BlockEditorPanel from '../../components/blocks/BlockEditorPanel';
 import ElementStylePanel from '../../components/blocks/ElementStylePanel';
@@ -151,6 +152,12 @@ export default function FunnelEditorPage() {
   const [showBrandKit, setShowBrandKit] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
+  const [showAiAssistant, setShowAiAssistant] = useState(false);
+  const [aiMessages, setAiMessages] = useState([
+    { role: 'assistant', text: "Décris ce que tu veux changer sur ce tunnel (ex. « ajoute une section témoignages », « rends le titre plus percutant »)." },
+  ]);
+  const [aiInput, setAiInput] = useState('');
+  const [aiGenerating, setAiGenerating] = useState(false);
   const [leadsCount, setLeadsCount] = useState(0);
   const [nameDraft, setNameDraft] = useState('');
   const [editingName, setEditingName] = useState(false);
@@ -197,6 +204,32 @@ export default function FunnelEditorPage() {
   }, [funnelId, loadAllBlocks]);
 
   useEffect(() => { loadAll(); }, [loadAll]);
+
+  const AI_ERROR_MESSAGES = {
+    plan_required: "L'édition par IA nécessite le plan Pro ou Entreprise.",
+    limit_reached: 'Tu as atteint ta limite de générations IA ce mois-ci.',
+    invalid_input: 'Précise un peu plus ta demande.',
+    ai_error: "L'IA n'a pas pu répondre pour le moment. Réessaie dans quelques instants.",
+    parse_error: 'La modification a échoué. Réessaie avec une formulation différente.',
+    server_error: 'Une erreur est survenue. Réessaie.',
+  };
+
+  const handleAiSend = async (e) => {
+    e.preventDefault();
+    if (!aiInput.trim() || aiGenerating) return;
+    const instruction = aiInput.trim();
+    setAiInput('');
+    setAiMessages((prev) => [...prev, { role: 'user', text: instruction }]);
+    setAiGenerating(true);
+    try {
+      await editFunnelWithAI(funnelId, instruction);
+      await loadAll();
+      setAiMessages((prev) => [...prev, { role: 'assistant', text: 'Modifications appliquées — regarde le résultat ci-dessous.' }]);
+    } catch (err) {
+      setAiMessages((prev) => [...prev, { role: 'assistant', text: AI_ERROR_MESSAGES[err.message] || AI_ERROR_MESSAGES.server_error }]);
+    }
+    setAiGenerating(false);
+  };
 
   const applyBlocks = useCallback((updater) => {
     setBlocks((prev) => {
@@ -595,17 +628,25 @@ export default function FunnelEditorPage() {
             <Eye className="w-4 h-4" /> Aperçu
           </button>
           <button
-            onClick={() => { setShowSettings((v) => !v); setShowBrandKit(false); }}
+            onClick={() => { setShowSettings((v) => !v); setShowBrandKit(false); setShowAiAssistant(false); }}
             className={`magnetic-btn flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-semibold border ${showSettings ? 'bg-accent/10 border-accent text-accent' : 'border-surface/10 text-surface/70'}`}
           >
             <Settings className="w-4 h-4" /> Réglages
           </button>
           <button
-            onClick={() => { setShowBrandKit((v) => !v); setShowSettings(false); }}
+            onClick={() => { setShowBrandKit((v) => !v); setShowSettings(false); setShowAiAssistant(false); }}
             className={`magnetic-btn flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-semibold border ${showBrandKit ? 'bg-accent/10 border-accent text-accent' : 'border-surface/10 text-surface/70'}`}
           >
             <Palette className="w-4 h-4" /> Design
           </button>
+          {plan.aiAccess && (
+            <button
+              onClick={() => { setShowAiAssistant((v) => !v); setShowSettings(false); setShowBrandKit(false); }}
+              className={`magnetic-btn flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-semibold border ${showAiAssistant ? 'bg-accent/10 border-accent text-accent' : 'border-surface/10 text-surface/70'}`}
+            >
+              <Sparkles className="w-4 h-4" /> Assistant IA
+            </button>
+          )}
           <button
             onClick={togglePublish}
             className={`magnetic-btn flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-semibold ${funnel.is_published ? 'bg-surface/10 text-surface' : 'bg-accent text-background'}`}
@@ -631,6 +672,48 @@ export default function FunnelEditorPage() {
       {showSettings && (
         <div className="mb-6 max-w-2xl">
           <FunnelSettingsPanel funnel={funnel} plan={plan} onSave={handleSaveSettings} />
+        </div>
+      )}
+
+      {showAiAssistant && (
+        <div className="mb-6 max-w-2xl bg-background border border-surface/10 rounded-[2rem] p-4 md:p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <Sparkles className="w-4 h-4 text-accent" />
+            <h3 className="font-sans font-semibold text-surface text-sm">Assistant IA</h3>
+          </div>
+          <div className="space-y-3 max-h-[320px] overflow-y-auto mb-4">
+            {aiMessages.map((m, i) => (
+              <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                <div className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${m.role === 'user' ? 'bg-primary text-background rounded-br-sm' : 'bg-surface/[0.03] border border-surface/10 text-surface rounded-bl-sm'}`}>
+                  {m.text}
+                </div>
+              </div>
+            ))}
+            {aiGenerating && (
+              <div className="flex justify-start">
+                <div className="bg-surface/[0.03] border border-surface/10 rounded-2xl rounded-bl-sm px-4 py-2.5 text-sm text-surface/60 inline-flex items-center gap-2">
+                  <span className="w-3.5 h-3.5 border-2 border-surface/20 border-t-accent rounded-full animate-spin" /> Modification en cours…
+                </div>
+              </div>
+            )}
+          </div>
+          <form onSubmit={handleAiSend} className="flex items-center gap-2">
+            <input
+              value={aiInput}
+              onChange={(e) => setAiInput(e.target.value)}
+              placeholder="Ex : ajoute une section témoignages"
+              disabled={aiGenerating}
+              className="flex-1 bg-primary/5 border border-surface/10 rounded-full px-4 py-2.5 text-sm focus:outline-none focus:border-accent transition-colors text-surface disabled:opacity-50"
+            />
+            <button
+              type="submit"
+              disabled={!aiInput.trim() || aiGenerating}
+              className="magnetic-btn shrink-0 flex items-center justify-center gap-2 gradient-accent text-background w-10 h-10 rounded-full disabled:opacity-50"
+              aria-label="Envoyer"
+            >
+              <Wand2 className="w-4 h-4" />
+            </button>
+          </form>
         </div>
       )}
 

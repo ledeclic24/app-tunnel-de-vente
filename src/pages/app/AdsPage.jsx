@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Lock, Megaphone, Plug, Trash2, Wallet, Users, Target } from 'lucide-react';
+import { Lock, Megaphone, Plug, Trash2, Wallet, Users, Target, Sparkles } from 'lucide-react';
 import {
   LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend,
 } from 'recharts';
@@ -10,6 +10,11 @@ import {
   startMetaAdsConnect, fetchMetaAdAccounts, disconnectMetaAdAccount,
   fetchMetaAdCampaigns, fetchMetaAdsSummary,
 } from '../../lib/metaAdsApi';
+
+// Le code est prêt (OAuth, tableau de bord, coût par lead) mais attend les
+// identifiants de l'App Facebook côté serveur — passer à false dès qu'ils
+// sont configurés pour réactiver la page normalement.
+const COMING_SOON = true;
 
 const DATE_PRESETS = [
   { key: 'last_7d', label: '7 derniers jours' },
@@ -187,6 +192,23 @@ export default function AdsPage() {
       setError('Impossible de déconnecter ce compte, réessaie.');
     }
   };
+
+  if (COMING_SOON) {
+    return (
+      <div className="max-w-lg mx-auto text-center py-16">
+        <div className="w-16 h-16 rounded-2xl bg-accent/10 flex items-center justify-center mx-auto mb-5">
+          <Megaphone className="w-7 h-7 text-accent" />
+        </div>
+        <span className="inline-flex items-center gap-1.5 text-[10px] font-mono uppercase tracking-wider px-2.5 py-1 rounded-full bg-accent/10 text-accent mb-4">
+          <Sparkles className="w-3 h-3" /> Bientôt disponible
+        </span>
+        <h1 className="text-xl font-sans font-bold text-surface mb-2">Pilote tes campagnes Meta Ads depuis Vendeko</h1>
+        <p className="text-surface/60">
+          Connecte ton compte publicitaire Facebook, suis tes dépenses et ton coût par lead réel, directement croisé avec tes tunnels — en cours de finalisation.
+        </p>
+      </div>
+    );
+  }
 
   if (!plan.adsManagement) {
     return (

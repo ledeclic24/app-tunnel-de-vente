@@ -22,7 +22,7 @@ const NAV_GROUPS = [
       { to: '/app/leads', label: 'Leads', icon: Mail },
       { to: '/app/analytics', label: 'Analytique', icon: BarChart3, requires: 'analytics' },
       { to: '/app/integrations', label: 'Intégrations', icon: Webhook, requires: 'webhooks' },
-      { to: '/app/ads', label: 'Publicité', icon: Megaphone, requires: 'adsManagement' },
+      { to: '/app/ads', label: 'Publicité', icon: Megaphone, requires: 'adsManagement', comingSoon: true },
     ],
   },
   {
@@ -59,7 +59,27 @@ function NavLinks({ onNavigate, isAdmin, plan }) {
         <div key={group.label}>
           <p className="px-4 mb-1 text-[10px] uppercase tracking-wider text-surface/40 font-mono">{group.label}</p>
           <div className="flex flex-col gap-1">
-            {group.items.map(({ to, label, icon: Icon, end, requires }) => {
+            {group.items.map(({ to, label, icon: Icon, end, requires, comingSoon }) => {
+              if (comingSoon) {
+                return (
+                  <NavLink
+                    key={to}
+                    to={to}
+                    end={end}
+                    onClick={onNavigate}
+                    className={({ isActive }) => `
+                      flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors duration-200
+                      ${isActive ? 'bg-accent/10 text-accent' : 'text-surface/70 hover:bg-surface/5 hover:text-surface'}
+                    `}
+                  >
+                    <Icon className="w-4 h-4" />
+                    {label}
+                    <span className="ml-auto text-[9px] font-mono uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-surface/10 text-surface/50">
+                      Bientôt
+                    </span>
+                  </NavLink>
+                );
+              }
               const locked = requires && !plan[requires];
               if (locked) {
                 return (

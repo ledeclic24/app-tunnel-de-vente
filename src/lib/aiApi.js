@@ -1,23 +1,16 @@
-import { supabase } from './supabaseClient';
+import { apiGet, apiPost } from './apiClient';
 
 export async function generateTunnelWithAI({ description, category, images, price, paletteHint }) {
-  const { data, error } = await supabase.functions.invoke('generate-tunnel', {
-    body: { description, category, images, price, paletteHint },
-  });
-  if (error) throw error;
-  if (data?.error) throw new Error(data.error);
-  return data.funnel;
+  const { funnel } = await apiPost('/ai/funnels', { description, category, images, price, paletteHint });
+  return funnel;
 }
 
-export async function fetchAIUsageThisMonth(userId) {
-  const startOfMonth = new Date();
-  startOfMonth.setDate(1);
-  startOfMonth.setHours(0, 0, 0, 0);
-  const { count, error } = await supabase
-    .from('ai_generations')
-    .select('id', { count: 'exact', head: true })
-    .eq('user_id', userId)
-    .gte('created_at', startOfMonth.toISOString());
-  if (error) throw error;
+export async function editFunnelWithAI(funnelId, instruction) {
+  const { funnel } = await apiPost(`/ai/funnels/${funnelId}/edit`, { instruction });
+  return funnel;
+}
+
+export async function fetchAIUsageThisMonth(_userId) {
+  const { count } = await apiGet('/ai/usage');
   return count || 0;
 }
