@@ -40,8 +40,12 @@ function useAdPixels(brand) {
   }, [brand?.metaPixelId, brand?.googleAnalyticsId]);
 }
 
-export default function PublishedFunnelPage() {
-  const { funnelSlug, stepSlug } = useParams();
+export default function PublishedFunnelPage({ funnelSlugOverride } = {}) {
+  const { funnelSlug: paramSlug, stepSlug } = useParams();
+  const funnelSlug = funnelSlugOverride || paramSlug;
+  // Domaine personnalisé (pas de préfixe /f/:slug dans l'URL) : la
+  // navigation interne doit rester à la racine du domaine.
+  const basePath = funnelSlugOverride ? '' : `/f/${funnelSlug}`;
   const navigate = useNavigate();
   const [funnel, setFunnel] = useState(null);
   const [steps, setSteps] = useState([]);
@@ -86,7 +90,7 @@ export default function PublishedFunnelPage() {
   const handleAdvance = () => {
     const idx = steps.findIndex((s) => s.id === currentStep?.id);
     const next = steps[idx + 1];
-    if (next) navigate(`/f/${funnelSlug}/${next.slug}`);
+    if (next) navigate(`${basePath}/${next.slug}`);
   };
 
   const handleSubmitLead = async ({ name, email }) => {
