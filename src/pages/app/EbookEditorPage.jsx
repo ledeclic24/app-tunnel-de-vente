@@ -14,6 +14,8 @@ import {
   fetchEbook, updateEbook, addChapter, updateChapter, deleteChapter,
   reorderChapters, generateChapterContent, downloadEbookPdf,
 } from '../../lib/ebooksApi';
+import { useAuth } from '../../context/AuthContext';
+import ImageUploadField from '../../components/blocks/ImageUploadField';
 
 const ERROR_MESSAGES = {
   plan_required: "Le générateur d'ebook nécessite le plan Pro ou Entreprise.",
@@ -28,6 +30,11 @@ const TONES = [
   { key: 'pro', label: 'Professionnel' },
   { key: 'storytelling', label: 'Storytelling' },
   { key: 'direct', label: 'Direct' },
+];
+
+const LANGUAGES = [
+  { key: 'fr', label: 'Français' },
+  { key: 'en', label: 'Anglais' },
 ];
 
 function ChapterCard({ chapter, index, onGenerate, onUpdate, onDelete, generating, dragHandleProps }) {
@@ -104,6 +111,7 @@ function SortableChapterCard(props) {
 
 export default function EbookEditorPage() {
   const { ebookId } = useParams();
+  const { effectiveOwnerId } = useAuth();
   const navigate = useNavigate();
 
   const [ebook, setEbook] = useState(null);
@@ -160,6 +168,23 @@ export default function EbookEditorPage() {
     const chapter = await addChapter(ebookId, { title: newTitle.trim(), description: newDescription.trim() || newTitle.trim() });
     setChapters((prev) => [...prev, chapter]);
     setNewTitle(''); setNewDescription(''); setShowAddChapter(false);
+  };
+
+  const handleGenerateAll = async () => {
+    setError('');
+    for (const chapter of chapters) {
+      if (chapter.content) continue;
+      setGeneratingId(chapter.id);
+      try {
+        // eslint-disable-next-line no-await-in-loop
+        const updated = await generateChapterContent(chapter.id);
+        setChapters((prev) => prev.map((c) => (c.id === chapter.id ? updated : c)));
+      } catch (err) {
+        setError(ERROR_MESSAGES[err.message] || ERROR_MESSAGES.server_error);
+        break;
+      }
+    }
+    setGeneratingId(null);
   };
 
   const handleDragEnd = async (event) => {
@@ -224,17 +249,72 @@ export default function EbookEditorPage() {
             placeholder="Nom de l'auteur"
             className="w-full bg-primary/5 border border-surface/10 rounded-lg px-3 py-2 text-sm text-surface"
           />
-          <div className="flex gap-2">
-            {TONES.map((t) => (
-              <button
-                key={t.key}
-                type="button"
-                onClick={() => handleSaveSettings({ tone: t.key })}
-                className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${ebook.tone === t.key ? 'bg-primary text-background' : 'bg-primary/5 text-surface/60'}`}
-              >
-                {t.label}
-              </button>
-            ))}
+
+          <div>
+            <label className="block text-xs font-semibold text-surface/50 uppercase tracking-wider mb-1.5">
+              Couverture (devient la 1ʳᵉ page du PDF, telle quelle)
+            </label>
+            <ImageUploadField
+              userId={effectiveOwnerId}
+              value={ebook.coverImageUrl}
+              onChange={(url) => handleSaveSettings({ coverImageUrl: url })}
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-surface/50 uppercase tracking-wider mb-1.5">Ton d'écriture</label>
+            <div className="flex flex-wrap gap-2">
+              {TONES.map((t) => (
+                <button
+                  key={t.key}
+                  type="button"
+                  onClick={() => handleSaveSettings({ tone: t.key })}
+                  className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${ebook.tone === t.key ? 'bg-primary text-background' : 'bg-primary/5 text-surface/60'}`}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-surface/50 uppercase tracking-wider mb-1.5">Langue</label>
+            <div className="flex flex-wrap gap-2">
+              {LANGUAGES.map((l) => (
+                <button
+                  key={l.key}
+                  type="button"
+                  onClick={() => handleSaveSettings({ language: l.key })}
+                  className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${(ebook.language || 'fr') === l.key ? 'bg-primary text-background' : 'bg-primary/5 text-surface/60'}`}
+                >
+                  {l.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-surface/50 uppercase tracking-wider mb-1.5">Couleurs</label>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="flex items-center gap-2">
+                <input
+                  type="color"
+                  value={ebook.brand?.primaryColor || '#0B2818'}
+                  onChange={(e) => handleSaveSettings({ brand: { ...(ebook.brand || {}), primaryColor: e.target.value } })}
+                  className="w-9 h-9 rounded-lg border border-surface/10 cursor-pointer"
+                />
+                <span className="text-xs text-surface/50">Principale</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <input
+                  type="color"
+                  value={ebook.brand?.accentColor || '#22C55E'}
+                  onChange={(e) => handleSaveSettings({ brand: { ...(ebook.brand || {}), accentColor: e.target.value } })}
+                  className="w-9 h-9 rounded-lg border border-surface/10 cursor-pointer"
+                />
+                <span className="text-xs text-surface/50">Accent</span>
+              </div>
+            </div>
           </div>
         </div>
       )}
@@ -249,8 +329,19 @@ export default function EbookEditorPage() {
 
       {error && <p className="text-sm text-red-500 mb-4">{error}</p>}
 
-      <div className="flex items-center gap-2 text-xs font-semibold text-surface/50 uppercase tracking-wider mb-3">
-        <Sparkles className="w-3.5 h-3.5" /> Sommaire
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2 text-xs font-semibold text-surface/50 uppercase tracking-wider">
+          <Sparkles className="w-3.5 h-3.5" /> Sommaire
+        </div>
+        {chapters.some((c) => !c.content) && (
+          <button
+            onClick={handleGenerateAll}
+            disabled={Boolean(generatingId)}
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-accent disabled:opacity-50"
+          >
+            <Wand2 className="w-3.5 h-3.5" /> Générer tout le contenu restant
+          </button>
+        )}
       </div>
 
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>

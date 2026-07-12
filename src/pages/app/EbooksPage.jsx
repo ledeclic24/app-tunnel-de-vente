@@ -20,6 +20,11 @@ const TONES = [
   { key: 'direct', label: 'Direct' },
 ];
 
+const LANGUAGES = [
+  { key: 'fr', label: 'Français' },
+  { key: 'en', label: 'Anglais' },
+];
+
 export default function EbooksPage() {
   const { effectiveProfile } = useAuth();
   const plan = getPlan(effectiveProfile?.plan);
@@ -30,6 +35,7 @@ export default function EbooksPage() {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [tone, setTone] = useState('pro');
+  const [language, setLanguage] = useState('fr');
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState('');
 
@@ -55,7 +61,7 @@ export default function EbooksPage() {
     setGenerating(true);
     setError('');
     try {
-      const { ebook } = await generateOutline({ title: title.trim(), description: description.trim(), tone });
+      const { ebook } = await generateOutline({ title: title.trim(), description: description.trim(), tone, language });
       navigate(`/app/ebooks/${ebook.id}`);
     } catch (err) {
       setError(ERROR_MESSAGES[err.message] || ERROR_MESSAGES.server_error);
@@ -107,21 +113,39 @@ export default function EbooksPage() {
               className="w-full bg-primary/5 border border-surface/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-accent transition-colors text-surface"
             />
           </div>
-          <div>
-            <label className="block text-xs font-semibold text-surface/70 uppercase tracking-wider mb-2">Ton d'écriture</label>
-            <div className="flex gap-2">
-              {TONES.map((t) => (
-                <button
-                  key={t.key}
-                  type="button"
-                  onClick={() => setTone(t.key)}
-                  className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${tone === t.key ? 'bg-primary text-background' : 'bg-primary/5 text-surface/60'}`}
-                >
-                  {t.label}
-                </button>
-              ))}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-semibold text-surface/70 uppercase tracking-wider mb-2">Ton d'écriture</label>
+              <div className="flex flex-wrap gap-2">
+                {TONES.map((t) => (
+                  <button
+                    key={t.key}
+                    type="button"
+                    onClick={() => setTone(t.key)}
+                    className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${tone === t.key ? 'bg-primary text-background' : 'bg-primary/5 text-surface/60'}`}
+                  >
+                    {t.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-surface/70 uppercase tracking-wider mb-2">Langue</label>
+              <div className="flex flex-wrap gap-2">
+                {LANGUAGES.map((l) => (
+                  <button
+                    key={l.key}
+                    type="button"
+                    onClick={() => setLanguage(l.key)}
+                    className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${language === l.key ? 'bg-primary text-background' : 'bg-primary/5 text-surface/60'}`}
+                  >
+                    {l.label}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
+          <p className="text-xs text-surface/40">Sommaire complet garanti : introduction, minimum 12 chapitres, conclusion.</p>
           {error && <p className="text-sm text-red-500">{error}</p>}
           <button
             type="submit"
