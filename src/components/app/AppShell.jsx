@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { NavLink, Link, Outlet, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, User, LogOut, Menu, X, Shield, Mail, BarChart3, Lock, Sparkles, ArrowRight,
-  Search, Bell, Building2, Webhook, Megaphone,
+  Search, Bell, Building2, Webhook, Megaphone, Image as ImageIcon,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { getPlan, PLAN_ORDER } from '../../lib/plans';
@@ -14,6 +14,7 @@ const NAV_GROUPS = [
     label: 'Créer',
     items: [
       { to: '/app', label: 'Tableau de bord', icon: LayoutDashboard, end: true },
+      { to: '/app/images', label: 'Visuels IA', icon: ImageIcon, requires: 'imageGeneration', comingSoon: true },
     ],
   },
   {

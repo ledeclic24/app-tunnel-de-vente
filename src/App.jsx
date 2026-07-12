@@ -26,6 +26,7 @@ const LeadsPage = lazy(() => import('./pages/app/LeadsPage'));
 const AnalyticsPage = lazy(() => import('./pages/app/AnalyticsPage'));
 const IntegrationsPage = lazy(() => import('./pages/app/IntegrationsPage'));
 const AdsPage = lazy(() => import('./pages/app/AdsPage'));
+const ImageStudioPage = lazy(() => import('./pages/app/ImageStudioPage'));
 const OrganisationPage = lazy(() => import('./pages/app/OrganisationPage'));
 const AdminOverviewPage = lazy(() => import('./pages/app/admin/AdminOverviewPage'));
 const AdminUsersPage = lazy(() => import('./pages/app/admin/AdminUsersPage'));
@@ -78,6 +79,7 @@ function App() {
                 <Route path="analytics" element={<AnalyticsPage />} />
                 <Route path="integrations" element={<IntegrationsPage />} />
                 <Route path="ads" element={<AdsPage />} />
+                <Route path="images" element={<ImageStudioPage />} />
                 <Route path="organisation" element={<OrganisationPage />} />
                 <Route path="billing" element={<BillingPage />} />
                 <Route path="account" element={<AccountPage />} />
