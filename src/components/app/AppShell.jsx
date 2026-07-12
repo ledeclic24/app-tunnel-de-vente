@@ -14,7 +14,7 @@ const NAV_GROUPS = [
     label: 'Créer',
     items: [
       { to: '/app', label: 'Tableau de bord', icon: LayoutDashboard, end: true },
-      { to: '/app/images', label: 'Visuels IA', icon: ImageIcon, requires: 'imageGeneration', comingSoon: true },
+      { to: '/app/images', label: 'Visuels IA', icon: ImageIcon, requires: 'imageGeneration' },
     ],
   },
   {

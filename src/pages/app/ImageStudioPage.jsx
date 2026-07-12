@@ -4,10 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import { getPlan } from '../../lib/plans';
 import { generateImages, fetchImageUsageThisMonth } from '../../lib/imagesApi';
 
-// Le moteur de génération créative est prêt côté serveur mais attend une clé
-// API fournisseur (image) — passer à false dès qu'elle est configurée pour
-// réactiver la page normalement.
-const COMING_SOON = true;
+const COMING_SOON = false;
 
 const ERROR_MESSAGES = {
   plan_required: "La génération d'images nécessite le plan Pro ou Entreprise.",
