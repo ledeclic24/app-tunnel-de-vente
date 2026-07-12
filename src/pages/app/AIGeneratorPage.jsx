@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Sparkles, Lock, Wand2, SlidersHorizontal, ArrowRight } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { getPlan } from '../../lib/plans';
@@ -35,6 +35,7 @@ function Bubble({ role, children }) {
 export default function AIGeneratorPage() {
   const { effectiveOwnerId, effectiveProfile } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const plan = getPlan(effectiveProfile?.plan);
 
   const [name, setName] = useState('');
@@ -67,6 +68,27 @@ export default function AIGeneratorPage() {
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
   }, [messages, generating]);
+
+  // Pré-remplissage quand on arrive depuis "Créer un tunnel pour cet ebook"
+  // (EbookEditorPage) — l'utilisateur garde la main pour ajuster le brief
+  // et cliquer Envoyer lui-même, aucune génération n'est déclenchée ici.
+  useEffect(() => {
+    const fromEbook = location.state?.fromEbook;
+    if (!fromEbook) return;
+    setName(fromEbook.title || '');
+    if (fromEbook.coverImageUrl) setImages([fromEbook.coverImageUrl]);
+    if (fromEbook.brand?.primaryColor || fromEbook.brand?.accentColor) {
+      setCustomPalette(true);
+      if (fromEbook.brand.primaryColor) setPrimaryColor(fromEbook.brand.primaryColor);
+      if (fromEbook.brand.accentColor) setAccentColor(fromEbook.brand.accentColor);
+    }
+    setShowOptions(true);
+    const chapterLines = (fromEbook.chapters || []).map((c) => `- ${c.title}`).join('\n');
+    setInput(
+      `Crée un tunnel de vente adapté pour promouvoir et vendre l'ebook "${fromEbook.title}"${fromEbook.subtitle ? ` — ${fromEbook.subtitle}` : ''}.\n\nChapitres de l'ebook :\n${chapterLines}`,
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   if (!plan.aiAccess) {
     return (

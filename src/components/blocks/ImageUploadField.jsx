@@ -1,11 +1,13 @@
 import React, { useRef, useState } from 'react';
-import { Upload } from 'lucide-react';
+import { ImageIcon, Upload } from 'lucide-react';
 import { uploadImage } from '../../lib/storage';
+import ImagePickerModal from '../app/ImagePickerModal';
 
 export default function ImageUploadField({ userId, value, onChange }) {
   const fileRef = useRef(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
+  const [showPicker, setShowPicker] = useState(false);
 
   const handleFile = async (e) => {
     const file = e.target.files?.[0];
@@ -45,9 +47,22 @@ export default function ImageUploadField({ userId, value, onChange }) {
         >
           <Upload className="w-4 h-4" /> {uploading ? 'Envoi...' : 'Importer'}
         </button>
+        <button
+          type="button"
+          onClick={() => setShowPicker(true)}
+          className="shrink-0 flex items-center gap-1.5 px-3 py-2.5 rounded-xl border border-surface/10 text-sm text-surface/70 hover:border-accent hover:text-accent transition-colors"
+        >
+          <ImageIcon className="w-4 h-4" /> Mes visuels
+        </button>
         <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFile} />
       </div>
       {error && <p className="text-xs text-red-500">{error}</p>}
+      <ImagePickerModal
+        open={showPicker}
+        onClose={() => setShowPicker(false)}
+        multiple={false}
+        onConfirm={([url]) => onChange(url)}
+      />
     </div>
   );
 }

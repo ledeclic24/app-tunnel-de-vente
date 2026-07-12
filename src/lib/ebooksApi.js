@@ -2,8 +2,8 @@ import { apiGet, apiPost, apiPatch, apiDelete, getAccessToken } from './apiClien
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
-export async function generateOutline({ title, description, tone }) {
-  return apiPost('/ebooks/generate-outline', { title, description, tone });
+export async function generateOutline({ title, description, tone, language, length, brand }) {
+  return apiPost('/ebooks/generate-outline', { title, description, tone, language, length, brand });
 }
 
 export async function fetchEbooks() {
@@ -40,6 +40,22 @@ export async function reorderChapters(chapterIdsInOrder) {
 
 export async function generateChapterContent(chapterId) {
   return apiPost(`/ebooks/chapters/${chapterId}/generate`);
+}
+
+// Actions groupées sur le sommaire (sélection de chapitres).
+export async function regenerateChapters(ebookId, chapterIds) {
+  const { chapters } = await apiPost(`/ebooks/${ebookId}/chapters/regenerate`, { chapterIds });
+  return chapters;
+}
+
+export async function bulkDeleteChapters(ebookId, chapterIds) {
+  const { chapters } = await apiPost(`/ebooks/${ebookId}/chapters/bulk-delete`, { chapterIds });
+  return chapters;
+}
+
+export async function generateMoreChapters(ebookId, { count, guidance }) {
+  const { chapters } = await apiPost(`/ebooks/${ebookId}/chapters/generate-more`, { count, guidance });
+  return chapters;
 }
 
 export async function fetchEbookUsageThisMonth() {

@@ -1,11 +1,13 @@
 import React, { useRef, useState } from 'react';
-import { Upload, X } from 'lucide-react';
+import { ImageIcon, Upload, X } from 'lucide-react';
 import { uploadImage } from '../../lib/storage';
+import ImagePickerModal from './ImagePickerModal';
 
 export default function MultiImageUpload({ userId, images, onChange, max = 5 }) {
   const fileRef = useRef(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
+  const [showPicker, setShowPicker] = useState(false);
 
   const handleFiles = async (e) => {
     const files = Array.from(e.target.files || []).slice(0, max - images.length);
@@ -44,17 +46,33 @@ export default function MultiImageUpload({ userId, images, onChange, max = 5 }) 
         </div>
       )}
       {images.length < max && (
-        <button
-          type="button"
-          onClick={() => fileRef.current?.click()}
-          disabled={uploading || !userId}
-          className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-dashed border-surface/20 text-sm text-surface/60 hover:border-accent hover:text-accent transition-colors disabled:opacity-50"
-        >
-          <Upload className="w-4 h-4" /> {uploading ? 'Envoi...' : `Importer des images (${images.length}/${max})`}
-        </button>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => fileRef.current?.click()}
+            disabled={uploading || !userId}
+            className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border border-dashed border-surface/20 text-sm text-surface/60 hover:border-accent hover:text-accent transition-colors disabled:opacity-50"
+          >
+            <Upload className="w-4 h-4" /> {uploading ? 'Envoi...' : `Importer (${images.length}/${max})`}
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowPicker(true)}
+            className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border border-dashed border-surface/20 text-sm text-surface/60 hover:border-accent hover:text-accent transition-colors"
+          >
+            <ImageIcon className="w-4 h-4" /> Mes visuels générés
+          </button>
+        </div>
       )}
       <input ref={fileRef} type="file" accept="image/*" multiple className="hidden" onChange={handleFiles} />
       {error && <p className="text-xs text-red-500">{error}</p>}
+      <ImagePickerModal
+        open={showPicker}
+        onClose={() => setShowPicker(false)}
+        multiple
+        max={max - images.length}
+        onConfirm={(urls) => onChange([...images, ...urls])}
+      />
     </div>
   );
 }

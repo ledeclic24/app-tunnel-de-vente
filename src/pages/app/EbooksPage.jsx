@@ -25,6 +25,12 @@ const LANGUAGES = [
   { key: 'en', label: 'Anglais' },
 ];
 
+const LENGTHS = [
+  { key: 'short', label: 'Court', hint: '6-9 chapitres, ~20-35 pages' },
+  { key: 'medium', label: 'Moyen', hint: '14-20 chapitres, ~45-70 pages' },
+  { key: 'long', label: 'Long', hint: '20-28 chapitres, ~70-110 pages' },
+];
+
 export default function EbooksPage() {
   const { effectiveProfile } = useAuth();
   const plan = getPlan(effectiveProfile?.plan);
@@ -36,6 +42,10 @@ export default function EbooksPage() {
   const [description, setDescription] = useState('');
   const [tone, setTone] = useState('pro');
   const [language, setLanguage] = useState('fr');
+  const [length, setLength] = useState('medium');
+  const [customBrand, setCustomBrand] = useState(false);
+  const [primaryColor, setPrimaryColor] = useState('#0B2818');
+  const [accentColor, setAccentColor] = useState('#22C55E');
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState('');
 
@@ -61,7 +71,14 @@ export default function EbooksPage() {
     setGenerating(true);
     setError('');
     try {
-      const { ebook } = await generateOutline({ title: title.trim(), description: description.trim(), tone, language });
+      const { ebook } = await generateOutline({
+        title: title.trim(),
+        description: description.trim(),
+        tone,
+        language,
+        length,
+        brand: customBrand ? { primaryColor, accentColor } : undefined,
+      });
       navigate(`/app/ebooks/${ebook.id}`);
     } catch (err) {
       setError(ERROR_MESSAGES[err.message] || ERROR_MESSAGES.server_error);
@@ -145,7 +162,51 @@ export default function EbooksPage() {
               </div>
             </div>
           </div>
-          <p className="text-xs text-surface/40">Sommaire complet garanti : introduction, minimum 12 chapitres, conclusion.</p>
+
+          <div>
+            <label className="block text-xs font-semibold text-surface/70 uppercase tracking-wider mb-2">Longueur</label>
+            <div className="flex flex-wrap gap-2">
+              {LENGTHS.map((l) => (
+                <button
+                  key={l.key}
+                  type="button"
+                  onClick={() => setLength(l.key)}
+                  className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${length === l.key ? 'bg-primary text-background' : 'bg-primary/5 text-surface/60'}`}
+                >
+                  {l.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <label className="flex items-center gap-2 text-sm text-surface/70 mb-2">
+              <input type="checkbox" checked={customBrand} onChange={(e) => setCustomBrand(e.target.checked)} />
+              Choisir mes couleurs
+            </label>
+            {customBrand && (
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs text-surface/50 mb-1">Couleur principale</label>
+                  <div className="flex items-center gap-2">
+                    <input type="color" value={primaryColor} onChange={(e) => setPrimaryColor(e.target.value)} className="w-10 h-10 rounded-lg border border-surface/10 cursor-pointer" />
+                    <input value={primaryColor} onChange={(e) => setPrimaryColor(e.target.value)} className="flex-1 bg-primary/5 border border-surface/10 rounded-xl px-3 py-2 text-sm text-surface" />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs text-surface/50 mb-1">Couleur d'accent</label>
+                  <div className="flex items-center gap-2">
+                    <input type="color" value={accentColor} onChange={(e) => setAccentColor(e.target.value)} className="w-10 h-10 rounded-lg border border-surface/10 cursor-pointer" />
+                    <input value={accentColor} onChange={(e) => setAccentColor(e.target.value)} className="flex-1 bg-primary/5 border border-surface/10 rounded-xl px-3 py-2 text-sm text-surface" />
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <p className="text-xs text-surface/40">
+            Sommaire complet garanti : introduction, {LENGTHS.find((l) => l.key === length)?.hint}, conclusion.
+          </p>
           {error && <p className="text-sm text-red-500">{error}</p>}
           <button
             type="submit"

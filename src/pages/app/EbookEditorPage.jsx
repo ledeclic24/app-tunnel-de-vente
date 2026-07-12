@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import {
-  ArrowLeft, Download, GripVertical, Pencil, Plus, Sparkles, Trash2, Wand2, X,
+  ArrowLeft, Download, GripVertical, Pencil, Plus, Rocket, Sparkles, Trash2, Wand2, X,
 } from 'lucide-react';
 import {
   DndContext, closestCenter, PointerSensor, KeyboardSensor, useSensor, useSensors,
@@ -13,6 +13,7 @@ import { CSS } from '@dnd-kit/utilities';
 import {
   fetchEbook, updateEbook, addChapter, updateChapter, deleteChapter,
   reorderChapters, generateChapterContent, downloadEbookPdf,
+  regenerateChapters, bulkDeleteChapters, generateMoreChapters,
 } from '../../lib/ebooksApi';
 import { useAuth } from '../../context/AuthContext';
 import ImageUploadField from '../../components/blocks/ImageUploadField';
@@ -24,6 +25,7 @@ const ERROR_MESSAGES = {
   ai_error: "L'IA n'a pas pu répondre pour le moment. Réessaie dans quelques instants.",
   parse_error: 'La génération a échoué. Réessaie.',
   server_error: 'Une erreur est survenue. Réessaie.',
+  cannot_delete_all: "Impossible de supprimer tous les chapitres d'un coup.",
 };
 
 const TONES = [
@@ -37,7 +39,7 @@ const LANGUAGES = [
   { key: 'en', label: 'Anglais' },
 ];
 
-function ChapterCard({ chapter, index, onGenerate, onUpdate, onDelete, generating, dragHandleProps }) {
+function ChapterCard({ chapter, index, onGenerate, onUpdate, onDelete, generating, dragHandleProps, selected, onToggleSelect }) {
   const [editing, setEditing] = useState(false);
   const [title, setTitle] = useState(chapter.title);
   const [description, setDescription] = useState(chapter.description);
@@ -48,8 +50,15 @@ function ChapterCard({ chapter, index, onGenerate, onUpdate, onDelete, generatin
   };
 
   return (
-    <div className="bg-background border border-surface/10 rounded-[1.5rem] p-4">
+    <div className={`bg-background border rounded-[1.5rem] p-4 transition-colors ${selected ? 'border-accent' : 'border-surface/10'}`}>
       <div className="flex items-start gap-3">
+        <input
+          type="checkbox"
+          checked={selected}
+          onChange={() => onToggleSelect(chapter.id)}
+          className="mt-2 shrink-0"
+          aria-label={`Sélectionner "${chapter.title}"`}
+        />
         <button {...dragHandleProps} className="p-1.5 mt-0.5 rounded-lg text-surface/30 hover:text-surface cursor-grab active:cursor-grabbing touch-none shrink-0" aria-label="Réordonner">
           <GripVertical className="w-4 h-4" />
         </button>
@@ -123,6 +132,11 @@ export default function EbookEditorPage() {
   const [showAddChapter, setShowAddChapter] = useState(false);
   const [newTitle, setNewTitle] = useState('');
   const [newDescription, setNewDescription] = useState('');
+  const [selectedIds, setSelectedIds] = useState(() => new Set());
+  const [bulkBusy, setBulkBusy] = useState(false);
+  const [showGenerateMore, setShowGenerateMore] = useState(false);
+  const [moreCount, setMoreCount] = useState(3);
+  const [moreGuidance, setMoreGuidance] = useState('');
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -185,6 +199,90 @@ export default function EbookEditorPage() {
       }
     }
     setGeneratingId(null);
+  };
+
+  const toggleSelect = (chapterId) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(chapterId)) next.delete(chapterId); else next.add(chapterId);
+      return next;
+    });
+  };
+
+  const handleBulkGenerate = async () => {
+    setError('');
+    setBulkBusy(true);
+    const targets = chapters.filter((c) => selectedIds.has(c.id));
+    for (const chapter of targets) {
+      setGeneratingId(chapter.id);
+      try {
+        // eslint-disable-next-line no-await-in-loop
+        const updated = await generateChapterContent(chapter.id);
+        setChapters((prev) => prev.map((c) => (c.id === chapter.id ? updated : c)));
+      } catch (err) {
+        setError(ERROR_MESSAGES[err.message] || ERROR_MESSAGES.server_error);
+        break;
+      }
+    }
+    setGeneratingId(null);
+    setSelectedIds(new Set());
+    setBulkBusy(false);
+  };
+
+  const handleBulkRegenerate = async () => {
+    setError('');
+    setBulkBusy(true);
+    try {
+      const updated = await regenerateChapters(ebookId, Array.from(selectedIds));
+      setChapters((prev) => prev.map((c) => updated.find((u) => u.id === c.id) || c));
+      setSelectedIds(new Set());
+    } catch (err) {
+      setError(ERROR_MESSAGES[err.message] || ERROR_MESSAGES.server_error);
+    }
+    setBulkBusy(false);
+  };
+
+  const handleBulkDelete = async () => {
+    if (!window.confirm(`Supprimer ${selectedIds.size} chapitre${selectedIds.size > 1 ? 's' : ''} ?`)) return;
+    setError('');
+    setBulkBusy(true);
+    try {
+      const remaining = await bulkDeleteChapters(ebookId, Array.from(selectedIds));
+      setChapters(remaining);
+      setSelectedIds(new Set());
+    } catch (err) {
+      setError(ERROR_MESSAGES[err.message] || ERROR_MESSAGES.server_error);
+    }
+    setBulkBusy(false);
+  };
+
+  const handleGenerateMoreChapters = async (e) => {
+    e.preventDefault();
+    setError('');
+    setBulkBusy(true);
+    try {
+      const added = await generateMoreChapters(ebookId, { count: moreCount, guidance: moreGuidance.trim() || undefined });
+      setChapters((prev) => [...prev.slice(0, -1), ...added, prev[prev.length - 1]]);
+      setShowGenerateMore(false);
+      setMoreGuidance('');
+    } catch (err) {
+      setError(ERROR_MESSAGES[err.message] || ERROR_MESSAGES.server_error);
+    }
+    setBulkBusy(false);
+  };
+
+  const handleCreateTunnel = () => {
+    navigate('/app/funnels/ai', {
+      state: {
+        fromEbook: {
+          title: ebook.title,
+          subtitle: ebook.subtitle,
+          coverImageUrl: ebook.coverImageUrl,
+          brand: ebook.brand,
+          chapters: chapters.map((c) => ({ title: c.title, description: c.description })),
+        },
+      },
+    });
   };
 
   const handleDragEnd = async (event) => {
@@ -319,13 +417,22 @@ export default function EbookEditorPage() {
         </div>
       )}
 
-      <button
-        onClick={handleDownload}
-        disabled={downloading || chapters.length === 0}
-        className="magnetic-btn inline-flex items-center gap-2 bg-accent text-background px-5 py-3 rounded-full text-sm font-semibold disabled:opacity-50 mb-6"
-      >
-        <Download className="w-4 h-4" /> {downloading ? 'Génération du PDF...' : 'Exporter en PDF'}
-      </button>
+      <div className="flex flex-wrap gap-3 mb-6">
+        <button
+          onClick={handleDownload}
+          disabled={downloading || chapters.length === 0}
+          className="magnetic-btn inline-flex items-center gap-2 bg-accent text-background px-5 py-3 rounded-full text-sm font-semibold disabled:opacity-50"
+        >
+          <Download className="w-4 h-4" /> {downloading ? 'Génération du PDF...' : 'Exporter en PDF'}
+        </button>
+        <button
+          onClick={handleCreateTunnel}
+          disabled={chapters.length === 0}
+          className="inline-flex items-center gap-2 bg-primary/5 border border-surface/10 text-surface px-5 py-3 rounded-full text-sm font-semibold disabled:opacity-50 hover:border-accent transition-colors"
+        >
+          <Rocket className="w-4 h-4" /> Créer un tunnel pour cet ebook
+        </button>
+      </div>
 
       {error && <p className="text-sm text-red-500 mb-4">{error}</p>}
 
@@ -344,6 +451,24 @@ export default function EbookEditorPage() {
         )}
       </div>
 
+      {selectedIds.size > 0 && (
+        <div className="flex flex-wrap items-center gap-3 bg-accent/5 border border-accent/20 rounded-2xl px-4 py-3 mb-3">
+          <span className="text-xs font-semibold text-surface/60">{selectedIds.size} sélectionné{selectedIds.size > 1 ? 's' : ''}</span>
+          <button onClick={handleBulkGenerate} disabled={bulkBusy || Boolean(generatingId)} className="inline-flex items-center gap-1.5 text-xs font-semibold text-accent disabled:opacity-50">
+            <Wand2 className="w-3.5 h-3.5" /> Générer le contenu
+          </button>
+          <button onClick={handleBulkRegenerate} disabled={bulkBusy} className="inline-flex items-center gap-1.5 text-xs font-semibold text-accent disabled:opacity-50">
+            <Sparkles className="w-3.5 h-3.5" /> Proposer d'autres chapitres
+          </button>
+          <button onClick={handleBulkDelete} disabled={bulkBusy} className="inline-flex items-center gap-1.5 text-xs font-semibold text-red-500 disabled:opacity-50">
+            <Trash2 className="w-3.5 h-3.5" /> Supprimer
+          </button>
+          <button onClick={() => setSelectedIds(new Set())} className="ml-auto text-xs text-surface/50 hover:text-surface">
+            Tout désélectionner
+          </button>
+        </div>
+      )}
+
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
         <SortableContext items={chapters.map((c) => c.id)} strategy={verticalListSortingStrategy}>
           <div className="space-y-3">
@@ -356,6 +481,8 @@ export default function EbookEditorPage() {
                 onUpdate={handleUpdateChapter}
                 onDelete={handleDeleteChapter}
                 generating={generatingId === chapter.id}
+                selected={selectedIds.has(chapter.id)}
+                onToggleSelect={toggleSelect}
               />
             ))}
           </div>
@@ -377,6 +504,37 @@ export default function EbookEditorPage() {
           className="w-full mt-4 flex items-center justify-center gap-2 py-3 rounded-[1.5rem] border border-dashed border-surface/20 text-surface/60 hover:border-accent hover:text-accent transition-colors"
         >
           <Plus className="w-4 h-4" /> Ajouter un chapitre
+        </button>
+      )}
+
+      {showGenerateMore ? (
+        <form onSubmit={handleGenerateMoreChapters} className="bg-background border border-surface/10 rounded-[1.5rem] p-4 mt-3 space-y-2">
+          <div className="flex items-center gap-2">
+            <label className="text-sm text-surface/70">Nombre de chapitres</label>
+            <input
+              type="number" min={1} max={6} value={moreCount}
+              onChange={(e) => setMoreCount(Math.min(6, Math.max(1, Number(e.target.value) || 1)))}
+              className="w-16 bg-primary/5 border border-surface/10 rounded-lg px-2 py-1.5 text-sm text-surface"
+            />
+          </div>
+          <textarea
+            value={moreGuidance} onChange={(e) => setMoreGuidance(e.target.value)}
+            placeholder="Consigne optionnelle (ex : approfondir un aspect précis)" rows={2}
+            className="w-full bg-primary/5 border border-surface/10 rounded-lg px-3 py-2 text-sm text-surface"
+          />
+          <div className="flex gap-2">
+            <button type="submit" disabled={bulkBusy} className="text-xs font-semibold text-accent disabled:opacity-50">
+              {bulkBusy ? 'Génération...' : 'Proposer'}
+            </button>
+            <button type="button" onClick={() => setShowGenerateMore(false)} className="text-xs text-surface/50 inline-flex items-center gap-1"><X className="w-3 h-3" /> Annuler</button>
+          </div>
+        </form>
+      ) : (
+        <button
+          onClick={() => setShowGenerateMore(true)}
+          className="w-full mt-2 flex items-center justify-center gap-2 py-2.5 rounded-[1.5rem] text-xs font-semibold text-accent/80 hover:text-accent transition-colors"
+        >
+          <Sparkles className="w-3.5 h-3.5" /> Proposer des chapitres avec l'IA
         </button>
       )}
     </div>
