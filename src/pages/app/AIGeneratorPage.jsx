@@ -39,6 +39,7 @@ export default function AIGeneratorPage() {
 
   const [name, setName] = useState('');
   const [categoryKey, setCategoryKey] = useState('');
+  const [cible, setCible] = useState('');
   const [price, setPrice] = useState('');
   const [images, setImages] = useState([]);
   const [customPalette, setCustomPalette] = useState(false);
@@ -91,6 +92,8 @@ export default function AIGeneratorPage() {
       const generatedFunnel = await generateTunnelWithAI({
         description: nextBrief,
         category: categoryLabel,
+        categoryKey,
+        cible: cible.trim(),
         images,
         price: price.trim(),
         paletteHint: customPalette ? `couleur principale ${primaryColor}, couleur d'accent ${accentColor}` : '',
@@ -197,7 +200,7 @@ export default function AIGeneratorPage() {
         onClick={() => setShowOptions((v) => !v)}
         className="flex items-center gap-2 text-xs font-semibold text-surface/50 hover:text-surface mb-3"
       >
-        <SlidersHorizontal className="w-3.5 h-3.5" /> Réglages avancés (catégorie, prix, images, palette)
+        <SlidersHorizontal className="w-3.5 h-3.5" /> Réglages avancés (catégorie, cible, prix, images, palette)
       </button>
 
       {showOptions && (
@@ -214,6 +217,17 @@ export default function AIGeneratorPage() {
                 <option key={c.key} value={c.key}>{c.label}</option>
               ))}
             </select>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-surface/70 uppercase tracking-wider mb-2">Cible / marché visé (optionnel)</label>
+            <input
+              value={cible}
+              onChange={(e) => setCible(e.target.value)}
+              placeholder="Ex : jeunes mamans débordées, entrepreneurs débutants..."
+              className="w-full bg-primary/5 border border-surface/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-accent transition-colors text-surface"
+            />
+            <p className="text-xs text-surface/40 mt-1.5">Précise à qui s'adresse ton offre pour un ton et des exemples plus justes.</p>
           </div>
 
           <div>

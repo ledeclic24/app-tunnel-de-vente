@@ -101,6 +101,21 @@ function BlockFields({ type, content, set, userId }) {
         </div>
       );
 
+    case 'video':
+      return (
+        <div className="space-y-4">
+          <Field label="Titre">
+            <input className={inputClass} value={content.heading || ''} onChange={(e) => set({ heading: e.target.value })} />
+          </Field>
+          <Field label="Lien de la vidéo (YouTube, Vimeo, ou lien direct .mp4)">
+            <input className={inputClass} placeholder="https://youtube.com/watch?v=..." value={content.videoUrl || ''} onChange={(e) => set({ videoUrl: e.target.value })} />
+          </Field>
+          <Field label="Description (optionnel)">
+            <textarea className={inputClass} rows={3} value={content.description || ''} onChange={(e) => set({ description: e.target.value })} />
+          </Field>
+        </div>
+      );
+
     case 'features':
       return (
         <div className="space-y-4">

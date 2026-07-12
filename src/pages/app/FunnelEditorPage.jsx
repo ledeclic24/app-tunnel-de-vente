@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import {
-  ArrowLeft, ExternalLink, Plus, X, Pencil, Trash2, Users, Check, Lock, Palette, Copy,
+  ArrowLeft, ExternalLink, Plus, X, Pencil, Trash2, Users, Check, Lock, Unlock, Palette, Copy,
   GripVertical, Undo2, Redo2, Eye, Settings, BookmarkPlus, Sparkles, Wand2,
 } from 'lucide-react';
 import {
@@ -14,7 +14,7 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import {
   fetchFunnel, updateFunnel, fetchSteps, addStep, deleteStep, reorderSteps,
-  fetchBlocks, addBlock, updateBlock, deleteBlock, reorderBlocks, countLeads,
+  fetchBlocks, addBlock, updateBlock, deleteBlock, reorderBlocks, countLeads, toggleBlockLock,
 } from '../../lib/funnelsApi';
 import { BLOCK_TYPES, createDefaultContent } from '../../lib/blockTypes';
 import { slugify } from '../../lib/slug';
@@ -23,7 +23,7 @@ import { getPlan } from '../../lib/plans';
 import { brandStyleVars } from '../../lib/colorUtils';
 import { computeHealthScore } from '../../lib/healthScore';
 import { fetchReusableBlocks, saveReusableBlock, deleteReusableBlock, incrementReusableBlockUsage } from '../../lib/growthApi';
-import { editFunnelWithAI } from '../../lib/aiApi';
+import { editFunnelWithAI, regenerateBlockWithAI } from '../../lib/aiApi';
 import BlockRenderer from '../../components/blocks/BlockRenderer';
 import BlockEditorPanel from '../../components/blocks/BlockEditorPanel';
 import ElementStylePanel from '../../components/blocks/ElementStylePanel';
@@ -34,12 +34,16 @@ import HealthScoreCard from '../../components/app/HealthScoreCard';
 
 const HISTORY_LIMIT = 20;
 
-function BlockCard({ block, onDelete, onDuplicate, isExpanded, onToggle, onChange, userId, selectedElement, onSelectElement, dragHandleProps, onSaveToLibrary, canUseLibrary }) {
+function BlockCard({
+  block, onDelete, onDuplicate, isExpanded, onToggle, onChange, userId, selectedElement, onSelectElement,
+  dragHandleProps, onSaveToLibrary, canUseLibrary, onToggleLock, onRegenerate, canRegenerate, isRegenerating,
+}) {
   const def = BLOCK_TYPES.find((b) => b.type === block.type);
   const Icon = def?.icon;
+  const locked = Boolean(block.locked);
 
   return (
-    <div className="bg-background border border-surface/10 rounded-[2rem] overflow-hidden">
+    <div className={`bg-background border rounded-[2rem] overflow-hidden ${locked ? 'border-accent/30' : 'border-surface/10'}`}>
       <div className="flex items-center justify-between px-5 py-3 border-b border-surface/10 bg-surface/[0.02]">
         <div className="flex items-center gap-2 text-sm font-medium text-surface/70 min-w-0">
           <button
@@ -52,8 +56,32 @@ function BlockCard({ block, onDelete, onDuplicate, isExpanded, onToggle, onChang
           </button>
           {Icon && <Icon className="w-4 h-4 text-accent shrink-0" />}
           <span className="truncate">{def?.label || block.type}</span>
+          {locked && <span className="text-[10px] font-mono uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-accent/10 text-accent shrink-0">Verrouillé</span>}
         </div>
         <div className="flex items-center gap-1 shrink-0">
+          {canRegenerate && !locked && (
+            <button
+              onClick={onRegenerate}
+              disabled={isRegenerating}
+              className="p-1.5 rounded-lg text-surface/40 hover:text-accent disabled:opacity-50"
+              aria-label="Régénérer ce bloc avec l'IA"
+              title="Régénérer ce bloc avec l'IA"
+            >
+              {isRegenerating ? (
+                <span className="block w-4 h-4 border-2 border-surface/20 border-t-accent rounded-full animate-spin" />
+              ) : (
+                <Wand2 className="w-4 h-4" />
+              )}
+            </button>
+          )}
+          <button
+            onClick={onToggleLock}
+            className={`p-1.5 rounded-lg ${locked ? 'text-accent hover:text-accent/70' : 'text-surface/40 hover:text-surface'}`}
+            aria-label={locked ? 'Déverrouiller ce bloc' : 'Verrouiller ce bloc'}
+            title={locked ? "Déverrouiller (l'IA pourra à nouveau le modifier)" : "Verrouiller (protège ce bloc des régénérations IA)"}
+          >
+            {locked ? <Lock className="w-4 h-4" /> : <Unlock className="w-4 h-4" />}
+          </button>
           <button onClick={onToggle} className={`p-1.5 rounded-lg ${isExpanded ? 'text-accent' : 'text-surface/40 hover:text-surface'}`}>
             <Pencil className="w-4 h-4" />
           </button>
@@ -158,6 +186,7 @@ export default function FunnelEditorPage() {
   ]);
   const [aiInput, setAiInput] = useState('');
   const [aiGenerating, setAiGenerating] = useState(false);
+  const [regeneratingBlockId, setRegeneratingBlockId] = useState(null);
   const [leadsCount, setLeadsCount] = useState(0);
   const [nameDraft, setNameDraft] = useState('');
   const [editingName, setEditingName] = useState(false);
@@ -211,6 +240,7 @@ export default function FunnelEditorPage() {
     invalid_input: 'Précise un peu plus ta demande.',
     ai_error: "L'IA n'a pas pu répondre pour le moment. Réessaie dans quelques instants.",
     parse_error: 'La modification a échoué. Réessaie avec une formulation différente.',
+    block_locked: 'Déverrouille ce bloc avant de le régénérer.',
     server_error: 'Une erreur est survenue. Réessaie.',
   };
 
@@ -389,6 +419,33 @@ export default function FunnelEditorPage() {
     } catch {
       setActionError('La duplication a échoué. Réessaie.');
     }
+  };
+
+  const handleToggleLock = async (block) => {
+    const nextLocked = !block.locked;
+    const next = blocks.map((b) => (b.id === block.id ? { ...b, locked: nextLocked } : b));
+    applyBlocks(next);
+    try {
+      await toggleBlockLock(block.id, nextLocked);
+    } catch {
+      applyBlocks(blocks);
+      setActionError('Le verrouillage a échoué. Réessaie.');
+    }
+  };
+
+  const handleRegenerateBlock = async (block) => {
+    if (regeneratingBlockId) return;
+    setRegeneratingBlockId(block.id);
+    setActionError('');
+    try {
+      const updated = await regenerateBlockWithAI(block.id);
+      const next = blocks.map((b) => (b.id === block.id ? { ...b, content: updated.content } : b));
+      applyBlocks(next);
+      pushHistory(next);
+    } catch (err) {
+      setActionError(AI_ERROR_MESSAGES[err.message] || AI_ERROR_MESSAGES.server_error);
+    }
+    setRegeneratingBlockId(null);
   };
 
   const handleBlockChange = async (block, newContent) => {
@@ -758,6 +815,10 @@ export default function FunnelEditorPage() {
                   onSelectElement={(elementKey, kind, label) => setSelection({ blockId: block.id, elementKey, kind, label })}
                   onSaveToLibrary={() => handleSaveToLibrary(block)}
                   canUseLibrary={plan.blockLibrary}
+                  onToggleLock={() => handleToggleLock(block)}
+                  onRegenerate={() => handleRegenerateBlock(block)}
+                  canRegenerate={plan.aiAccess}
+                  isRegenerating={regeneratingBlockId === block.id}
                 />
               ))}
             </div>

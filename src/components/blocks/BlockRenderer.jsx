@@ -10,6 +10,7 @@ import CountdownBlock from './CountdownBlock';
 import FaqBlock from './FaqBlock';
 import CtaBlock from './CtaBlock';
 import QuizBlock from './QuizBlock';
+import VideoBlock from './VideoBlock';
 import { getEditableProps, buildDesktopStyleTag } from '../../lib/blockStyle';
 
 const COMPONENTS = {
@@ -24,6 +25,7 @@ const COMPONENTS = {
   faq: FaqBlock,
   cta: CtaBlock,
   quiz: QuizBlock,
+  video: VideoBlock,
 };
 
 export default function BlockRenderer({ block, onAdvance, onSubmitLead, editMode, selectedElement, onSelectElement, onContentChange, userId }) {

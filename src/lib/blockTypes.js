@@ -1,6 +1,6 @@
 import {
   LayoutTemplate, Type, Image, LayoutGrid, MessageSquareQuote,
-  Tag, Mail, Timer, HelpCircle, MousePointerClick, ListChecks,
+  Tag, Mail, Timer, HelpCircle, MousePointerClick, ListChecks, Video,
 } from 'lucide-react';
 
 export const BLOCK_TYPES = [
@@ -118,6 +118,17 @@ export const BLOCK_TYPES = [
       items: [
         { question: 'Comment ça marche ?', answer: "Ajoute autant de questions que nécessaire pour rassurer tes visiteurs." },
       ],
+    }),
+  },
+  {
+    type: 'video',
+    label: 'Vidéo',
+    icon: Video,
+    tier: 'createur',
+    defaultContent: () => ({
+      heading: 'Regarde cette vidéo',
+      videoUrl: '',
+      description: '',
     }),
   },
   {

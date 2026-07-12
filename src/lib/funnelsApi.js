@@ -151,6 +151,10 @@ export async function updateBlock(blockId, content) {
   await apiPatch(`/blocks/${blockId}`, { content });
 }
 
+export async function toggleBlockLock(blockId, locked) {
+  return apiPatch(`/blocks/${blockId}`, { locked });
+}
+
 export async function deleteBlock(blockId) {
   await apiDelete(`/blocks/${blockId}`);
 }
