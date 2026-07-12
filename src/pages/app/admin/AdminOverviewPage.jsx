@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Users, Layers, Rocket, Mail, Shield, ArrowRight } from 'lucide-react';
-import { fetchAllProfiles, fetchAllFunnels, fetchAllLeadCounts, setAdminByEmail } from '../../../lib/adminApi';
+import { fetchAllProfiles, fetchAllFunnels, fetchAllLeadCounts, setAdminStatus } from '../../../lib/adminApi';
 import { useAuth } from '../../../context/AuthContext';
 import { PLAN_ORDER, getPlan } from '../../../lib/plans';
 
@@ -43,11 +43,13 @@ export default function AdminOverviewPage() {
     setMessage(null);
     setSubmitting(true);
     try {
-      await setAdminByEmail(email.trim(), true);
+      const target = profiles.find((p) => p.email.toLowerCase() === email.trim().toLowerCase());
+      if (!target) throw new Error('NOT_FOUND');
+      await setAdminStatus(target.id, true);
       setMessage({ type: 'success', text: `${email.trim()} est maintenant administrateur.` });
       setEmail('');
       await load();
-      if (email.trim() === user?.email) await refreshProfile();
+      if (email.trim().toLowerCase() === user?.email?.toLowerCase()) await refreshProfile();
     } catch (err) {
       setMessage({ type: 'error', text: err.message === 'NOT_FOUND' ? "Aucun compte avec cet email." : "Une erreur est survenue." });
     } finally {

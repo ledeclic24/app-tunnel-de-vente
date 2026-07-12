@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Search, Shield, ShieldOff } from 'lucide-react';
-import { fetchAllProfiles, updateUserPlanAsAdmin, setAdminByEmail } from '../../../lib/adminApi';
+import { fetchAllProfiles, updateUserPlanAsAdmin, setAdminStatus } from '../../../lib/adminApi';
 import { logPlanChange } from '../../../lib/plansApi';
 import { logAuditEvent } from '../../../lib/growthApi';
 import { useAuth } from '../../../context/AuthContext';
@@ -44,7 +44,7 @@ export default function AdminUsersPage() {
   const handleToggleAdmin = async (p) => {
     setBusyId(p.id);
     try {
-      await setAdminByEmail(p.email, !p.is_admin);
+      await setAdminStatus(p.id, !p.is_admin);
       await logAuditEvent({
         actorId: user?.id,
         action: p.is_admin ? 'admin.revoke' : 'admin.grant',
