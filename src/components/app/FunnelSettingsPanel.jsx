@@ -34,6 +34,46 @@ const STATUS_CLASS = {
   misconfigured: 'bg-red-500/10 text-red-500',
 };
 
+function DnsRow({ type, name, value }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <div className="grid grid-cols-[auto_1fr_auto] gap-3 items-center text-xs font-mono bg-primary/5 rounded-lg px-3 py-2">
+      <span className="text-surface/50 uppercase">{type}</span>
+      <span className="text-surface truncate">{name} → {value}</span>
+      <button
+        type="button"
+        onClick={() => { navigator.clipboard.writeText(value); setCopied(true); setTimeout(() => setCopied(false), 1500); }}
+        className="text-accent shrink-0"
+      >
+        {copied ? 'Copié' : 'Copier'}
+      </button>
+    </div>
+  );
+}
+
+// Valeurs A/CNAME renvoyées en direct par l'API Vercel (jamais codées en
+// dur ici, voir DomainsService côté serveur) — valables quel que soit le
+// registrar ou hébergeur DNS du domaine de l'utilisateur, seul le contrôle
+// des enregistrements DNS compte, pas l'endroit où le domaine a été acheté.
+function DnsInstructions({ verification }) {
+  const config = verification?.config;
+  const ipv4 = config?.recommendedIPv4?.[0]?.value?.[0];
+  const cname = config?.recommendedCNAME?.[0]?.value;
+  if (!ipv4 && !cname) {
+    return <p className="text-xs text-surface/50">Clique sur vérifier pour récupérer les enregistrements DNS à ajouter.</p>;
+  }
+  return (
+    <div className="space-y-2">
+      <p className="text-xs text-surface/50">
+        Ajoute UN de ces deux enregistrements chez ton hébergeur DNS (peu importe où le domaine a été acheté — OVH, Hostinger, GoDaddy, Namecheap...), selon que c'est un domaine racine ou un sous-domaine :
+      </p>
+      {ipv4 && <DnsRow type="A" name="Domaine racine (ex. masuperoffre.com) — nom : @" value={ipv4} />}
+      {cname && <DnsRow type="CNAME" name="Sous-domaine (ex. boutique.masuperoffre.com) — nom : boutique" value={cname} />}
+      <p className="text-xs text-surface/40">Puis clique sur vérifier — la propagation DNS peut prendre jusqu'à quelques heures.</p>
+    </div>
+  );
+}
+
 function DomainSection({ funnelId }) {
   const [domains, setDomains] = useState(null);
   const [newDomain, setNewDomain] = useState('');
@@ -105,11 +145,7 @@ function DomainSection({ funnelId }) {
               </button>
             </div>
           </div>
-          {d.status !== 'active' && (
-            <p className="text-xs text-surface/50">
-              Ajoute les enregistrements DNS indiqués par Vercel chez ton hébergeur de domaine, puis clique sur vérifier. Ça peut prendre jusqu'à quelques heures pour se propager.
-            </p>
-          )}
+          {d.status !== 'active' && <DnsInstructions verification={d.verification} />}
         </div>
       ))}
 
