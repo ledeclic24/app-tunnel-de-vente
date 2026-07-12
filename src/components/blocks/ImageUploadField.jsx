@@ -1,9 +1,12 @@
 import React, { useRef, useState } from 'react';
-import { ImageIcon, Upload } from 'lucide-react';
+import { ImageIcon, Upload, Wand2 } from 'lucide-react';
 import { uploadImage } from '../../lib/storage';
 import ImagePickerModal from '../app/ImagePickerModal';
 
-export default function ImageUploadField({ userId, value, onChange }) {
+// onGenerate/generating sont optionnels : sans eux, comportement inchangé
+// (upload + bibliothèque uniquement). Avec eux, un 3ᵉ bouton "Générer"
+// apparaît (couverture d'ebook, illustration de chapitre).
+export default function ImageUploadField({ userId, value, onChange, onGenerate, generating }) {
   const fileRef = useRef(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
@@ -54,6 +57,21 @@ export default function ImageUploadField({ userId, value, onChange }) {
         >
           <ImageIcon className="w-4 h-4" /> Mes visuels
         </button>
+        {onGenerate && (
+          <button
+            type="button"
+            onClick={onGenerate}
+            disabled={generating}
+            className="shrink-0 flex items-center gap-1.5 px-3 py-2.5 rounded-xl border border-surface/10 text-sm text-surface/70 hover:border-accent hover:text-accent transition-colors disabled:opacity-50"
+          >
+            {generating ? (
+              <span className="w-4 h-4 border-2 border-surface/20 border-t-accent rounded-full animate-spin" />
+            ) : (
+              <Wand2 className="w-4 h-4" />
+            )}
+            {generating ? 'Génération...' : 'Générer'}
+          </button>
+        )}
         <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFile} />
       </div>
       {error && <p className="text-xs text-red-500">{error}</p>}

@@ -2,8 +2,8 @@ import { apiGet, apiPost, apiPatch, apiDelete, getAccessToken } from './apiClien
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
-export async function generateOutline({ title, description, tone, language, length, brand }) {
-  return apiPost('/ebooks/generate-outline', { title, description, tone, language, length, brand });
+export async function generateOutline({ title, description, tone, language, length, brand, subtitle, authorName }) {
+  return apiPost('/ebooks/generate-outline', { title, description, tone, language, length, brand, subtitle, authorName });
 }
 
 export async function fetchEbooks() {
@@ -56,6 +56,16 @@ export async function bulkDeleteChapters(ebookId, chapterIds) {
 export async function generateMoreChapters(ebookId, { count, guidance }) {
   const { chapters } = await apiPost(`/ebooks/${ebookId}/chapters/generate-more`, { count, guidance });
   return chapters;
+}
+
+// Génération d'images (couverture / illustration de chapitre) — quota
+// image uniquement, voir EbooksService.generateCover/generateChapterImage.
+export async function generateCover(ebookId) {
+  return apiPost(`/ebooks/${ebookId}/generate-cover`);
+}
+
+export async function generateChapterImage(chapterId) {
+  return apiPost(`/ebooks/chapters/${chapterId}/generate-image`);
 }
 
 export async function fetchEbookUsageThisMonth() {

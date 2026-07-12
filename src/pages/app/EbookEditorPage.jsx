@@ -14,6 +14,7 @@ import {
   fetchEbook, updateEbook, addChapter, updateChapter, deleteChapter,
   reorderChapters, generateChapterContent, downloadEbookPdf,
   regenerateChapters, bulkDeleteChapters, generateMoreChapters,
+  generateCover, generateChapterImage,
 } from '../../lib/ebooksApi';
 import { useAuth } from '../../context/AuthContext';
 import ImageUploadField from '../../components/blocks/ImageUploadField';
@@ -28,6 +29,19 @@ const ERROR_MESSAGES = {
   cannot_delete_all: "Impossible de supprimer tous les chapitres d'un coup.",
 };
 
+// Messages dédiés pour generateCover/generateChapterImage : ces actions
+// consomment le quota d'IMAGES (ImagesService), pas le quota ebook — les
+// mêmes codes d'erreur (plan_required, limit_reached) veulent donc dire
+// autre chose ici que dans ERROR_MESSAGES ci-dessus.
+const IMAGE_ERROR_MESSAGES = {
+  plan_required: "La génération d'images nécessite le plan Pro ou Entreprise.",
+  limit_reached: "Tu as atteint ta limite de générations d'images ce mois-ci.",
+  invalid_input: 'Précise un peu plus le visuel souhaité.',
+  ai_error: "Le générateur d'images n'a pas pu répondre. Réessaie dans quelques instants.",
+  parse_error: 'La génération a échoué. Réessaie.',
+  server_error: 'Une erreur est survenue. Réessaie.',
+};
+
 const TONES = [
   { key: 'pro', label: 'Professionnel' },
   { key: 'storytelling', label: 'Storytelling' },
@@ -39,7 +53,10 @@ const LANGUAGES = [
   { key: 'en', label: 'Anglais' },
 ];
 
-function ChapterCard({ chapter, index, onGenerate, onUpdate, onDelete, generating, dragHandleProps, selected, onToggleSelect }) {
+function ChapterCard({
+  chapter, index, onGenerate, onUpdate, onDelete, generating, dragHandleProps, selected, onToggleSelect,
+  userId, onGenerateImage, imageGenerating,
+}) {
   const [editing, setEditing] = useState(false);
   const [title, setTitle] = useState(chapter.title);
   const [description, setDescription] = useState(chapter.description);
@@ -71,11 +88,26 @@ function ChapterCard({ chapter, index, onGenerate, onUpdate, onDelete, generatin
                 <button onClick={saveEdit} className="text-xs font-semibold text-accent">Enregistrer</button>
                 <button onClick={() => setEditing(false)} className="text-xs text-surface/50">Annuler</button>
               </div>
+              <div>
+                <label className="block text-xs font-semibold text-surface/50 uppercase tracking-wider mb-1.5">Illustration (optionnelle)</label>
+                <ImageUploadField
+                  userId={userId}
+                  value={chapter.imageUrl}
+                  onChange={(url) => onUpdate(chapter.id, { imageUrl: url })}
+                  onGenerate={() => onGenerateImage(chapter.id)}
+                  generating={imageGenerating}
+                />
+              </div>
             </div>
           ) : (
             <>
               <p className="font-semibold text-surface">{index + 1}. {chapter.title}</p>
               <p className="text-sm text-surface/50 mt-0.5">{chapter.description}</p>
+              {chapter.imageUrl && (
+                <div className="w-full h-24 mt-2 rounded-lg overflow-hidden bg-surface/5 border border-surface/10">
+                  <img src={chapter.imageUrl} alt="" className="w-full h-full object-cover" />
+                </div>
+              )}
               {chapter.content && (
                 <p className="text-xs text-surface/40 mt-2 line-clamp-3 whitespace-pre-line">{chapter.content}</p>
               )}
@@ -137,6 +169,8 @@ export default function EbookEditorPage() {
   const [showGenerateMore, setShowGenerateMore] = useState(false);
   const [moreCount, setMoreCount] = useState(3);
   const [moreGuidance, setMoreGuidance] = useState('');
+  const [coverGenerating, setCoverGenerating] = useState(false);
+  const [generatingImageId, setGeneratingImageId] = useState(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -163,6 +197,18 @@ export default function EbookEditorPage() {
       setError(ERROR_MESSAGES[err.message] || ERROR_MESSAGES.server_error);
     }
     setGeneratingId(null);
+  };
+
+  const handleGenerateChapterImage = async (chapterId) => {
+    setGeneratingImageId(chapterId);
+    setError('');
+    try {
+      const updated = await generateChapterImage(chapterId);
+      setChapters((prev) => prev.map((c) => (c.id === chapterId ? updated : c)));
+    } catch (err) {
+      setError(IMAGE_ERROR_MESSAGES[err.message] || IMAGE_ERROR_MESSAGES.server_error);
+    }
+    setGeneratingImageId(null);
   };
 
   const handleUpdateChapter = async (chapterId, patch) => {
@@ -300,6 +346,18 @@ export default function EbookEditorPage() {
     setEbook(updated);
   };
 
+  const handleGenerateCover = async () => {
+    setCoverGenerating(true);
+    setError('');
+    try {
+      const updated = await generateCover(ebookId);
+      setEbook(updated);
+    } catch (err) {
+      setError(IMAGE_ERROR_MESSAGES[err.message] || IMAGE_ERROR_MESSAGES.server_error);
+    }
+    setCoverGenerating(false);
+  };
+
   const handleDownload = async () => {
     setDownloading(true);
     setError('');
@@ -350,12 +408,18 @@ export default function EbookEditorPage() {
 
           <div>
             <label className="block text-xs font-semibold text-surface/50 uppercase tracking-wider mb-1.5">
-              Couverture (devient la 1ʳᵉ page du PDF, telle quelle)
+              Couverture (devient la 1ʳᵉ page du PDF)
             </label>
+            <p className="text-xs text-surface/40 mb-2">
+              Une image déposée ou choisie dans tes visuels est utilisée telle quelle. "Générer" crée un fond sans
+              texte à partir du titre/sous-titre et y compose le titre par-dessus.
+            </p>
             <ImageUploadField
               userId={effectiveOwnerId}
               value={ebook.coverImageUrl}
-              onChange={(url) => handleSaveSettings({ coverImageUrl: url })}
+              onChange={(url) => handleSaveSettings({ coverImageUrl: url, coverIsGenerated: false })}
+              onGenerate={handleGenerateCover}
+              generating={coverGenerating}
             />
           </div>
 
@@ -483,6 +547,9 @@ export default function EbookEditorPage() {
                 generating={generatingId === chapter.id}
                 selected={selectedIds.has(chapter.id)}
                 onToggleSelect={toggleSelect}
+                userId={effectiveOwnerId}
+                onGenerateImage={handleGenerateChapterImage}
+                imageGenerating={generatingImageId === chapter.id}
               />
             ))}
           </div>
