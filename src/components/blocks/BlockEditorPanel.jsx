@@ -5,6 +5,17 @@ import ImageUploadField from './ImageUploadField';
 const inputClass = "w-full bg-primary/5 border border-surface/10 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-accent transition-colors text-surface";
 const labelClass = "block text-xs font-semibold text-surface/70 uppercase tracking-wider mb-1";
 
+// Menu de type pour la génération d'image d'un bloc hero/image (Image, Box,
+// Ebook, Mockup, Mockup écran) — un choix de formulation de prompt côté
+// serveur (voir tunnel-image-prompts.ts), pas un nouveau type de bloc.
+const TUNNEL_IMAGE_TYPES = [
+  { key: 'photo', label: 'Image' },
+  { key: 'box', label: 'Coffret produit' },
+  { key: 'ebook-cover', label: 'Ebook' },
+  { key: 'mockup', label: 'Mockup' },
+  { key: 'mockup-screen', label: 'Mockup écran' },
+];
+
 function Field({ label, children }) {
   return (
     <div>
@@ -48,7 +59,7 @@ function ListEditor({ items, onChange, renderRow, emptyItem, addLabel }) {
   );
 }
 
-function BlockFields({ type, content, set, userId }) {
+function BlockFields({ type, content, set, userId, blockId, onGenerateImage, imageGenerating }) {
   switch (type) {
     case 'hero':
       return (
@@ -63,7 +74,14 @@ function BlockFields({ type, content, set, userId }) {
             <textarea className={inputClass} rows={2} value={content.subheading || ''} onChange={(e) => set({ subheading: e.target.value })} />
           </Field>
           <Field label="Image">
-            <ImageUploadField userId={userId} value={content.imageUrl} onChange={(imageUrl) => set({ imageUrl })} />
+            <ImageUploadField
+              userId={userId}
+              value={content.imageUrl}
+              onChange={(imageUrl) => set({ imageUrl })}
+              generateTypes={onGenerateImage ? TUNNEL_IMAGE_TYPES : undefined}
+              onGenerate={onGenerateImage ? (imageType) => onGenerateImage(blockId, imageType) : undefined}
+              generating={imageGenerating}
+            />
           </Field>
           <Field label="Texte du bouton (laisser vide pour masquer)">
             <input className={inputClass} value={content.ctaText || ''} onChange={(e) => set({ ctaText: e.target.value })} />
@@ -90,7 +108,14 @@ function BlockFields({ type, content, set, userId }) {
       return (
         <div className="space-y-4">
           <Field label="Image">
-            <ImageUploadField userId={userId} value={content.url} onChange={(url) => set({ url })} />
+            <ImageUploadField
+              userId={userId}
+              value={content.url}
+              onChange={(url) => set({ url })}
+              generateTypes={onGenerateImage ? TUNNEL_IMAGE_TYPES : undefined}
+              onGenerate={onGenerateImage ? (imageType) => onGenerateImage(blockId, imageType) : undefined}
+              generating={imageGenerating}
+            />
           </Field>
           <Field label="Légende (optionnel)">
             <input className={inputClass} value={content.caption || ''} onChange={(e) => set({ caption: e.target.value })} />
@@ -156,6 +181,10 @@ function BlockFields({ type, content, set, userId }) {
                   <textarea className={inputClass} placeholder="Citation" rows={2} value={item.quote || ''} onChange={(e) => update({ quote: e.target.value })} />
                   <input className={inputClass} placeholder="Nom" value={item.name || ''} onChange={(e) => update({ name: e.target.value })} />
                   <input className={inputClass} placeholder="Rôle (optionnel)" value={item.role || ''} onChange={(e) => update({ role: e.target.value })} />
+                  <div>
+                    <label className="block text-xs text-surface/50 mb-1.5">Capture d'écran (optionnel — remplace la citation si présente)</label>
+                    <ImageUploadField userId={userId} value={item.screenshotUrl} onChange={(screenshotUrl) => update({ screenshotUrl })} />
+                  </div>
                 </>
               )}
             />
@@ -302,13 +331,21 @@ function BlockFields({ type, content, set, userId }) {
   }
 }
 
-export default function BlockEditorPanel({ block, onChange, userId }) {
+export default function BlockEditorPanel({ block, onChange, userId, onGenerateImage, imageGenerating }) {
   const { type, content } = block;
   const set = (patch) => onChange({ ...content, ...patch });
 
   return (
     <div>
-      <BlockFields type={type} content={content} set={set} userId={userId} />
+      <BlockFields
+        type={type}
+        content={content}
+        set={set}
+        userId={userId}
+        blockId={block.id}
+        onGenerateImage={onGenerateImage}
+        imageGenerating={imageGenerating}
+      />
       <p className="pt-4 mt-2 border-t border-surface/10 text-xs text-surface/40">
         Astuce : cliquez directement sur un titre, un bouton, une image ou une carte dans l'aperçu ci-dessus pour personnaliser sa couleur, sa police et ses effets.
       </p>

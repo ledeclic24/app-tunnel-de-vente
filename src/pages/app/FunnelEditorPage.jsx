@@ -23,7 +23,7 @@ import { getPlan } from '../../lib/plans';
 import { brandStyleVars } from '../../lib/colorUtils';
 import { computeHealthScore } from '../../lib/healthScore';
 import { fetchReusableBlocks, saveReusableBlock, deleteReusableBlock, incrementReusableBlockUsage } from '../../lib/growthApi';
-import { editFunnelWithAI, regenerateBlockWithAI } from '../../lib/aiApi';
+import { editFunnelWithAI, regenerateBlockWithAI, generateBlockImageWithAI } from '../../lib/aiApi';
 import BlockRenderer from '../../components/blocks/BlockRenderer';
 import BlockEditorPanel from '../../components/blocks/BlockEditorPanel';
 import ElementStylePanel from '../../components/blocks/ElementStylePanel';
@@ -37,6 +37,7 @@ const HISTORY_LIMIT = 20;
 function BlockCard({
   block, onDelete, onDuplicate, isExpanded, onToggle, onChange, userId, selectedElement, onSelectElement,
   dragHandleProps, onSaveToLibrary, canUseLibrary, onToggleLock, onRegenerate, canRegenerate, isRegenerating,
+  onGenerateImage, isGeneratingImage,
 }) {
   const def = BLOCK_TYPES.find((b) => b.type === block.type);
   const Icon = def?.icon;
@@ -116,7 +117,13 @@ function BlockCard({
 
       {isExpanded && (
         <div className="border-t border-surface/10 p-5 bg-surface/[0.02]">
-          <BlockEditorPanel block={block} onChange={onChange} userId={userId} />
+          <BlockEditorPanel
+            block={block}
+            onChange={onChange}
+            userId={userId}
+            onGenerateImage={onGenerateImage}
+            imageGenerating={isGeneratingImage}
+          />
         </div>
       )}
     </div>
@@ -187,6 +194,7 @@ export default function FunnelEditorPage() {
   const [aiInput, setAiInput] = useState('');
   const [aiGenerating, setAiGenerating] = useState(false);
   const [regeneratingBlockId, setRegeneratingBlockId] = useState(null);
+  const [imageGeneratingBlockId, setImageGeneratingBlockId] = useState(null);
   const [leadsCount, setLeadsCount] = useState(0);
   const [nameDraft, setNameDraft] = useState('');
   const [editingName, setEditingName] = useState(false);
@@ -241,6 +249,18 @@ export default function FunnelEditorPage() {
     ai_error: "L'IA n'a pas pu répondre pour le moment. Réessaie dans quelques instants.",
     parse_error: 'La modification a échoué. Réessaie avec une formulation différente.',
     block_locked: 'Déverrouille ce bloc avant de le régénérer.',
+    server_error: 'Une erreur est survenue. Réessaie.',
+  };
+
+  // Messages dédiés au quota d'images (distinct du quota IA/texte ci-dessus)
+  // : un utilisateur avec du quota IA restant mais plus de quota image ne
+  // doit pas voir un message trompeur sur la limite de génération de texte.
+  const IMAGE_ERROR_MESSAGES = {
+    plan_required: "La génération d'images nécessite le plan Pro ou Entreprise.",
+    limit_reached: "Tu as atteint ta limite de générations d'images ce mois-ci.",
+    invalid_input: "Ce type de bloc ne supporte pas la génération d'image.",
+    ai_error: "Le générateur d'images n'a pas pu répondre. Réessaie dans quelques instants.",
+    parse_error: 'La génération a échoué. Réessaie.',
     server_error: 'Une erreur est survenue. Réessaie.',
   };
 
@@ -446,6 +466,21 @@ export default function FunnelEditorPage() {
       setActionError(AI_ERROR_MESSAGES[err.message] || AI_ERROR_MESSAGES.server_error);
     }
     setRegeneratingBlockId(null);
+  };
+
+  const handleGenerateBlockImage = async (blockId, imageType) => {
+    if (imageGeneratingBlockId) return;
+    setImageGeneratingBlockId(blockId);
+    setActionError('');
+    try {
+      const updated = await generateBlockImageWithAI(blockId, imageType);
+      const next = blocks.map((b) => (b.id === blockId ? { ...b, content: updated.content } : b));
+      applyBlocks(next);
+      pushHistory(next);
+    } catch (err) {
+      setActionError(IMAGE_ERROR_MESSAGES[err.message] || IMAGE_ERROR_MESSAGES.server_error);
+    }
+    setImageGeneratingBlockId(null);
   };
 
   const handleBlockChange = async (block, newContent) => {
@@ -819,6 +854,8 @@ export default function FunnelEditorPage() {
                   onRegenerate={() => handleRegenerateBlock(block)}
                   canRegenerate={plan.aiAccess}
                   isRegenerating={regeneratingBlockId === block.id}
+                  onGenerateImage={plan.aiAccess ? handleGenerateBlockImage : undefined}
+                  isGeneratingImage={imageGeneratingBlockId === block.id}
                 />
               ))}
             </div>

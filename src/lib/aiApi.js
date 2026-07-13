@@ -15,6 +15,11 @@ export async function regenerateBlockWithAI(blockId, instruction) {
   return block;
 }
 
+export async function generateBlockImageWithAI(blockId, imageType) {
+  const { block } = await apiPost(`/ai/blocks/${blockId}/generate-image`, { imageType });
+  return block;
+}
+
 export async function fetchAIUsageThisMonth(_userId) {
   const { count } = await apiGet('/ai/usage');
   return count || 0;

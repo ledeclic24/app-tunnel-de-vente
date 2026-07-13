@@ -44,10 +44,16 @@ export default function TestimonialsBlock({ content, editMode, selectedElement, 
               style={cardProps.style}
               onClick={cardProps.onClick}
             >
-              <Quote className="w-6 h-6 text-accent mb-3" />
-              <p className="text-surface/80 mb-4 outline-none" {...itemField(i, 'quote', item.quote)}>{item.quote}</p>
-              <p className="text-sm font-semibold text-surface outline-none" {...itemField(i, 'name', item.name)}>{item.name}</p>
-              {item.role && <p className="text-xs text-surface/50 outline-none" {...itemField(i, 'role', item.role)}>{item.role}</p>}
+              {item.screenshotUrl ? (
+                <img src={item.screenshotUrl} alt="" loading="lazy" className="w-full h-auto rounded-xl object-cover" />
+              ) : (
+                <>
+                  <Quote className="w-6 h-6 text-accent mb-3" />
+                  <p className="text-surface/80 mb-4 outline-none" {...itemField(i, 'quote', item.quote)}>{item.quote}</p>
+                  <p className="text-sm font-semibold text-surface outline-none" {...itemField(i, 'name', item.name)}>{item.name}</p>
+                  {item.role && <p className="text-xs text-surface/50 outline-none" {...itemField(i, 'role', item.role)}>{item.role}</p>}
+                </>
+              )}
             </div>
           );
         })}

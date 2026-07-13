@@ -5,12 +5,16 @@ import ImagePickerModal from '../app/ImagePickerModal';
 
 // onGenerate/generating sont optionnels : sans eux, comportement inchangé
 // (upload + bibliothèque uniquement). Avec eux, un 3ᵉ bouton "Générer"
-// apparaît (couverture d'ebook, illustration de chapitre).
-export default function ImageUploadField({ userId, value, onChange, onGenerate, generating }) {
+// apparaît (couverture d'ebook, illustration de chapitre). Si generateTypes
+// est fourni en plus (menu Image/Box/Ebook/Mockup pour les blocs de tunnel),
+// le bouton "Générer" ouvre d'abord un petit menu de types avant d'appeler
+// onGenerate(typeKey) — sinon onGenerate() est appelé directement sans argument.
+export default function ImageUploadField({ userId, value, onChange, onGenerate, generating, generateTypes }) {
   const fileRef = useRef(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
   const [showPicker, setShowPicker] = useState(false);
+  const [showTypeMenu, setShowTypeMenu] = useState(false);
 
   const handleFile = async (e) => {
     const file = e.target.files?.[0];
@@ -58,19 +62,35 @@ export default function ImageUploadField({ userId, value, onChange, onGenerate, 
           <ImageIcon className="w-4 h-4" /> Mes visuels
         </button>
         {onGenerate && (
-          <button
-            type="button"
-            onClick={onGenerate}
-            disabled={generating}
-            className="shrink-0 flex items-center gap-1.5 px-3 py-2.5 rounded-xl border border-surface/10 text-sm text-surface/70 hover:border-accent hover:text-accent transition-colors disabled:opacity-50"
-          >
-            {generating ? (
-              <span className="w-4 h-4 border-2 border-surface/20 border-t-accent rounded-full animate-spin" />
-            ) : (
-              <Wand2 className="w-4 h-4" />
+          <div className="relative shrink-0">
+            <button
+              type="button"
+              onClick={() => (generateTypes ? setShowTypeMenu((v) => !v) : onGenerate())}
+              disabled={generating}
+              className="flex items-center gap-1.5 px-3 py-2.5 rounded-xl border border-surface/10 text-sm text-surface/70 hover:border-accent hover:text-accent transition-colors disabled:opacity-50"
+            >
+              {generating ? (
+                <span className="w-4 h-4 border-2 border-surface/20 border-t-accent rounded-full animate-spin" />
+              ) : (
+                <Wand2 className="w-4 h-4" />
+              )}
+              {generating ? 'Génération...' : 'Générer'}
+            </button>
+            {showTypeMenu && !generating && (
+              <div className="absolute right-0 top-full mt-1 z-10 bg-background border border-surface/10 rounded-xl shadow-lg overflow-hidden min-w-[160px]">
+                {generateTypes.map((t) => (
+                  <button
+                    key={t.key}
+                    type="button"
+                    onClick={() => { setShowTypeMenu(false); onGenerate(t.key); }}
+                    className="w-full text-left px-3 py-2 text-sm text-surface/80 hover:bg-primary/5 hover:text-accent transition-colors"
+                  >
+                    {t.label}
+                  </button>
+                ))}
+              </div>
             )}
-            {generating ? 'Génération...' : 'Générer'}
-          </button>
+          </div>
         )}
         <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFile} />
       </div>

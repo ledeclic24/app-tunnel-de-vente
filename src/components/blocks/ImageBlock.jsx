@@ -39,6 +39,7 @@ export default function ImageBlock({ content, editMode, selectedElement, onSelec
           <img
             src={url}
             alt={alt || caption || ''}
+            loading="lazy"
             className={cx('w-full h-auto rounded-[2rem] object-cover', imageProps.className)}
             style={imageProps.style}
             onClick={handleImageClick}
