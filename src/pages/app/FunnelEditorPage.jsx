@@ -37,7 +37,7 @@ const HISTORY_LIMIT = 20;
 function BlockCard({
   block, onDelete, onDuplicate, isExpanded, onToggle, onChange, userId, selectedElement, onSelectElement,
   dragHandleProps, onSaveToLibrary, canUseLibrary, onToggleLock, onRegenerate, canRegenerate, isRegenerating,
-  onGenerateImage, isGeneratingImage,
+  onGenerateImage, isGeneratingImage, defaultBg,
 }) {
   const def = BLOCK_TYPES.find((b) => b.type === block.type);
   const Icon = def?.icon;
@@ -112,6 +112,7 @@ function BlockCard({
           onSelectElement={onSelectElement}
           onContentChange={onChange}
           userId={userId}
+          defaultBg={defaultBg}
         />
       </div>
 
@@ -836,10 +837,11 @@ export default function FunnelEditorPage() {
         <DndContext sensors={blockSensors} collisionDetection={closestCenter} onDragEnd={handleBlockDragEnd}>
           <SortableContext items={blocks.map((b) => b.id)} strategy={verticalListSortingStrategy}>
             <div className="space-y-4">
-              {blocks.map((block) => (
+              {blocks.map((block, blockIndex) => (
                 <SortableBlockCard
                   key={block.id}
                   block={block}
+                  defaultBg={blockIndex % 2 === 0 ? 'primary' : 'white'}
                   onDelete={() => handleDeleteBlock(block)}
                   onDuplicate={() => handleDuplicateBlock(block)}
                   isExpanded={expandedBlockId === block.id}

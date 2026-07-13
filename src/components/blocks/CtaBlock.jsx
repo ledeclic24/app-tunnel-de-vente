@@ -1,22 +1,23 @@
 import React from 'react';
 import { ArrowRight } from 'lucide-react';
-import { getButtonStyle, getEditableProps, getContentEditableProps, cx } from '../../lib/blockStyle';
+import { getButtonStyle, getEditableProps, getContentEditableProps, getSectionBackground, cx } from '../../lib/blockStyle';
 
-export default function CtaBlock({ content, onAdvance, editMode, selectedElement, onSelectElement, onContentChange }) {
+export default function CtaBlock({ content, onAdvance, editMode, selectedElement, onSelectElement, onContentChange, defaultBg }) {
   const { heading, buttonText, externalUrl } = content;
   const editable = (elementKey, kind, label) =>
     getEditableProps({ elementKey, kind, styles: content.styles, editMode, selectedElement, onSelectElement, label });
   const editableText = (field) => getContentEditableProps({ editMode, onContentChange, content, field });
+  const bg = getSectionBackground(content.styles, defaultBg || 'white');
 
   const headingProps = editable('heading', 'text', 'Titre');
   const buttonProps = editable('button', 'button', 'Bouton');
   const buttonStyle = { ...getButtonStyle(content.style), ...buttonProps.style };
 
   return (
-    <section className="px-6 py-16 md:px-16 md:py-20 text-center">
+    <section className={cx('px-6 py-16 md:px-16 md:py-20 text-center', bg.sectionClassName)}>
       {heading && (
         <h2
-          className={cx('font-serif italic text-3xl md:text-5xl text-surface mb-8 outline-none', headingProps.className)}
+          className={cx('font-serif italic text-3xl md:text-5xl mb-8 outline-none', bg.headingClassName, headingProps.className)}
           style={headingProps.style}
           onClick={headingProps.onClick}
           {...editableText('heading')}

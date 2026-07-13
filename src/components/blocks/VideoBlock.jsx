@@ -1,6 +1,6 @@
 import React from 'react';
 import { Video } from 'lucide-react';
-import { getEditableProps, getContentEditableProps, cx } from '../../lib/blockStyle';
+import { getEditableProps, getContentEditableProps, getSectionBackground, cx } from '../../lib/blockStyle';
 
 function toEmbedUrl(url) {
   if (!url) return null;
@@ -11,21 +11,22 @@ function toEmbedUrl(url) {
   return null;
 }
 
-export default function VideoBlock({ content, editMode, selectedElement, onSelectElement, onContentChange }) {
+export default function VideoBlock({ content, editMode, selectedElement, onSelectElement, onContentChange, defaultBg }) {
   const { heading, description, videoUrl } = content;
   const editable = (elementKey, kind, label) =>
     getEditableProps({ elementKey, kind, styles: content.styles, editMode, selectedElement, onSelectElement, label });
   const editableText = (field, multiline) => getContentEditableProps({ editMode, onContentChange, content, field, multiline });
+  const bg = getSectionBackground(content.styles, defaultBg || 'white');
 
   const headingProps = editable('heading', 'text', 'Titre');
   const descriptionProps = editable('description', 'text', 'Description');
   const embedUrl = toEmbedUrl(videoUrl);
 
   return (
-    <section className="px-6 py-12 md:px-16 md:py-16 max-w-3xl mx-auto text-center">
+    <section className={cx('px-6 py-12 md:px-16 md:py-16 max-w-3xl mx-auto text-center', bg.sectionClassName)}>
       {heading && (
         <h2
-          className={cx('font-sans font-bold text-2xl md:text-3xl text-surface mb-4 outline-none', headingProps.className)}
+          className={cx('font-sans font-bold text-2xl md:text-3xl mb-4 outline-none', bg.headingClassName, headingProps.className)}
           style={headingProps.style}
           onClick={headingProps.onClick}
           {...editableText('heading')}
@@ -56,7 +57,7 @@ export default function VideoBlock({ content, editMode, selectedElement, onSelec
 
       {description && (
         <p
-          className={cx('text-surface/70 text-base leading-relaxed whitespace-pre-line outline-none mt-4', descriptionProps.className)}
+          className={cx('text-base leading-relaxed whitespace-pre-line outline-none mt-4', bg.bodyClassName, descriptionProps.className)}
           style={descriptionProps.style}
           onClick={descriptionProps.onClick}
           {...editableText('description', true)}

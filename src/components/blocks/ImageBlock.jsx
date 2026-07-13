@@ -1,12 +1,13 @@
 import React, { useRef, useState } from 'react';
 import { ImagePlus } from 'lucide-react';
-import { getEditableProps, getContentEditableProps, cx } from '../../lib/blockStyle';
+import { getEditableProps, getContentEditableProps, getSectionBackground, cx } from '../../lib/blockStyle';
 import { uploadImage } from '../../lib/storage';
 
-export default function ImageBlock({ content, editMode, selectedElement, onSelectElement, onContentChange, userId }) {
+export default function ImageBlock({ content, editMode, selectedElement, onSelectElement, onContentChange, userId, defaultBg }) {
   const { url, caption, alt } = content;
   const imageProps = getEditableProps({ elementKey: 'image', kind: 'image', styles: content.styles, editMode, selectedElement, onSelectElement, label: 'Image' });
   const captionProps = getContentEditableProps({ editMode, onContentChange, content, field: 'caption' });
+  const bg = getSectionBackground(content.styles, defaultBg || 'white');
 
   const fileInputRef = useRef(null);
   const [uploading, setUploading] = useState(false);
@@ -33,7 +34,7 @@ export default function ImageBlock({ content, editMode, selectedElement, onSelec
   if (!url && !editMode) return null;
 
   return (
-    <section className="px-6 py-8 md:px-16 max-w-4xl mx-auto">
+    <section className={cx('px-6 py-8 md:px-16 max-w-4xl mx-auto', bg.sectionClassName)}>
       {url ? (
         <div className="relative group/img">
           <img
@@ -67,7 +68,7 @@ export default function ImageBlock({ content, editMode, selectedElement, onSelec
       )}
       {editMode && <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />}
       {(caption || editMode) && (
-        <p className="text-center text-sm text-surface/50 mt-3 outline-none" {...captionProps}>{caption}</p>
+        <p className={cx('text-center text-sm mt-3 outline-none', bg.isDark ? 'text-background/60' : 'text-surface/50')} {...captionProps}>{caption}</p>
       )}
     </section>
   );

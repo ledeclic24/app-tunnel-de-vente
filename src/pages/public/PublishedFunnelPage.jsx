@@ -121,8 +121,14 @@ export default function PublishedFunnelPage({ funnelSlugOverride } = {}) {
         {funnel.brand?.logoUrl && (
           <img src={funnel.brand.logoUrl} alt={funnel.name} className="h-10 mx-auto object-contain" />
         )}
-        {blocks.map((block) => (
-          <BlockRenderer key={block.id} block={block} onAdvance={handleAdvance} onSubmitLead={handleSubmitLead} />
+        {blocks.map((block, i) => (
+          <BlockRenderer
+            key={block.id}
+            block={block}
+            onAdvance={handleAdvance}
+            onSubmitLead={handleSubmitLead}
+            defaultBg={i % 2 === 0 ? 'primary' : 'white'}
+          />
         ))}
       </div>
       {funnel.show_branding && (

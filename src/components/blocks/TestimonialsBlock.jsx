@@ -1,11 +1,12 @@
 import React from 'react';
 import { Quote } from 'lucide-react';
-import { getEditableProps, getContentEditableProps, cx } from '../../lib/blockStyle';
+import { getEditableProps, getContentEditableProps, getSectionBackground, cx } from '../../lib/blockStyle';
 
-export default function TestimonialsBlock({ content, editMode, selectedElement, onSelectElement, onContentChange }) {
+export default function TestimonialsBlock({ content, editMode, selectedElement, onSelectElement, onContentChange, defaultBg }) {
   const { heading, items = [] } = content;
   const editable = (elementKey, kind, label) =>
     getEditableProps({ elementKey, kind, styles: content.styles, editMode, selectedElement, onSelectElement, label });
+  const bg = getSectionBackground(content.styles, defaultBg || 'white');
 
   const headingProps = editable('heading', 'text', 'Titre');
   const headingEditable = getContentEditableProps({ editMode, onContentChange, content, field: 'heading' });
@@ -23,10 +24,10 @@ export default function TestimonialsBlock({ content, editMode, selectedElement, 
   });
 
   return (
-    <section className="px-6 py-12 md:px-16 md:py-16 max-w-5xl mx-auto">
+    <section className={cx('px-6 py-12 md:px-16 md:py-16 max-w-5xl mx-auto', bg.sectionClassName)}>
       {heading && (
         <h2
-          className={cx('font-sans font-bold text-2xl md:text-3xl text-surface text-center mb-10 outline-none', headingProps.className)}
+          className={cx('font-sans font-bold text-2xl md:text-3xl text-center mb-10 outline-none', bg.headingClassName, headingProps.className)}
           style={headingProps.style}
           onClick={headingProps.onClick}
           {...headingEditable}

@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import { ArrowRight } from 'lucide-react';
-import { getEditableProps, getContentEditableProps, cx } from '../../lib/blockStyle';
+import { getEditableProps, getContentEditableProps, getSectionBackground, cx } from '../../lib/blockStyle';
 
-export default function QuizBlock({ content, onAdvance, editMode, selectedElement, onSelectElement, onContentChange }) {
+export default function QuizBlock({ content, onAdvance, editMode, selectedElement, onSelectElement, onContentChange, defaultBg }) {
   const { heading, questions = [], resultButtonText } = content;
   const [step, setStep] = useState(0);
   const editable = (elementKey, kind, label) =>
     getEditableProps({ elementKey, kind, styles: content.styles, editMode, selectedElement, onSelectElement, label });
   const editableText = (field) => getContentEditableProps({ editMode, onContentChange, content, field });
+  const bg = getSectionBackground(content.styles, defaultBg || 'white');
 
   const headingProps = editable('heading', 'text', 'Titre');
   const questionProps = editable('question', 'text', 'Question');
@@ -28,10 +29,10 @@ export default function QuizBlock({ content, onAdvance, editMode, selectedElemen
   const handleSelect = () => setStep((s) => s + 1);
 
   return (
-    <section className="px-6 py-12 md:px-16 md:py-16 max-w-2xl mx-auto">
+    <section className={cx('px-6 py-12 md:px-16 md:py-16 max-w-2xl mx-auto', bg.sectionClassName)}>
       {heading && (
         <h2
-          className={cx('font-sans font-bold text-2xl md:text-3xl text-surface text-center mb-8 outline-none', headingProps.className)}
+          className={cx('font-sans font-bold text-2xl md:text-3xl text-center mb-8 outline-none', bg.headingClassName, headingProps.className)}
           style={headingProps.style}
           onClick={headingProps.onClick}
           {...editableText('heading')}

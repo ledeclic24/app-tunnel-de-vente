@@ -133,6 +133,32 @@ export function getShadowClass(style) {
   return SHADOW_CLASSES[style?.shadow] || '';
 }
 
+export const SECTION_BACKGROUND_OPTIONS = [
+  { value: 'white', label: 'Blanc' },
+  { value: 'primary', label: 'Principale' },
+];
+
+// Alternance de fond primaire/blanc entre sections (cahier des charges
+// "tunnel standard") : chaque bloc reçoit un fond par défaut calculé selon
+// sa position dans la page (voir PublishedFunnelPage.jsx/BlockRenderer.jsx),
+// surchageable manuellement via styles.section.background. La couleur hex
+// libre existante (styles.section.bgColor) reste prioritaire et désactive
+// ce mécanisme de classe pour laisser sa valeur inline s'appliquer sans
+// concurrence (elle vit sur le wrapper englobant dans BlockRenderer.jsx).
+export function getSectionBackground(styles, defaultBg) {
+  const sectionStyle = styles?.section || {};
+  if (sectionStyle.bgColor) {
+    return { sectionClassName: '', headingClassName: 'text-surface', bodyClassName: 'text-surface/70', isDark: false };
+  }
+  const isDark = (sectionStyle.background || defaultBg) === 'primary';
+  return {
+    sectionClassName: isDark ? 'bg-primary text-background' : 'bg-background text-surface',
+    headingClassName: isDark ? 'text-background' : 'text-surface',
+    bodyClassName: isDark ? 'text-background/70' : 'text-surface/70',
+    isDark,
+  };
+}
+
 export function getButtonStyle(style) {
   const result = {};
   const bg = style?.bgColor ?? style?.buttonColor;

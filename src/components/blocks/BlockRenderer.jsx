@@ -11,7 +11,8 @@ import FaqBlock from './FaqBlock';
 import CtaBlock from './CtaBlock';
 import QuizBlock from './QuizBlock';
 import VideoBlock from './VideoBlock';
-import { getEditableProps, buildDesktopStyleTag } from '../../lib/blockStyle';
+import { getEditableProps, buildDesktopStyleTag, cx } from '../../lib/blockStyle';
+import useScrollReveal from '../../lib/useScrollReveal';
 
 const COMPONENTS = {
   hero: HeroBlock,
@@ -28,8 +29,9 @@ const COMPONENTS = {
   video: VideoBlock,
 };
 
-export default function BlockRenderer({ block, onAdvance, onSubmitLead, editMode, selectedElement, onSelectElement, onContentChange, userId }) {
+export default function BlockRenderer({ block, onAdvance, onSubmitLead, editMode, selectedElement, onSelectElement, onContentChange, userId, defaultBg }) {
   const Component = COMPONENTS[block.type];
+  const reveal = useScrollReveal(editMode);
   if (!Component) return null;
   const sectionProps = getEditableProps({
     elementKey: 'section',
@@ -46,8 +48,9 @@ export default function BlockRenderer({ block, onAdvance, onSubmitLead, editMode
     <>
       {responsiveCSS && <style>{responsiveCSS}</style>}
       <div
+        ref={reveal.ref}
         data-vk={sectionProps['data-vk']}
-        className={sectionProps.className ? `${sectionProps.className} rounded-[2rem]` : undefined}
+        className={cx(sectionProps.className, sectionProps.className ? 'rounded-[2rem]' : undefined, reveal.className)}
         style={sectionProps.style}
         onClick={sectionProps.onClick}
         onClickCapture={editMode ? (e) => e.preventDefault() : undefined}
@@ -61,6 +64,7 @@ export default function BlockRenderer({ block, onAdvance, onSubmitLead, editMode
           onSelectElement={onSelectElement}
           onContentChange={onContentChange}
           userId={userId}
+          defaultBg={defaultBg}
         />
       </div>
     </>

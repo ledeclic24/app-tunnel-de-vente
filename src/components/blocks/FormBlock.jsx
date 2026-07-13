@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { ArrowRight, CheckCircle2 } from 'lucide-react';
-import { getButtonStyle, getEditableProps, getContentEditableProps, cx } from '../../lib/blockStyle';
+import { getButtonStyle, getEditableProps, getContentEditableProps, getSectionBackground, cx } from '../../lib/blockStyle';
 
-export default function FormBlock({ content, onSubmitLead, onAdvance, editMode, selectedElement, onSelectElement, onContentChange }) {
+export default function FormBlock({ content, onSubmitLead, onAdvance, editMode, selectedElement, onSelectElement, onContentChange, defaultBg }) {
   const { headline, buttonText, successMessage } = content;
   const editable = (elementKey, kind, label) =>
     getEditableProps({ elementKey, kind, styles: content.styles, editMode, selectedElement, onSelectElement, label });
   const editableText = (field) => getContentEditableProps({ editMode, onContentChange, content, field });
+  const bg = getSectionBackground(content.styles, defaultBg || 'white');
 
   const headlineProps = editable('headline', 'text', 'Titre');
   const buttonProps = editable('button', 'button', 'Bouton');
@@ -39,7 +40,7 @@ export default function FormBlock({ content, onSubmitLead, onAdvance, editMode, 
   };
 
   return (
-    <section className="px-6 py-12 md:px-16 md:py-16 max-w-lg mx-auto">
+    <section className={cx('px-6 py-12 md:px-16 md:py-16 max-w-lg mx-auto', bg.sectionClassName)}>
       <div className="bg-background border border-surface/10 rounded-[2rem] p-8 shadow-sm text-center">
         {submitted ? (
           <div className="flex flex-col items-center gap-3 py-4">

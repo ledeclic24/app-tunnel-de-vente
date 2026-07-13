@@ -222,6 +222,23 @@ function BlockFields({ type, content, set, userId, blockId, onGenerateImage, ima
                     <input type="checkbox" checked={!!plan.highlight} onChange={(e) => update({ highlight: e.target.checked })} />
                     Mettre en avant
                   </label>
+                  <div>
+                    <label className="block text-xs text-surface/50 mb-1.5">
+                      Moyens de paiement (optionnel — colle tes propres liens de paiement déjà configurés ; sans lien, le bouton avance simplement à l'étape suivante)
+                    </label>
+                    <ListEditor
+                      items={plan.paymentLinks || []}
+                      onChange={(paymentLinks) => update({ paymentLinks })}
+                      emptyItem={{ method: '', url: '' }}
+                      addLabel="Ajouter un moyen de paiement"
+                      renderRow={(link, updateLink) => (
+                        <>
+                          <input className={inputClass} placeholder="Ex : Mobile Money, Carte bancaire..." value={link.method || ''} onChange={(e) => updateLink({ method: e.target.value })} />
+                          <input className={inputClass} placeholder="https://..." value={link.url || ''} onChange={(e) => updateLink({ url: e.target.value })} />
+                        </>
+                      )}
+                    />
+                  </div>
                 </>
               )}
             />

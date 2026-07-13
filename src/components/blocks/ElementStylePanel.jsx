@@ -3,7 +3,7 @@ import { X, Monitor, Smartphone } from 'lucide-react';
 import {
   SHADOW_OPTIONS, ROUNDED_OPTIONS, FONT_OPTIONS, FONT_WEIGHT_OPTIONS, TEXT_ALIGN_OPTIONS,
   LETTER_SPACING_OPTIONS, LINE_HEIGHT_OPTIONS, TEXT_TRANSFORM_OPTIONS, PADDING_OPTIONS,
-  SECTION_PADDING_OPTIONS, OBJECT_FIT_OPTIONS, BORDER_WIDTH_OPTIONS,
+  SECTION_PADDING_OPTIONS, OBJECT_FIT_OPTIONS, BORDER_WIDTH_OPTIONS, SECTION_BACKGROUND_OPTIONS,
 } from '../../lib/blockStyle';
 
 const inputClass = "w-full bg-primary/5 border border-surface/10 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-accent transition-colors text-surface";
@@ -169,7 +169,9 @@ export default function ElementStylePanel({ block, elementKey, kind, label, onCh
           device === 'mobile' ? (
             <>
               <Group label="Couleurs">
-                <ColorField label="Fond de la section" value={style.bgColor} defaultValue="#F6F9F7" onChange={(v) => setStyle({ bgColor: v })} onReset={() => setStyle({ bgColor: undefined })} />
+                <SegmentedField label="Fond de section" options={SECTION_BACKGROUND_OPTIONS} value={style.background} defaultValue="white" onChange={(v) => setStyle({ background: v })} />
+                <p className="text-[11px] text-surface/40 -mt-2">Par défaut, les sections alternent automatiquement blanc/principale le long de la page.</p>
+                <ColorField label="Fond personnalisé (remplace l'alternance)" value={style.bgColor} defaultValue="#F6F9F7" onChange={(v) => setStyle({ bgColor: v })} onReset={() => setStyle({ bgColor: undefined })} />
                 <ColorField label="Couleur du texte" value={style.textColor} defaultValue="#0C1F16" onChange={(v) => setStyle({ textColor: v })} onReset={() => setStyle({ textColor: undefined })} />
               </Group>
               <Group label="Mise en page">

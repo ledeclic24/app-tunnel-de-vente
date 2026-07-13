@@ -1,14 +1,15 @@
 import React from 'react';
 import { Check } from 'lucide-react';
-import { getEditableProps, getContentEditableProps, cx } from '../../lib/blockStyle';
+import { getEditableProps, getContentEditableProps, getSectionBackground, cx } from '../../lib/blockStyle';
 
 const GRID_COLS_CLASS = { 1: '', 2: 'md:grid-cols-2', 3: 'md:grid-cols-3' };
 
-export default function PricingBlock({ content, onAdvance, editMode, selectedElement, onSelectElement, onContentChange }) {
+export default function PricingBlock({ content, onAdvance, editMode, selectedElement, onSelectElement, onContentChange, defaultBg }) {
   const { heading, plans = [] } = content;
   const gridClass = GRID_COLS_CLASS[Math.min(plans.length, 3)] || '';
   const editable = (elementKey, kind, label) =>
     getEditableProps({ elementKey, kind, styles: content.styles, editMode, selectedElement, onSelectElement, label });
+  const bg = getSectionBackground(content.styles, defaultBg || 'white');
 
   const headingProps = editable('heading', 'text', 'Titre');
   const headingEditable = getContentEditableProps({ editMode, onContentChange, content, field: 'heading' });
@@ -30,10 +31,10 @@ export default function PricingBlock({ content, onAdvance, editMode, selectedEle
   });
 
   return (
-    <section className="px-6 py-12 md:px-16 md:py-16 max-w-5xl mx-auto">
+    <section className={cx('px-6 py-12 md:px-16 md:py-16 max-w-5xl mx-auto', bg.sectionClassName)}>
       {heading && (
         <h2
-          className={cx('font-sans font-bold text-2xl md:text-3xl text-surface text-center mb-10 outline-none', headingProps.className)}
+          className={cx('font-sans font-bold text-2xl md:text-3xl text-center mb-10 outline-none', bg.headingClassName, headingProps.className)}
           style={headingProps.style}
           onClick={headingProps.onClick}
           {...headingEditable}
@@ -60,16 +61,37 @@ export default function PricingBlock({ content, onAdvance, editMode, selectedEle
                 <span className="text-4xl font-bold outline-none" {...singleLine((v) => updatePlan(i, { price: v }))}>{plan.price}</span>
                 <span className={cx(plan.highlight ? 'text-background/60 text-sm' : 'text-surface/60 text-sm', 'outline-none')} {...singleLine((v) => updatePlan(i, { period: v }))}>{plan.period}</span>
               </div>
-              <button
-                onClick={editMode ? buttonProps.onClick : onAdvance}
-                style={buttonProps.style}
-                className={cx(
-                  `magnetic-btn w-full py-3 rounded-full font-semibold mb-6 ${plan.highlight ? 'bg-accent text-background' : 'bg-primary text-background'}`,
-                  buttonProps.className
-                )}
-              >
-                Choisir cette offre
-              </button>
+              {(plan.paymentLinks || []).length > 0 ? (
+                <div className="space-y-2 mb-6">
+                  {plan.paymentLinks.map((link, j) => (
+                    <a
+                      key={j}
+                      href={link.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      onClick={editMode ? (e) => { e.preventDefault(); buttonProps.onClick?.(e); } : undefined}
+                      style={j === 0 ? buttonProps.style : undefined}
+                      className={cx(
+                        `magnetic-btn block w-full text-center py-3 rounded-full font-semibold ${j === 0 ? (plan.highlight ? 'bg-accent text-background' : 'bg-primary text-background') : `border ${plan.highlight ? 'border-background/30 text-background' : 'border-surface/20 text-surface'}`}`,
+                        j === 0 ? buttonProps.className : undefined,
+                      )}
+                    >
+                      {link.method || 'Payer'}
+                    </a>
+                  ))}
+                </div>
+              ) : (
+                <button
+                  onClick={editMode ? buttonProps.onClick : onAdvance}
+                  style={buttonProps.style}
+                  className={cx(
+                    `magnetic-btn w-full py-3 rounded-full font-semibold mb-6 ${plan.highlight ? 'bg-accent text-background' : 'bg-primary text-background'}`,
+                    buttonProps.className
+                  )}
+                >
+                  Choisir cette offre
+                </button>
+              )}
               <div className="space-y-2">
                 {(plan.features || []).map((feat, j) => (
                   <div key={j} className="flex items-center gap-2 text-sm">

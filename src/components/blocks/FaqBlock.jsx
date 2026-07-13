@@ -1,11 +1,17 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { ChevronDown } from 'lucide-react';
-import { getEditableProps, getContentEditableProps, cx } from '../../lib/blockStyle';
+import { getEditableProps, getContentEditableProps, getSectionBackground, cx } from '../../lib/blockStyle';
 
-export default function FaqBlock({ content, editMode, selectedElement, onSelectElement, onContentChange }) {
+export default function FaqBlock({ content, editMode, selectedElement, onSelectElement, onContentChange, defaultBg }) {
   const { heading, items = [] } = content;
   const editable = (elementKey, kind, label) =>
     getEditableProps({ elementKey, kind, styles: content.styles, editMode, selectedElement, onSelectElement, label });
+  const bg = getSectionBackground(content.styles, defaultBg || 'white');
+  // Accordéon exclusif (cahier des charges "tunnel standard") : un seul
+  // élément ouvert à la fois. <details> natif ne le permet pas nativement
+  // (chaque élément gère son propre état) — on pilote donc l'attribut
+  // "open" nous-mêmes plutôt que de laisser le navigateur le faire.
+  const [openIndex, setOpenIndex] = useState(null);
 
   const headingProps = editable('heading', 'text', 'Titre');
   const headingEditable = getContentEditableProps({ editMode, onContentChange, content, field: 'heading' });
@@ -16,10 +22,10 @@ export default function FaqBlock({ content, editMode, selectedElement, onSelectE
   };
 
   return (
-    <section className="px-6 py-12 md:px-16 md:py-16 max-w-3xl mx-auto">
+    <section className={cx('px-6 py-12 md:px-16 md:py-16 max-w-3xl mx-auto', bg.sectionClassName)}>
       {heading && (
         <h2
-          className={cx('font-sans font-bold text-2xl md:text-3xl text-surface text-center mb-10 outline-none', headingProps.className)}
+          className={cx('font-sans font-bold text-2xl md:text-3xl text-center mb-10 outline-none', bg.headingClassName, headingProps.className)}
           style={headingProps.style}
           onClick={headingProps.onClick}
           {...headingEditable}
@@ -30,14 +36,28 @@ export default function FaqBlock({ content, editMode, selectedElement, onSelectE
       <div className="space-y-3">
         {items.map((item, i) => {
           const itemProps = editable(`faq-${i}`, 'card', `Question ${i + 1}`);
+          const isOpen = openIndex === i;
           return (
             <details
               key={i}
+              open={isOpen}
               className={cx('group bg-background border border-surface/10 rounded-2xl p-5 [&_summary::-webkit-details-marker]:hidden', itemProps.className)}
               style={itemProps.style}
               onClick={itemProps.onClick}
+              onToggle={(e) => {
+                if (e.currentTarget.open) setOpenIndex(i);
+                else if (isOpen) setOpenIndex(null);
+              }}
             >
-              <summary className="flex items-center justify-between cursor-pointer font-sans font-medium text-surface list-none">
+              <summary
+                className="flex items-center justify-between cursor-pointer font-sans font-medium text-surface list-none"
+                onClick={(e) => {
+                  // <details> bascule "open" tout seul avant qu'on l'intercepte ;
+                  // on gère nous-mêmes la fermeture des autres pour rester exclusif.
+                  e.preventDefault();
+                  setOpenIndex(isOpen ? null : i);
+                }}
+              >
                 <span
                   className="outline-none"
                   contentEditable={editMode}
