@@ -1,10 +1,21 @@
 import React from 'react';
 import { getEditableProps, getContentEditableProps, getSectionBackground, cx } from '../../lib/blockStyle';
-import BlockExtras from './BlockExtras';
+import SlotList, { SlotReadOnly } from './SlotList';
 import EditableItemImage from './EditableItemImage';
 
+function buildDefaultSlots(itemCount) {
+  const slots = [];
+  for (let i = 0; i < itemCount; i++) slots.push({ id: `field-item-${i}`, kind: 'field', field: `item-${i}` });
+  return slots;
+}
+function isSlotsValid(slots, itemCount) {
+  const fieldSlots = slots.filter((s) => s.kind === 'field').map((s) => s.field);
+  for (let i = 0; i < itemCount; i++) if (!fieldSlots.includes(`item-${i}`)) return false;
+  return fieldSlots.length === itemCount;
+}
+
 export default function BonusStackBlock({ content, editMode, selectedElement, onSelectElement, onContentChange, userId, defaultBg }) {
-  const { heading, items = [] } = content;
+  const { heading, items = [], slots } = content;
   const editable = (elementKey, kind, label) =>
     getEditableProps({ elementKey, kind, styles: content.styles, editMode, selectedElement, onSelectElement, label });
   const bg = getSectionBackground(content.styles, defaultBg || 'white');
@@ -24,6 +35,41 @@ export default function BonusStackBlock({ content, editMode, selectedElement, on
     onKeyDown: opts.multiline ? undefined : (e) => { if (e.key === 'Enter') { e.preventDefault(); e.currentTarget.blur(); } },
   });
 
+  const renderItem = (i) => {
+    const item = items[i];
+    if (!item) return null;
+    const cardProps = editable(`bonus-${i}`, 'card', `Bonus ${i + 1}`);
+    return (
+      <div
+        className={cx('bg-background border border-surface/10 rounded-[2rem] p-6 flex flex-col md:flex-row gap-6 items-center', cardProps.className)}
+        style={cardProps.style}
+        onClick={cardProps.onClick}
+      >
+        {item.imageUrl && (
+          <EditableItemImage
+            src={item.imageUrl}
+            userId={userId}
+            editMode={editMode}
+            onChange={(imageUrl) => updateItem(i, { imageUrl })}
+            className="w-full md:w-40 aspect-square rounded-xl object-cover shrink-0"
+          />
+        )}
+        <div>
+          <span className="text-xs font-bold uppercase tracking-wider text-accent">Bonus {i + 1}</span>
+          <h3 className="font-sans font-bold text-lg mt-1 mb-1 outline-none text-surface" {...itemField(i, 'title')}>{item.title}</h3>
+          <p className="text-sm text-surface/60 outline-none" {...itemField(i, 'description', { multiline: true })}>{item.description}</p>
+        </div>
+      </div>
+    );
+  };
+
+  const renderField = (field) => {
+    const m = /^item-(\d+)$/.exec(field);
+    return m ? renderItem(Number(m[1])) : null;
+  };
+
+  const effectiveSlots = slots && isSlotsValid(slots, items.length) ? slots : buildDefaultSlots(items.length);
+
   return (
     <section className={cx('px-6 py-12 md:px-16 md:py-16 max-w-4xl mx-auto', bg.sectionClassName)}>
       {heading && (
@@ -36,44 +82,23 @@ export default function BonusStackBlock({ content, editMode, selectedElement, on
           {heading}
         </h2>
       )}
-      <div className="space-y-6">
-        {items.map((item, i) => {
-          const cardProps = editable(`bonus-${i}`, 'card', `Bonus ${i + 1}`);
-          return (
-            <div
-              key={i}
-              className={cx('bg-background border border-surface/10 rounded-[2rem] p-6 flex flex-col md:flex-row gap-6 items-center', cardProps.className)}
-              style={cardProps.style}
-              onClick={cardProps.onClick}
-            >
-              {item.imageUrl && (
-                <EditableItemImage
-                  src={item.imageUrl}
-                  userId={userId}
-                  editMode={editMode}
-                  onChange={(imageUrl) => updateItem(i, { imageUrl })}
-                  className="w-full md:w-40 aspect-square rounded-xl object-cover shrink-0"
-                />
-              )}
-              <div>
-                <span className="text-xs font-bold uppercase tracking-wider text-accent">Bonus {i + 1}</span>
-                <h3 className="font-sans font-bold text-lg mt-1 mb-1 outline-none text-surface" {...itemField(i, 'title')}>{item.title}</h3>
-                <p className="text-sm text-surface/60 outline-none" {...itemField(i, 'description', { multiline: true })}>{item.description}</p>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-      <BlockExtras
-        extras={content.extras}
-        styles={content.styles}
-        onChange={(extras) => onContentChange?.({ ...content, extras })}
-        editMode={editMode}
-        selectedElement={selectedElement}
-        onSelectElement={onSelectElement}
-        bg={bg}
-        userId={userId}
-      />
+      {editMode ? (
+        <SlotList
+          slots={effectiveSlots}
+          onSlotsChange={(next) => onContentChange?.({ ...content, slots: next })}
+          renderField={renderField}
+          bg={bg}
+          userId={userId}
+          styles={content.styles}
+          editMode={editMode}
+          selectedElement={selectedElement}
+          onSelectElement={onSelectElement}
+        />
+      ) : (
+        <div className="space-y-6">
+          {effectiveSlots.map((slot) => <SlotReadOnly key={slot.id} slot={slot} renderField={renderField} bg={bg} />)}
+        </div>
+      )}
     </section>
   );
 }

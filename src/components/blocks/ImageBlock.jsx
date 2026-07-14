@@ -2,12 +2,23 @@ import React, { useRef, useState } from 'react';
 import { ImagePlus, Upload, Image as LibraryIcon, Wand2 } from 'lucide-react';
 import { getEditableProps, getContentEditableProps, getSectionBackground, cx } from '../../lib/blockStyle';
 import { uploadImage } from '../../lib/storage';
-import BlockExtras from './BlockExtras';
+import SlotList from './SlotList';
 import ImagePickerModal from '../app/ImagePickerModal';
 import { TUNNEL_IMAGE_TYPES } from './BlockEditorPanel';
 
+// L'image principale reste hors du système d'emplacements (comme pour
+// Hero) : c'est l'ancrage central du bloc, pas un élément de flux parmi
+// d'autres. Seule la légende est un emplacement réordonnable.
+function buildDefaultSlots() {
+  return [{ id: 'field-caption', kind: 'field', field: 'caption' }];
+}
+function isSlotsValid(slots) {
+  const fieldSlots = slots.filter((s) => s.kind === 'field').map((s) => s.field);
+  return fieldSlots.length === 1 && fieldSlots[0] === 'caption';
+}
+
 export default function ImageBlock({ content, editMode, selectedElement, onSelectElement, onContentChange, userId, defaultBg, onGenerateImage, imageGenerating }) {
-  const { url, caption, alt } = content;
+  const { url, caption, alt, slots } = content;
   const imageProps = getEditableProps({ elementKey: 'image', kind: 'image', styles: content.styles, editMode, selectedElement, onSelectElement, label: 'Image' });
   const captionProps = getContentEditableProps({ editMode, onContentChange, content, field: 'caption' });
   const bg = getSectionBackground(content.styles, defaultBg || 'white');
@@ -97,7 +108,16 @@ export default function ImageBlock({ content, editMode, selectedElement, onSelec
     </>
   );
 
-  if (!url && !editMode && !(content.extras?.length > 0)) return null;
+  const renderField = (field) => {
+    if (field !== 'caption') return null;
+    return (caption || editMode) ? (
+      <p className={cx('text-center text-sm outline-none', bg.isDark ? 'text-background/60' : 'text-surface/50')} {...captionProps}>{caption}</p>
+    ) : null;
+  };
+
+  const effectiveSlots = slots && isSlotsValid(slots) ? slots : buildDefaultSlots();
+  const hasFreeContent = (slots || []).some((s) => s.kind !== 'field' && (s.kind !== 'container' || s.items?.length > 0)) || (content.extras?.length > 0);
+  if (!url && !editMode && !hasFreeContent) return null;
 
   return (
     <section className={cx('px-6 py-8 md:px-16 max-w-4xl mx-auto', bg.sectionClassName)}>
@@ -136,19 +156,19 @@ export default function ImageBlock({ content, editMode, selectedElement, onSelec
           </div>
         )
       )}
-      {(caption || editMode) && (
-        <p className={cx('text-center text-sm mt-3 outline-none', bg.isDark ? 'text-background/60' : 'text-surface/50')} {...captionProps}>{caption}</p>
-      )}
-      <BlockExtras
-        extras={content.extras}
-        styles={content.styles}
-        onChange={(extras) => onContentChange?.({ ...content, extras })}
-        editMode={editMode}
-        selectedElement={selectedElement}
-        onSelectElement={onSelectElement}
-        bg={bg}
-        userId={userId}
-      />
+      <div className="mt-3">
+        <SlotList
+          slots={effectiveSlots}
+          onSlotsChange={(next) => onContentChange?.({ ...content, slots: next })}
+          renderField={renderField}
+          bg={bg}
+          userId={userId}
+          styles={content.styles}
+          editMode={editMode}
+          selectedElement={selectedElement}
+          onSelectElement={onSelectElement}
+        />
+      </div>
     </section>
   );
 }

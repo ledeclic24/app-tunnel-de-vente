@@ -2,16 +2,40 @@ import React, { useRef, useState } from 'react';
 import { ArrowRight, ImagePlus, Upload, Image as LibraryIcon, Wand2 } from 'lucide-react';
 import { getButtonStyle, getEditableProps, getContentEditableProps, cx } from '../../lib/blockStyle';
 import { uploadImage } from '../../lib/storage';
-import BlockExtras from './BlockExtras';
+import SlotList from './SlotList';
 import ImagePickerModal from '../app/ImagePickerModal';
 import { TUNNEL_IMAGE_TYPES } from './BlockEditorPanel';
 
+// L'image de Hero reste hors du système d'emplacements dans les deux
+// mises en page : en plein cadre (overlay) c'est un arrière-plan absolu,
+// pas un élément de flux ; en côte-à-côte (split) elle occupe sa propre
+// colonne de grille, pas une position "avant/après" par rapport au
+// texte. Seuls les éléments de la colonne de texte (eyebrow, titre,
+// sous-titre, bouton, badges de confiance) sont réordonnables entre eux
+// et avec des extras insérés.
+function buildDefaultSlots(hasTrustBadges) {
+  const slots = [
+    { id: 'field-eyebrow', kind: 'field', field: 'eyebrow' },
+    { id: 'field-heading', kind: 'field', field: 'heading' },
+    { id: 'field-subheading', kind: 'field', field: 'subheading' },
+    { id: 'field-cta', kind: 'field', field: 'cta' },
+  ];
+  if (hasTrustBadges) slots.push({ id: 'field-trustBadges', kind: 'field', field: 'trustBadges' });
+  return slots;
+}
+
+function isSlotsValid(slots, hasTrustBadges) {
+  const fieldSlots = slots.filter((s) => s.kind === 'field').map((s) => s.field);
+  const expected = ['eyebrow', 'heading', 'subheading', 'cta', ...(hasTrustBadges ? ['trustBadges'] : [])];
+  return expected.every((f) => fieldSlots.includes(f)) && fieldSlots.length === expected.length;
+}
+
 export default function HeroBlock({ content, onAdvance, editMode, selectedElement, onSelectElement, onContentChange, userId, onGenerateImage, imageGenerating }) {
-  const { eyebrow, heading, subheading, imageUrl, ctaText, externalUrl, layout, trustBadges = [] } = content;
+  const { eyebrow, heading, subheading, imageUrl, ctaText, externalUrl, layout, trustBadges = [], slots } = content;
   const isSplit = layout === 'split';
   // Hero est toujours sombre (bg-primary), quelle que soit sa position —
   // pas de calcul via getSectionBackground ici, donc un objet "bg" de
-  // substitution pour que BlockExtras hérite du bon contraste de texte.
+  // substitution pour que SlotList hérite du bon contraste de texte.
   const heroBg = { headingClassName: 'text-background', bodyClassName: 'text-background/70', isDark: true };
   const editable = (elementKey, kind, label) =>
     getEditableProps({ elementKey, kind, styles: content.styles, editMode, selectedElement, onSelectElement, label });
@@ -135,6 +159,55 @@ export default function HeroBlock({ content, onAdvance, editMode, selectedElemen
     </>
   );
 
+  const renderField = (field) => {
+    if (field === 'eyebrow') return eyebrow ? (
+      <span className="inline-block mb-4 px-3 py-1 rounded-full bg-accent/20 text-accent text-xs font-mono uppercase tracking-wider">{eyebrow}</span>
+    ) : null;
+    if (field === 'heading') return (
+      <h1
+        className={cx('font-sans font-bold text-3xl leading-tight mb-4 outline-none', isSplit ? 'md:text-4xl' : 'md:text-5xl', headingProps.className)}
+        style={headingProps.style}
+        onClick={headingProps.onClick}
+        {...editableText('heading')}
+      >
+        {heading}
+      </h1>
+    );
+    if (field === 'subheading') return subheading ? (
+      <p
+        className={cx('text-background/70 text-lg outline-none', isSplit ? 'mb-6' : 'mb-8 max-w-xl', subheadingProps.className)}
+        style={subheadingProps.style}
+        onClick={subheadingProps.onClick}
+        {...editableText('subheading', true)}
+      >
+        {subheading}
+      </p>
+    ) : null;
+    if (field === 'cta') return cta;
+    if (field === 'trustBadges') return trustBadges.length > 0 ? (
+      <div className="flex flex-wrap gap-x-4 gap-y-1 mt-6 text-xs text-background/60">
+        {trustBadges.map((b, i) => <span key={i}>{b}</span>)}
+      </div>
+    ) : null;
+    return null;
+  };
+
+  const effectiveSlots = slots && isSlotsValid(slots, isSplit) ? slots : buildDefaultSlots(isSplit);
+
+  const textColumn = (
+    <SlotList
+      slots={effectiveSlots}
+      onSlotsChange={(next) => onContentChange?.({ ...content, slots: next })}
+      renderField={renderField}
+      bg={heroBg}
+      userId={userId}
+      styles={content.styles}
+      editMode={editMode}
+      selectedElement={selectedElement}
+      onSelectElement={onSelectElement}
+    />
+  );
+
   if (isSplit) {
     return (
       <section className="rounded-[2rem] bg-primary text-background overflow-hidden">
@@ -167,45 +240,7 @@ export default function HeroBlock({ content, onAdvance, editMode, selectedElemen
             {imageMenu}
           </div>
           <div className="px-6 py-12 md:px-12 md:py-16">
-            {eyebrow && (
-              <span className="inline-block mb-4 px-3 py-1 rounded-full bg-accent/20 text-accent text-xs font-mono uppercase tracking-wider">
-                {eyebrow}
-              </span>
-            )}
-            <h1
-              className={cx('font-sans font-bold text-3xl md:text-4xl leading-tight mb-4 outline-none', headingProps.className)}
-              style={headingProps.style}
-              onClick={headingProps.onClick}
-              {...editableText('heading')}
-            >
-              {heading}
-            </h1>
-            {subheading && (
-              <p
-                className={cx('text-background/70 text-lg mb-6 outline-none', subheadingProps.className)}
-                style={subheadingProps.style}
-                onClick={subheadingProps.onClick}
-                {...editableText('subheading', true)}
-              >
-                {subheading}
-              </p>
-            )}
-            {cta}
-            {trustBadges.length > 0 && (
-              <div className="flex flex-wrap gap-x-4 gap-y-1 mt-6 text-xs text-background/60">
-                {trustBadges.map((b, i) => <span key={i}>{b}</span>)}
-              </div>
-            )}
-            <BlockExtras
-              extras={content.extras}
-              styles={content.styles}
-              onChange={(extras) => onContentChange?.({ ...content, extras })}
-              editMode={editMode}
-              selectedElement={selectedElement}
-              onSelectElement={onSelectElement}
-              bg={heroBg}
-              userId={userId}
-            />
+            {textColumn}
           </div>
         </div>
       </section>
@@ -237,40 +272,7 @@ export default function HeroBlock({ content, onAdvance, editMode, selectedElemen
         </div>
       )}
       <div className="relative z-10 px-6 py-16 md:px-16 md:py-24 max-w-3xl">
-        {eyebrow && (
-          <span className="inline-block mb-4 px-3 py-1 rounded-full bg-accent/20 text-accent text-xs font-mono uppercase tracking-wider">
-            {eyebrow}
-          </span>
-        )}
-        <h1
-          className={cx('font-sans font-bold text-3xl md:text-5xl leading-tight mb-4 outline-none', headingProps.className)}
-          style={headingProps.style}
-          onClick={headingProps.onClick}
-          {...editableText('heading')}
-        >
-          {heading}
-        </h1>
-        {subheading && (
-          <p
-            className={cx('text-background/70 text-lg mb-8 max-w-xl outline-none', subheadingProps.className)}
-            style={subheadingProps.style}
-            onClick={subheadingProps.onClick}
-            {...editableText('subheading', true)}
-          >
-            {subheading}
-          </p>
-        )}
-        {cta}
-        <BlockExtras
-          extras={content.extras}
-          styles={content.styles}
-          onChange={(extras) => onContentChange?.({ ...content, extras })}
-          editMode={editMode}
-          selectedElement={selectedElement}
-          onSelectElement={onSelectElement}
-          bg={heroBg}
-          userId={userId}
-        />
+        {textColumn}
       </div>
     </section>
   );

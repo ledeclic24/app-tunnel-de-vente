@@ -1,9 +1,14 @@
 import React from 'react';
 import { getEditableProps, getContentEditableProps, getSectionBackground, cx } from '../../lib/blockStyle';
-import BlockExtras from './BlockExtras';
+import SlotList from './SlotList';
+
+const DEFAULT_SLOTS = [
+  { id: 'field-heading', kind: 'field', field: 'heading' },
+  { id: 'field-body', kind: 'field', field: 'body' },
+];
 
 export default function TextBlock({ content, editMode, selectedElement, onSelectElement, onContentChange, userId, defaultBg }) {
-  const { heading, body } = content;
+  const { heading, body, slots } = content;
   const editable = (elementKey, kind, label) =>
     getEditableProps({ elementKey, kind, styles: content.styles, editMode, selectedElement, onSelectElement, label });
   const editableText = (field, multiline) => getContentEditableProps({ editMode, onContentChange, content, field, multiline });
@@ -12,9 +17,9 @@ export default function TextBlock({ content, editMode, selectedElement, onSelect
   const headingProps = editable('heading', 'text', 'Titre');
   const bodyProps = editable('body', 'text', 'Texte');
 
-  return (
-    <section className={cx('px-6 py-12 md:px-16 md:py-16 max-w-3xl mx-auto text-center', bg.sectionClassName)}>
-      {heading && (
+  const renderField = (field) => {
+    if (field === 'heading') {
+      return heading ? (
         <h2
           className={cx('font-sans font-bold text-2xl md:text-3xl mb-4 outline-none', bg.headingClassName, headingProps.className)}
           style={headingProps.style}
@@ -23,8 +28,10 @@ export default function TextBlock({ content, editMode, selectedElement, onSelect
         >
           {heading}
         </h2>
-      )}
-      {body && (
+      ) : null;
+    }
+    if (field === 'body') {
+      return body ? (
         <p
           className={cx('text-lg leading-relaxed whitespace-pre-line outline-none', bg.bodyClassName, bodyProps.className)}
           style={bodyProps.style}
@@ -33,16 +40,23 @@ export default function TextBlock({ content, editMode, selectedElement, onSelect
         >
           {body}
         </p>
-      )}
-      <BlockExtras
-        extras={content.extras}
+      ) : null;
+    }
+    return null;
+  };
+
+  return (
+    <section className={cx('px-6 py-12 md:px-16 md:py-16 max-w-3xl mx-auto text-center', bg.sectionClassName)}>
+      <SlotList
+        slots={slots || DEFAULT_SLOTS}
+        onSlotsChange={(next) => onContentChange?.({ ...content, slots: next })}
+        renderField={renderField}
+        bg={bg}
+        userId={userId}
         styles={content.styles}
-        onChange={(extras) => onContentChange?.({ ...content, extras })}
         editMode={editMode}
         selectedElement={selectedElement}
         onSelectElement={onSelectElement}
-        bg={bg}
-        userId={userId}
       />
     </section>
   );
