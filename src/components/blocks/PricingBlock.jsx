@@ -2,6 +2,7 @@ import React from 'react';
 import { Check, X } from 'lucide-react';
 import { getEditableProps, getContentEditableProps, getSectionBackground, cx } from '../../lib/blockStyle';
 import BlockExtras from './BlockExtras';
+import EditableItemImage from './EditableItemImage';
 
 const GRID_COLS_CLASS = { 1: '', 2: 'md:grid-cols-2', 3: 'md:grid-cols-3' };
 
@@ -90,7 +91,13 @@ export default function PricingBlock({ content, onAdvance, editMode, selectedEle
                 </span>
               )}
               {plan.imageUrl && (
-                <img src={plan.imageUrl} alt="" loading="lazy" className="w-full h-auto rounded-xl object-cover mb-5" />
+                <EditableItemImage
+                  src={plan.imageUrl}
+                  userId={userId}
+                  editMode={editMode}
+                  onChange={(imageUrl) => updatePlan(i, { imageUrl })}
+                  className="w-full h-auto rounded-xl object-cover mb-5"
+                />
               )}
               <h3 className="font-sans text-xl mb-2 outline-none" {...singleLine((v) => updatePlan(i, { name: v }))}>{plan.name}</h3>
               {plan.originalPrice && (

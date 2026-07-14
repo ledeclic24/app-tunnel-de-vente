@@ -2,6 +2,7 @@ import React from 'react';
 import { Quote } from 'lucide-react';
 import { getEditableProps, getContentEditableProps, getSectionBackground, cx } from '../../lib/blockStyle';
 import BlockExtras from './BlockExtras';
+import EditableItemImage from './EditableItemImage';
 
 export default function TestimonialsBlock({ content, editMode, selectedElement, onSelectElement, onContentChange, userId, defaultBg }) {
   const { heading, items = [], layout } = content;
@@ -52,7 +53,13 @@ export default function TestimonialsBlock({ content, editMode, selectedElement, 
               onClick={cardProps.onClick}
             >
               {item.screenshotUrl ? (
-                <img src={item.screenshotUrl} alt="" loading="lazy" className="w-full h-auto rounded-xl object-cover" />
+                <EditableItemImage
+                  src={item.screenshotUrl}
+                  userId={userId}
+                  editMode={editMode}
+                  onChange={(screenshotUrl) => updateItem(i, { screenshotUrl })}
+                  className="w-full h-auto rounded-xl object-cover"
+                />
               ) : (
                 <>
                   <Quote className="w-6 h-6 text-accent mb-3" />

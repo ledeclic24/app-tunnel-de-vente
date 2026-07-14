@@ -8,7 +8,7 @@ const labelClass = "block text-xs font-semibold text-surface/70 uppercase tracki
 // Menu de type pour la génération d'image d'un bloc hero/image (Image, Box,
 // Ebook, Mockup, Mockup écran) — un choix de formulation de prompt côté
 // serveur (voir tunnel-image-prompts.ts), pas un nouveau type de bloc.
-const TUNNEL_IMAGE_TYPES = [
+export const TUNNEL_IMAGE_TYPES = [
   { key: 'photo', label: 'Image' },
   { key: 'box', label: 'Coffret produit' },
   { key: 'ebook-cover', label: 'Ebook' },

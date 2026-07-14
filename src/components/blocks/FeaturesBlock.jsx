@@ -2,6 +2,7 @@ import React from 'react';
 import { Check } from 'lucide-react';
 import { getEditableProps, getContentEditableProps, getSectionBackground, cx } from '../../lib/blockStyle';
 import BlockExtras from './BlockExtras';
+import EditableItemImage from './EditableItemImage';
 
 export default function FeaturesBlock({ content, editMode, selectedElement, onSelectElement, onContentChange, userId, defaultBg }) {
   const { heading, items = [], layout } = content;
@@ -43,7 +44,13 @@ export default function FeaturesBlock({ content, editMode, selectedElement, onSe
                 onClick={cardProps.onClick}
               >
                 <div className={cx('rounded-[2rem] overflow-hidden bg-primary/5 aspect-video', reversed && 'md:order-2')}>
-                  {item.imageUrl && <img src={item.imageUrl} alt="" loading="lazy" className="w-full h-full object-cover" />}
+                  <EditableItemImage
+                    src={item.imageUrl}
+                    userId={userId}
+                    editMode={editMode}
+                    onChange={(imageUrl) => updateItem(i, { imageUrl })}
+                    className="w-full h-full object-cover"
+                  />
                 </div>
                 <div className={reversed ? 'md:order-1' : undefined}>
                   <h3

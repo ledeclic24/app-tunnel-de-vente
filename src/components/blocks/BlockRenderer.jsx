@@ -43,9 +43,13 @@ const COMPONENTS = {
 
 export default function BlockRenderer({
   block, onAdvance, onSubmitLead, editMode, selectedElement, onSelectElement, onContentChange, userId, defaultBg,
-  siblingSteps, onNavigateToStep, currentStepSlug,
+  siblingSteps, onNavigateToStep, currentStepSlug, onGenerateImage, isGeneratingImage,
 }) {
   const Component = COMPONENTS[block.type];
+  // Reçu depuis FunnelEditorPage lié à un blockId générique ; on le relie ici
+  // à CE bloc précis pour que HeroBlock/ImageBlock puissent l'appeler
+  // directement au clic sur l'image, sans connaître leur propre id.
+  const generateImage = onGenerateImage ? (imageType) => onGenerateImage(block.id, imageType) : undefined;
   const reveal = useScrollReveal(editMode);
   if (!Component) return null;
   const sectionProps = getEditableProps({
@@ -83,6 +87,8 @@ export default function BlockRenderer({
           siblingSteps={siblingSteps}
           onNavigateToStep={onNavigateToStep}
           currentStepSlug={currentStepSlug}
+          onGenerateImage={generateImage}
+          imageGenerating={isGeneratingImage}
         />
       </div>
     </>

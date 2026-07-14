@@ -1,10 +1,12 @@
 import React, { useRef, useState } from 'react';
-import { ArrowRight, ImagePlus } from 'lucide-react';
+import { ArrowRight, ImagePlus, Upload, Image as LibraryIcon, Wand2 } from 'lucide-react';
 import { getButtonStyle, getEditableProps, getContentEditableProps, cx } from '../../lib/blockStyle';
 import { uploadImage } from '../../lib/storage';
 import BlockExtras from './BlockExtras';
+import ImagePickerModal from '../app/ImagePickerModal';
+import { TUNNEL_IMAGE_TYPES } from './BlockEditorPanel';
 
-export default function HeroBlock({ content, onAdvance, editMode, selectedElement, onSelectElement, onContentChange, userId }) {
+export default function HeroBlock({ content, onAdvance, editMode, selectedElement, onSelectElement, onContentChange, userId, onGenerateImage, imageGenerating }) {
   const { eyebrow, heading, subheading, imageUrl, ctaText, externalUrl, layout, trustBadges = [] } = content;
   const isSplit = layout === 'split';
   // Hero est toujours sombre (bg-primary), quelle que soit sa position —
@@ -23,10 +25,13 @@ export default function HeroBlock({ content, onAdvance, editMode, selectedElemen
 
   const fileInputRef = useRef(null);
   const [uploading, setUploading] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
+  const [showPicker, setShowPicker] = useState(false);
+  const [showTypeMenu, setShowTypeMenu] = useState(false);
 
   const handleImageClick = (e) => {
     imageProps.onClick?.(e);
-    if (editMode) fileInputRef.current?.click();
+    if (editMode) setShowMenu((v) => !v);
   };
 
   const handleFileChange = async (e) => {
@@ -70,8 +75,64 @@ export default function HeroBlock({ content, onAdvance, editMode, selectedElemen
     )
   );
 
-  const imagePicker = editMode && (
-    <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
+  const imageMenu = editMode && (
+    <>
+      <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
+      {showMenu && (
+        <div
+          className="absolute top-3 right-3 z-30 bg-background border border-surface/10 rounded-xl shadow-lg overflow-hidden min-w-[220px]"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <button
+            type="button"
+            onClick={() => { setShowMenu(false); fileInputRef.current?.click(); }}
+            className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-surface/80 hover:bg-primary/5 hover:text-accent text-left"
+          >
+            <Upload className="w-4 h-4 shrink-0" /> {uploading ? 'Envoi...' : 'Importer depuis mon ordinateur'}
+          </button>
+          <button
+            type="button"
+            onClick={() => { setShowMenu(false); setShowPicker(true); }}
+            className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-surface/80 hover:bg-primary/5 hover:text-accent text-left"
+          >
+            <LibraryIcon className="w-4 h-4 shrink-0" /> Choisir dans ma bibliothèque
+          </button>
+          {onGenerateImage && (
+            <button
+              type="button"
+              onClick={() => { setShowMenu(false); setShowTypeMenu(true); }}
+              disabled={imageGenerating}
+              className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-surface/80 hover:bg-primary/5 hover:text-accent text-left disabled:opacity-50"
+            >
+              <Wand2 className="w-4 h-4 shrink-0" /> {imageGenerating ? 'Génération...' : "Générer avec l'IA"}
+            </button>
+          )}
+        </div>
+      )}
+      {showTypeMenu && (
+        <div
+          className="absolute top-3 right-3 z-30 bg-background border border-surface/10 rounded-xl shadow-lg overflow-hidden min-w-[180px]"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {TUNNEL_IMAGE_TYPES.map((t) => (
+            <button
+              key={t.key}
+              type="button"
+              onClick={() => { setShowTypeMenu(false); onGenerateImage(t.key); }}
+              className="w-full text-left px-3 py-2 text-sm text-surface/80 hover:bg-primary/5 hover:text-accent"
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+      )}
+      <ImagePickerModal
+        open={showPicker}
+        onClose={() => setShowPicker(false)}
+        multiple={false}
+        onConfirm={([url]) => onContentChange?.({ ...content, imageUrl: url })}
+      />
+    </>
   );
 
   if (isSplit) {
@@ -103,7 +164,7 @@ export default function HeroBlock({ content, onAdvance, editMode, selectedElemen
                 <ImagePlus className="w-3.5 h-3.5" /> {uploading ? 'Import...' : "Changer l'image"}
               </button>
             )}
-            {imagePicker}
+            {imageMenu}
           </div>
           <div className="px-6 py-12 md:px-12 md:py-16">
             {eyebrow && (
@@ -172,7 +233,7 @@ export default function HeroBlock({ content, onAdvance, editMode, selectedElemen
               <ImagePlus className="w-3.5 h-3.5" /> {uploading ? 'Import...' : "Changer l'image"}
             </button>
           )}
-          {imagePicker}
+          {imageMenu}
         </div>
       )}
       <div className="relative z-10 px-6 py-16 md:px-16 md:py-24 max-w-3xl">

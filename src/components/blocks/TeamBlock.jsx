@@ -1,6 +1,7 @@
 import React from 'react';
 import { getEditableProps, getContentEditableProps, getSectionBackground, cx } from '../../lib/blockStyle';
 import BlockExtras from './BlockExtras';
+import EditableItemImage from './EditableItemImage';
 
 export default function TeamBlock({ content, editMode, selectedElement, onSelectElement, onContentChange, userId, defaultBg }) {
   const { heading, items = [] } = content;
@@ -45,11 +46,14 @@ export default function TeamBlock({ content, editMode, selectedElement, onSelect
               style={cardProps.style}
               onClick={cardProps.onClick}
             >
-              {item.photoUrl ? (
-                <img src={item.photoUrl} alt="" loading="lazy" className="w-20 h-20 rounded-full object-cover mx-auto mb-4" />
-              ) : (
-                <div className="w-20 h-20 rounded-full bg-primary/10 mx-auto mb-4" />
-              )}
+              <EditableItemImage
+                src={item.photoUrl}
+                userId={userId}
+                editMode={editMode}
+                onChange={(photoUrl) => updateItem(i, { photoUrl })}
+                className="w-20 h-20 rounded-full object-cover mx-auto mb-4 bg-primary/10"
+                placeholder={<div className="w-20 h-20 rounded-full bg-primary/10 mx-auto mb-4" />}
+              />
               <h3 className="font-sans font-semibold text-surface outline-none" {...itemField(i, 'name')}>{item.name}</h3>
               {item.role && <p className="text-xs text-accent font-medium mt-0.5 outline-none" {...itemField(i, 'role')}>{item.role}</p>}
               {item.bio && <p className="text-sm text-surface/60 mt-2 outline-none" {...itemField(i, 'bio', { multiline: true })}>{item.bio}</p>}

@@ -115,6 +115,8 @@ function BlockCard({
           userId={userId}
           defaultBg={defaultBg}
           siblingSteps={siblingSteps}
+          onGenerateImage={onGenerateImage}
+          isGeneratingImage={isGeneratingImage}
         />
       </div>
 

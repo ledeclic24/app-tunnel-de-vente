@@ -1,6 +1,7 @@
 import React from 'react';
 import { getEditableProps, getContentEditableProps, getSectionBackground, cx } from '../../lib/blockStyle';
 import BlockExtras from './BlockExtras';
+import EditableItemImage from './EditableItemImage';
 
 export default function BonusStackBlock({ content, editMode, selectedElement, onSelectElement, onContentChange, userId, defaultBg }) {
   const { heading, items = [] } = content;
@@ -46,7 +47,13 @@ export default function BonusStackBlock({ content, editMode, selectedElement, on
               onClick={cardProps.onClick}
             >
               {item.imageUrl && (
-                <img src={item.imageUrl} alt="" loading="lazy" className="w-full md:w-40 aspect-square rounded-xl object-cover shrink-0" />
+                <EditableItemImage
+                  src={item.imageUrl}
+                  userId={userId}
+                  editMode={editMode}
+                  onChange={(imageUrl) => updateItem(i, { imageUrl })}
+                  className="w-full md:w-40 aspect-square rounded-xl object-cover shrink-0"
+                />
               )}
               <div>
                 <span className="text-xs font-bold uppercase tracking-wider text-accent">Bonus {i + 1}</span>
