@@ -11,8 +11,8 @@ const GA_ID_RE = /^(G|UA|AW)-[A-Z0-9-]{4,20}$/i;
 
 export default function BrandKitPanel({ brand, onSave, userId, canUseBrandKit, canUseAdPixels }) {
   const [draft, setDraft] = useState({
-    primaryColor: brand?.primaryColor || '#0B2818',
-    accentColor: brand?.accentColor || '#22C55E',
+    primaryColor: brand?.primaryColor || '#0B0B0B',
+    accentColor: brand?.accentColor || '#D4AF37',
     font: brand?.font || 'Sora',
     logoUrl: brand?.logoUrl || '',
     metaPixelId: brand?.metaPixelId || '',

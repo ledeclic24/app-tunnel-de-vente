@@ -115,21 +115,34 @@ export const FUNNEL_TEMPLATES = [
             subheading: 'Décris ici la transformation que ton offre apporte à tes clients.',
             imageUrl: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?q=80&w=1600&auto=format&fit=crop',
             ctaText: 'Je découvre l\'offre', externalUrl: '',
+            layout: 'split', trustBadges: ['Paiement sécurisé', 'Accès immédiat'],
           } },
-          { type: 'features', content: { heading: 'Ce que tu obtiens', items: [
-            { title: 'Résultat concret', description: 'Le premier bénéfice clé de ton offre.' },
-            { title: 'Gain de temps', description: 'Pourquoi c\'est plus simple avec toi.' },
-            { title: 'Accompagnement', description: 'Le soutien apporté après l\'achat.' },
+          { type: 'process', content: { heading: 'Tu te reconnais dans l\'une de ces situations ?', layout: 'circular', items: [
+            { title: 'Premier blocage typique de ta cible', description: 'Formule-le avec ses propres mots.' },
+            { title: 'Deuxième blocage', description: 'Un frein complémentaire du premier.' },
+          ] } },
+          { type: 'features', content: { heading: 'Ce que tu obtiens', layout: 'rows', items: [
+            { title: 'Résultat concret', description: 'Le premier bénéfice clé de ton offre.', imageUrl: '' },
+            { title: 'Gain de temps', description: 'Pourquoi c\'est plus simple avec toi.', imageUrl: '' },
           ] } },
           { type: 'countdown', content: { headline: 'Offre de lancement valable jusqu\'à', targetDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString().slice(0, 16) } },
+          { type: 'bonus-stack', content: { heading: 'Et en plus, tu reçois...', items: [
+            { title: 'Bonus n°1', description: 'Un bonus concret qui renforce la décision d\'achat.', imageUrl: '' },
+          ] } },
           { type: 'testimonials', content: { heading: 'Ils l\'ont adopté', items: [
             { name: 'Fatou S.', role: 'Cliente', quote: 'Résultat visible dès la première semaine !' },
           ] } },
           { type: 'pricing', content: { heading: 'Choisis ton offre', plans: [
             { name: 'Offre unique', price: '29', period: '€', features: ['Accès complet', 'Support par email', 'Mises à jour incluses'], highlight: true },
           ] } },
+          { type: 'team', content: { heading: 'Qui est derrière cette offre', items: [
+            { name: 'Ton nom', role: 'Fondateur·rice', bio: 'Un ou deux résultats concrets ou une légitimité claire.' },
+          ] } },
+          { type: 'text', content: { heading: 'Garantie satisfait ou remboursé', body: 'Explique la garantie proposée pour lever le dernier frein à l\'achat.', styles: { section: { background: 'accent' } } } },
           { type: 'faq', content: { heading: 'Questions fréquentes', items: [
             { question: 'Y a-t-il une garantie ?', answer: 'Oui, satisfait ou remboursé sous 14 jours.' },
+            { question: 'Cette offre est-elle faite pour moi ?', answer: 'Réponds à l\'objection la plus fréquente de ta cible.' },
+            { question: 'Que se passe-t-il après mon achat ?', answer: 'Décris les prochaines étapes pour rassurer.' },
           ] } },
           { type: 'cta', content: { heading: 'Prêt à te lancer ?', buttonText: 'Je commande', externalUrl: '' } },
         ],
@@ -172,10 +185,18 @@ export const FUNNEL_TEMPLATES = [
             subheading: 'Décris ici ton offre choc et pourquoi elle ne durera pas.',
             imageUrl: 'https://images.unsplash.com/photo-1607083206968-13611e3d76db?q=80&w=1600&auto=format&fit=crop',
             ctaText: 'J\'en profite maintenant', externalUrl: '',
+            trustBadges: ['Paiement sécurisé', 'Accès immédiat'],
           } },
           { type: 'countdown', content: { headline: 'L\'offre se termine dans', targetDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString().slice(0, 16) } },
+          { type: 'features', content: { heading: 'Ce que tu obtiens', items: [
+            { title: 'Résultat concret', description: 'Le bénéfice clé de ton offre.' },
+            { title: 'Accès immédiat', description: 'Aucune attente, tu commences tout de suite.' },
+          ] } },
+          { type: 'testimonials', content: { heading: 'Ils ont déjà sauté le pas', items: [
+            { name: 'Prénom N.', role: 'Client·e', quote: 'Un résultat concret à remplacer par un vrai témoignage.' },
+          ] } },
           { type: 'pricing', content: { heading: 'Prix flash', plans: [
-            { name: 'Offre flash', price: '19', period: '€', features: ['Accès immédiat', 'Prix garanti pendant l\'offre', 'Sans engagement'], highlight: true },
+            { name: 'Offre flash', originalPrice: '39', price: '19', period: '€', badge: '-50%', features: ['Accès immédiat', 'Prix garanti pendant l\'offre', 'Sans engagement'], highlight: true },
           ] } },
           { type: 'cta', content: { heading: 'Dernière chance', buttonText: 'Je commande avant la fin', externalUrl: '' } },
         ],
@@ -246,11 +267,26 @@ export const FUNNEL_TEMPLATES = [
             subheading: 'Indique ton email pour débloquer l\'enregistrement complet dès maintenant.',
             imageUrl: 'https://images.unsplash.com/photo-1587825140708-dfaf72ae4b04?q=80&w=1600&auto=format&fit=crop',
             ctaText: '', externalUrl: '',
+            layout: 'split', trustBadges: ['Accès immédiat', '100% gratuit'],
           } },
-          { type: 'features', content: { heading: 'Ce que tu vas voir', items: [
+          { type: 'process', content: { heading: 'Ce que tu vas apprendre', layout: 'grid', items: [
             { title: 'La méthode complète', description: 'Le contenu intégral de l\'atelier en direct.' },
-            { title: 'Questions/réponses', description: 'Les réponses aux questions posées en direct.' },
-            { title: 'Offre bonus', description: 'Une offre spéciale réservée aux spectateurs du replay.' },
+            { title: 'Les erreurs à éviter', description: 'Ce qui bloque la plupart des gens.' },
+            { title: 'Comment démarrer', description: 'La première action concrète à poser.' },
+          ] } },
+          { type: 'features', content: { heading: 'Ce que tu vas voir', layout: 'rows', items: [
+            { title: 'La méthode en détail', description: 'Étape par étape, sans rien sauter.', imageUrl: '' },
+            { title: 'Questions/réponses', description: 'Les réponses aux questions posées en direct.', imageUrl: '' },
+          ] } },
+          { type: 'testimonials', content: { heading: 'Ils ont regardé le replay', items: [
+            { name: 'Prénom N.', role: 'Spectateur·rice', quote: 'Un résultat concret obtenu grâce à cette méthode.' },
+          ] } },
+          { type: 'bonus-stack', content: { heading: 'Offre bonus réservée aux spectateurs', items: [
+            { title: 'Bonus exclusif', description: 'Une offre spéciale réservée aux spectateurs du replay.', imageUrl: '' },
+          ] } },
+          { type: 'faq', content: { heading: 'Questions fréquentes', items: [
+            { question: 'Le replay est-il vraiment gratuit ?', answer: 'Oui, sans engagement.' },
+            { question: 'Combien de temps dure le replay ?', answer: 'Précise la durée réelle de l\'enregistrement.' },
           ] } },
           { type: 'form', content: { headline: 'Débloquer le replay', buttonText: 'Je regarde le replay', successMessage: 'Le lien du replay vient de t\'être envoyé par email.' } },
         ],
@@ -286,20 +322,28 @@ export const FUNNEL_TEMPLATES = [
             subheading: "30 minutes pour faire le point sur ta situation et voir comment je peux t'aider.",
             imageUrl: 'https://images.unsplash.com/photo-1543269865-4438870a8bd0?q=80&w=1600&auto=format&fit=crop',
             ctaText: '', externalUrl: '',
+            layout: 'split', trustBadges: ['Sans engagement', '30 minutes'],
           } },
-          { type: 'features', content: { heading: 'Ce que tu vas obtenir', items: [
-            { title: 'Un diagnostic clair', description: 'On identifie ensemble ce qui bloque.' },
-            { title: 'Un plan d\'action', description: 'Des étapes concrètes à appliquer dès la sortie de l\'appel.' },
-            { title: 'Zéro pression', description: 'Aucune obligation d\'achat, juste de la valeur.' },
+          { type: 'process', content: { heading: 'Tu te reconnais dans l\'une de ces situations ?', layout: 'circular', items: [
+            { title: 'Premier blocage typique de ta cible', description: 'Formule-le avec ses propres mots.' },
+            { title: 'Deuxième blocage', description: 'Un frein complémentaire du premier.' },
+          ] } },
+          { type: 'features', content: { heading: 'Ce que tu vas obtenir', layout: 'rows', items: [
+            { title: 'Un diagnostic clair', description: 'On identifie ensemble ce qui bloque.', imageUrl: '' },
+            { title: 'Un plan d\'action', description: 'Des étapes concrètes à appliquer dès la sortie de l\'appel.', imageUrl: '' },
           ] } },
           { type: 'testimonials', content: { heading: 'Ils ont réservé leur appel', items: [
             { name: 'Karim B.', role: 'Client accompagné', quote: 'L\'appel à lui seul valait le détour.' },
           ] } },
-          { type: 'form', content: { headline: 'Choisis un créneau', buttonText: 'Réserver mon appel', successMessage: 'C\'est noté ! Tu vas recevoir un email pour confirmer l\'horaire.' } },
+          { type: 'team', content: { heading: 'Qui je suis', items: [
+            { name: 'Ton nom', role: 'Coach', bio: 'Un ou deux résultats concrets ou une légitimité claire.' },
+          ] } },
           { type: 'faq', content: { heading: 'Questions fréquentes', items: [
             { question: 'Combien de temps dure l\'appel ?', answer: 'Environ 30 minutes.' },
             { question: 'Est-ce vraiment gratuit ?', answer: 'Oui, sans engagement.' },
+            { question: 'Cet appel est-il fait pour moi ?', answer: 'Réponds à l\'objection la plus fréquente de ta cible.' },
           ] } },
+          { type: 'form', content: { headline: 'Choisis un créneau', buttonText: 'Réserver mon appel', successMessage: 'C\'est noté ! Tu vas recevoir un email pour confirmer l\'horaire.' } },
         ],
       },
       {
@@ -367,23 +411,33 @@ export const FUNNEL_TEMPLATES = [
             subheading: 'Décris ici ton produit : à qui il s\'adresse et pourquoi il change la donne.',
             imageUrl: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=1600&auto=format&fit=crop',
             ctaText: 'Je commande', externalUrl: '',
+            layout: 'split', trustBadges: ['Paiement sécurisé', 'Livraison rapide'],
           } },
           { type: 'image', content: { url: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=1600&auto=format&fit=crop', caption: 'Vue en situation' } },
-          { type: 'features', content: { heading: 'Pourquoi le choisir', items: [
-            { title: 'Qualité garantie', description: 'Fabriqué avec des matériaux durables.' },
-            { title: 'Livraison rapide', description: 'Expédié sous 48h.' },
-            { title: 'Satisfait ou remboursé', description: '14 jours pour changer d\'avis.' },
+          { type: 'features', content: { heading: 'Pourquoi le choisir', layout: 'rows', items: [
+            { title: 'Qualité garantie', description: 'Fabriqué avec des matériaux durables.', imageUrl: '' },
+            { title: 'Livraison rapide', description: 'Expédié sous 48h.', imageUrl: '' },
           ] } },
-          { type: 'testimonials', content: { heading: 'Ils l\'ont reçu', items: [
+          { type: 'process', content: { heading: 'Comment ça marche', layout: 'grid', items: [
+            { title: 'Tu commandes', description: 'En quelques clics, paiement sécurisé.' },
+            { title: 'On prépare ton colis', description: 'Expédié sous 48h.' },
+            { title: 'Tu reçois ton produit', description: 'Livré directement chez toi.' },
+          ] } },
+          { type: 'testimonials', content: { heading: 'Ils l\'ont reçu', layout: 'carousel', items: [
             { name: 'Moussa T.', role: 'Client', quote: 'Livré rapidement, exactement comme décrit.' },
+            { name: 'Prénom N.', role: 'Client·e', quote: 'Un second témoignage, sur un bénéfice différent.' },
           ] } },
-          { type: 'pricing', content: { heading: 'Choisis ta formule', plans: [
-            { name: 'À l\'unité', price: '15', period: '€', features: ['1 article', 'Livraison incluse'], highlight: false },
-            { name: 'Lot de 3', price: '39', period: '€', features: ['3 articles', 'Livraison incluse', 'Économie de 15%'], highlight: true },
+          { type: 'pricing', content: { heading: 'Choisis ta formule', layout: 'comparison', plans: [
+            { name: 'À l\'unité', price: '15', period: '€', highlight: false },
+            { name: 'Lot de 3', originalPrice: '45', price: '39', period: '€', badge: 'Économie', highlight: true },
+          ], comparisonRows: [
+            { label: 'Livraison incluse', values: [true, true] },
+            { label: 'Économie de 15%', values: [false, true] },
           ] } },
           { type: 'faq', content: { heading: 'Questions fréquentes', items: [
             { question: 'Quels sont les délais de livraison ?', answer: '48 à 72h ouvrées.' },
             { question: 'Puis-je être remboursé ?', answer: 'Oui, sous 14 jours.' },
+            { question: 'Le paiement est-il sécurisé ?', answer: 'Oui, via un prestataire de paiement certifié.' },
           ] } },
           { type: 'cta', content: { heading: 'Prêt à passer commande ?', buttonText: 'Je commande', externalUrl: '' } },
         ],
@@ -688,11 +742,23 @@ export const FUNNEL_TEMPLATES = [
             subheading: 'Décris ici la durée du programme et la transformation obtenue à la fin.',
             imageUrl: 'https://images.unsplash.com/photo-1600880292203-757bb62b4baf?q=80&w=1600&auto=format&fit=crop',
             ctaText: '', externalUrl: '',
+            layout: 'split', trustBadges: ['Paiement sécurisé', 'Places limitées'],
           } },
-          { type: 'features', content: { heading: 'Ce qui est inclus', items: [
-            { title: 'Suivi personnalisé', description: 'Un accompagnement individuel tout au long du programme.' },
-            { title: 'Ressources complètes', description: 'Modules, supports et outils fournis.' },
-            { title: 'Groupe privé', description: 'Un espace d\'entraide avec les autres participants.' },
+          { type: 'process', content: { heading: 'Tu te reconnais dans l\'une de ces situations ?', layout: 'circular', items: [
+            { title: 'Premier blocage typique de ta cible', description: 'Formule-le avec ses propres mots.' },
+            { title: 'Deuxième blocage', description: 'Un frein complémentaire du premier.' },
+          ] } },
+          { type: 'features', content: { heading: 'Ce qui est inclus', layout: 'rows', items: [
+            { title: 'Suivi personnalisé', description: 'Un accompagnement individuel tout au long du programme.', imageUrl: '' },
+            { title: 'Ressources complètes', description: 'Modules, supports et outils fournis.', imageUrl: '' },
+          ] } },
+          { type: 'process', content: { heading: 'Comment ça marche', layout: 'grid', items: [
+            { title: 'Tu t\'inscris', description: 'Une première étape rapide et sans friction.' },
+            { title: 'Tu démarres le programme', description: 'Accès immédiat aux premiers modules.' },
+            { title: 'Tu es accompagné·e', description: 'Suivi individuel jusqu\'au résultat.' },
+          ] } },
+          { type: 'bonus-stack', content: { heading: 'Et en plus, tu reçois...', items: [
+            { title: 'Groupe privé', description: 'Un espace d\'entraide avec les autres participants.', imageUrl: '' },
           ] } },
           { type: 'testimonials', content: { heading: 'Ils ont suivi le programme', items: [
             { name: 'Awa D.', role: 'Ancienne participante', quote: 'Le meilleur investissement que j\'ai fait pour mon activité.' },
@@ -700,9 +766,14 @@ export const FUNNEL_TEMPLATES = [
           { type: 'pricing', content: { heading: 'Rejoindre le programme', plans: [
             { name: 'Accès complet', price: '297', period: '€', features: ['Suivi sur 8 semaines', 'Appels de groupe', 'Accès à vie aux ressources'], highlight: true },
           ] } },
+          { type: 'team', content: { heading: 'Qui t\'accompagne', items: [
+            { name: 'Ton nom', role: 'Fondateur·rice', bio: 'Un ou deux résultats concrets ou une légitimité claire.' },
+          ] } },
+          { type: 'text', content: { heading: 'Garantie satisfait ou remboursé', body: 'Explique la garantie proposée pour lever le dernier frein à l\'inscription.', styles: { section: { background: 'accent' } } } },
           { type: 'faq', content: { heading: 'Questions fréquentes', items: [
             { question: 'Combien de temps dure le programme ?', answer: '8 semaines, avec un accès aux ressources à vie.' },
             { question: 'Y a-t-il un accompagnement individuel ?', answer: 'Oui, en plus des sessions de groupe.' },
+            { question: 'Ce programme est-il fait pour moi ?', answer: 'Réponds à l\'objection la plus fréquente de ta cible.' },
           ] } },
           { type: 'cta', content: { heading: 'Prêt à te lancer ?', buttonText: 'Je rejoins le programme', externalUrl: '' } },
         ],

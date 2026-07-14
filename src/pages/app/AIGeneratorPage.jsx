@@ -44,8 +44,8 @@ export default function AIGeneratorPage() {
   const [price, setPrice] = useState('');
   const [images, setImages] = useState([]);
   const [customPalette, setCustomPalette] = useState(false);
-  const [primaryColor, setPrimaryColor] = useState('#0B2818');
-  const [accentColor, setAccentColor] = useState('#22C55E');
+  const [primaryColor, setPrimaryColor] = useState('#0B0B0B');
+  const [accentColor, setAccentColor] = useState('#D4AF37');
   const [showOptions, setShowOptions] = useState(false);
 
   const [usage, setUsage] = useState(null);
