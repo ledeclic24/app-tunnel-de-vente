@@ -136,6 +136,7 @@ export function getShadowClass(style) {
 export const SECTION_BACKGROUND_OPTIONS = [
   { value: 'white', label: 'Blanc' },
   { value: 'primary', label: 'Principale' },
+  { value: 'accent', label: 'Accent (mise en avant)' },
 ];
 
 // Alternance de fond primaire/blanc entre sections (cahier des charges
@@ -145,12 +146,27 @@ export const SECTION_BACKGROUND_OPTIONS = [
 // libre existante (styles.section.bgColor) reste prioritaire et désactive
 // ce mécanisme de classe pour laisser sa valeur inline s'appliquer sans
 // concurrence (elle vit sur le wrapper englobant dans BlockRenderer.jsx).
+//
+// Le 3e ton "accent" (teinte de la couleur d'accent, jamais calculé par
+// défaut — uniquement une surcharge manuelle ou pilotée par l'IA) sert aux
+// encadrés de mise en avant (garantie, mentorat...) repérés dans l'étude
+// des tunnels de référence, sans casser l'alternance stricte primary/white
+// déjà testée sur les tunnels publiés existants.
 export function getSectionBackground(styles, defaultBg) {
   const sectionStyle = styles?.section || {};
   if (sectionStyle.bgColor) {
     return { sectionClassName: '', headingClassName: 'text-surface', bodyClassName: 'text-surface/70', isDark: false };
   }
-  const isDark = (sectionStyle.background || defaultBg) === 'primary';
+  const token = sectionStyle.background || defaultBg;
+  if (token === 'accent') {
+    return {
+      sectionClassName: 'bg-accent/10 text-surface',
+      headingClassName: 'text-surface',
+      bodyClassName: 'text-surface/70',
+      isDark: false,
+    };
+  }
+  const isDark = token === 'primary';
   return {
     sectionClassName: isDark ? 'bg-primary text-background' : 'bg-background text-surface',
     headingClassName: isDark ? 'text-background' : 'text-surface',

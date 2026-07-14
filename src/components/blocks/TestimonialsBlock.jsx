@@ -3,7 +3,8 @@ import { Quote } from 'lucide-react';
 import { getEditableProps, getContentEditableProps, getSectionBackground, cx } from '../../lib/blockStyle';
 
 export default function TestimonialsBlock({ content, editMode, selectedElement, onSelectElement, onContentChange, defaultBg }) {
-  const { heading, items = [] } = content;
+  const { heading, items = [], layout } = content;
+  const isCarousel = layout === 'carousel';
   const editable = (elementKey, kind, label) =>
     getEditableProps({ elementKey, kind, styles: content.styles, editMode, selectedElement, onSelectElement, label });
   const bg = getSectionBackground(content.styles, defaultBg || 'white');
@@ -35,13 +36,17 @@ export default function TestimonialsBlock({ content, editMode, selectedElement, 
           {heading}
         </h2>
       )}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className={isCarousel ? 'flex gap-6 overflow-x-auto snap-x snap-mandatory pb-4 -mx-6 px-6 md:mx-0 md:px-0' : 'grid grid-cols-1 md:grid-cols-2 gap-6'}>
         {items.map((item, i) => {
           const cardProps = editable(`testimonial-${i}`, 'card', `Témoignage ${i + 1}`);
           return (
             <div
               key={i}
-              className={cx('bg-background border border-surface/10 rounded-[2rem] p-6 shadow-sm', cardProps.className)}
+              className={cx(
+                'bg-background border border-surface/10 rounded-[2rem] p-6 shadow-sm',
+                isCarousel && 'shrink-0 w-[85%] sm:w-[45%] snap-center',
+                cardProps.className,
+              )}
               style={cardProps.style}
               onClick={cardProps.onClick}
             >

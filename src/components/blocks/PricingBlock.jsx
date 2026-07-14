@@ -1,11 +1,38 @@
 import React from 'react';
-import { Check } from 'lucide-react';
+import { Check, X } from 'lucide-react';
 import { getEditableProps, getContentEditableProps, getSectionBackground, cx } from '../../lib/blockStyle';
 
 const GRID_COLS_CLASS = { 1: '', 2: 'md:grid-cols-2', 3: 'md:grid-cols-3' };
 
+// Lignes de comparaison partagées entre toutes les offres (cahier des
+// charges "tunnel standard" — ancrage de prix + comparaison ✓/✗) : chaque
+// ligne s'applique à chaque offre selon comparisonRows[j].values[planIndex],
+// à la place de la simple liste plate plan.features quand layout==='comparison'.
+function ComparisonRows({ rows, planIndex, highlight }) {
+  return (
+    <div className="space-y-2">
+      {rows.map((row, j) => {
+        const included = Boolean(row.values?.[planIndex]);
+        return (
+          <div key={j} className="flex items-center gap-2 text-sm">
+            {included ? (
+              <Check className={`w-4 h-4 shrink-0 ${highlight ? 'text-accent' : 'text-surface/40'}`} />
+            ) : (
+              <X className="w-4 h-4 shrink-0 text-surface/30" />
+            )}
+            <span className={cx(!included && 'line-through opacity-50', highlight ? 'text-background/90' : 'text-surface/80')}>
+              {row.label}
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 export default function PricingBlock({ content, onAdvance, editMode, selectedElement, onSelectElement, onContentChange, defaultBg }) {
-  const { heading, plans = [] } = content;
+  const { heading, plans = [], layout, comparisonRows } = content;
+  const isComparison = layout === 'comparison' && (comparisonRows || []).length > 0;
   const gridClass = GRID_COLS_CLASS[Math.min(plans.length, 3)] || '';
   const editable = (elementKey, kind, label) =>
     getEditableProps({ elementKey, kind, styles: content.styles, editMode, selectedElement, onSelectElement, label });
@@ -50,13 +77,26 @@ export default function PricingBlock({ content, onAdvance, editMode, selectedEle
             <div
               key={i}
               className={cx(
-                `rounded-[2rem] p-8 border ${plan.highlight ? 'bg-primary text-background border-accent/30 shadow-2xl' : 'bg-background text-surface border-surface/10 shadow-sm'}`,
+                `relative rounded-[2rem] p-8 border ${plan.highlight ? 'bg-primary text-background border-accent/30 shadow-2xl' : 'bg-background text-surface border-surface/10 shadow-sm'}`,
                 cardProps.className
               )}
               style={cardProps.style}
               onClick={cardProps.onClick}
             >
+              {plan.badge && (
+                <span className="absolute -top-3 right-6 bg-accent text-background text-xs font-bold px-3 py-1 rounded-full">
+                  {plan.badge}
+                </span>
+              )}
+              {plan.imageUrl && (
+                <img src={plan.imageUrl} alt="" loading="lazy" className="w-full h-auto rounded-xl object-cover mb-5" />
+              )}
               <h3 className="font-sans text-xl mb-2 outline-none" {...singleLine((v) => updatePlan(i, { name: v }))}>{plan.name}</h3>
+              {plan.originalPrice && (
+                <span className={cx('block text-sm line-through mb-0.5', plan.highlight ? 'text-background/50' : 'text-surface/40')} {...singleLine((v) => updatePlan(i, { originalPrice: v }))}>
+                  {plan.originalPrice}
+                </span>
+              )}
               <div className="flex items-baseline gap-1 mb-6">
                 <span className="text-4xl font-bold outline-none" {...singleLine((v) => updatePlan(i, { price: v }))}>{plan.price}</span>
                 <span className={cx(plan.highlight ? 'text-background/60 text-sm' : 'text-surface/60 text-sm', 'outline-none')} {...singleLine((v) => updatePlan(i, { period: v }))}>{plan.period}</span>
@@ -92,14 +132,18 @@ export default function PricingBlock({ content, onAdvance, editMode, selectedEle
                   Choisir cette offre
                 </button>
               )}
-              <div className="space-y-2">
-                {(plan.features || []).map((feat, j) => (
-                  <div key={j} className="flex items-center gap-2 text-sm">
-                    <Check className={`w-4 h-4 shrink-0 ${plan.highlight ? 'text-accent' : 'text-surface/40'}`} />
-                    <span className={cx(plan.highlight ? 'text-background/90' : 'text-surface/80', 'outline-none')} {...singleLine((v) => updateFeature(i, j, v))}>{feat}</span>
-                  </div>
-                ))}
-              </div>
+              {isComparison ? (
+                <ComparisonRows rows={comparisonRows} planIndex={i} highlight={plan.highlight} />
+              ) : (
+                <div className="space-y-2">
+                  {(plan.features || []).map((feat, j) => (
+                    <div key={j} className="flex items-center gap-2 text-sm">
+                      <Check className={`w-4 h-4 shrink-0 ${plan.highlight ? 'text-accent' : 'text-surface/40'}`} />
+                      <span className={cx(plan.highlight ? 'text-background/90' : 'text-surface/80', 'outline-none')} {...singleLine((v) => updateFeature(i, j, v))}>{feat}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           );
         })}

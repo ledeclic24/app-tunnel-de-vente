@@ -89,6 +89,31 @@ function BlockFields({ type, content, set, userId, blockId, onGenerateImage, ima
           <Field label="Lien externe du bouton (optionnel — sinon avance à l'étape suivante)">
             <input className={inputClass} placeholder="https://..." value={content.externalUrl || ''} onChange={(e) => set({ externalUrl: e.target.value })} />
           </Field>
+          <Field label="Mise en page">
+            <div className="flex bg-primary/5 rounded-xl p-1 gap-1">
+              {[{ v: 'overlay', l: 'Plein cadre' }, { v: 'split', l: 'Côte à côte' }].map((o) => (
+                <button
+                  key={o.v}
+                  type="button"
+                  onClick={() => set({ layout: o.v })}
+                  className={`flex-1 py-2 rounded-lg text-xs font-medium transition-colors ${(content.layout || 'overlay') === o.v ? 'bg-background text-surface shadow-sm' : 'text-surface/50'}`}
+                >
+                  {o.l}
+                </button>
+              ))}
+            </div>
+          </Field>
+          {content.layout === 'split' && (
+            <Field label="Badges de confiance (optionnel, une ligne par badge)">
+              <textarea
+                className={inputClass}
+                rows={2}
+                placeholder={'Paiement sécurisé\nAccès immédiat'}
+                value={(content.trustBadges || []).join('\n')}
+                onChange={(e) => set({ trustBadges: e.target.value.split('\n').filter(Boolean) })}
+              />
+            </Field>
+          )}
         </div>
       );
 
@@ -147,6 +172,20 @@ function BlockFields({ type, content, set, userId, blockId, onGenerateImage, ima
           <Field label="Titre de la section">
             <input className={inputClass} value={content.heading || ''} onChange={(e) => set({ heading: e.target.value })} />
           </Field>
+          <Field label="Mise en page">
+            <div className="flex bg-primary/5 rounded-xl p-1 gap-1">
+              {[{ v: 'grid', l: 'Grille' }, { v: 'rows', l: 'Lignes alternées' }].map((o) => (
+                <button
+                  key={o.v}
+                  type="button"
+                  onClick={() => set({ layout: o.v })}
+                  className={`flex-1 py-2 rounded-lg text-xs font-medium transition-colors ${(content.layout || 'grid') === o.v ? 'bg-background text-surface shadow-sm' : 'text-surface/50'}`}
+                >
+                  {o.l}
+                </button>
+              ))}
+            </div>
+          </Field>
           <Field label="Avantages">
             <ListEditor
               items={content.items || []}
@@ -157,6 +196,14 @@ function BlockFields({ type, content, set, userId, blockId, onGenerateImage, ima
                 <>
                   <input className={inputClass} placeholder="Titre" value={item.title || ''} onChange={(e) => update({ title: e.target.value })} />
                   <input className={inputClass} placeholder="Description" value={item.description || ''} onChange={(e) => update({ description: e.target.value })} />
+                  {content.layout === 'rows' && (
+                    <div>
+                      <label className="block text-xs text-surface/50 mb-1.5">
+                        Image (dépose la tienne ou choisis-en une dans ta bibliothèque — la génération IA par image individuelle n'est pas encore disponible pour ce champ)
+                      </label>
+                      <ImageUploadField userId={userId} value={item.imageUrl} onChange={(imageUrl) => update({ imageUrl })} />
+                    </div>
+                  )}
                 </>
               )}
             />
@@ -169,6 +216,20 @@ function BlockFields({ type, content, set, userId, blockId, onGenerateImage, ima
         <div className="space-y-4">
           <Field label="Titre de la section">
             <input className={inputClass} value={content.heading || ''} onChange={(e) => set({ heading: e.target.value })} />
+          </Field>
+          <Field label="Mise en page">
+            <div className="flex bg-primary/5 rounded-xl p-1 gap-1">
+              {[{ v: 'grid', l: 'Grille' }, { v: 'carousel', l: 'Carrousel' }].map((o) => (
+                <button
+                  key={o.v}
+                  type="button"
+                  onClick={() => set({ layout: o.v })}
+                  className={`flex-1 py-2 rounded-lg text-xs font-medium transition-colors ${(content.layout || 'grid') === o.v ? 'bg-background text-surface shadow-sm' : 'text-surface/50'}`}
+                >
+                  {o.l}
+                </button>
+              ))}
+            </div>
           </Field>
           <Field label="Témoignages">
             <ListEditor
@@ -192,12 +253,18 @@ function BlockFields({ type, content, set, userId, blockId, onGenerateImage, ima
         </div>
       );
 
-    case 'pricing':
+    case 'pricing': {
+      const isComparison = content.layout === 'comparison';
+      const planCount = (content.plans || []).length;
       return (
         <div className="space-y-4">
           <Field label="Titre de la section">
             <input className={inputClass} value={content.heading || ''} onChange={(e) => set({ heading: e.target.value })} />
           </Field>
+          <label className="flex items-center gap-2 text-sm text-surface/70">
+            <input type="checkbox" checked={isComparison} onChange={(e) => set({ layout: e.target.checked ? 'comparison' : 'cards' })} />
+            Mode comparaison (mêmes lignes ✓/✗ partagées entre les offres, au lieu d'une liste propre à chaque offre)
+          </label>
           <Field label="Offres">
             <ListEditor
               items={content.plans || []}
@@ -208,16 +275,24 @@ function BlockFields({ type, content, set, userId, blockId, onGenerateImage, ima
                 <>
                   <input className={inputClass} placeholder="Nom de l'offre" value={plan.name || ''} onChange={(e) => update({ name: e.target.value })} />
                   <div className="flex gap-2">
+                    <input className={inputClass} placeholder="Prix barré (optionnel)" value={plan.originalPrice || ''} onChange={(e) => update({ originalPrice: e.target.value })} />
                     <input className={inputClass} placeholder="Prix" value={plan.price || ''} onChange={(e) => update({ price: e.target.value })} />
                     <input className={inputClass} placeholder="Période (ex: / mois)" value={plan.period || ''} onChange={(e) => update({ period: e.target.value })} />
                   </div>
-                  <textarea
-                    className={inputClass}
-                    placeholder={'Une fonctionnalité par ligne'}
-                    rows={3}
-                    value={(plan.features || []).join('\n')}
-                    onChange={(e) => update({ features: e.target.value.split('\n') })}
-                  />
+                  <input className={inputClass} placeholder="Badge (ex : -81%, optionnel)" value={plan.badge || ''} onChange={(e) => update({ badge: e.target.value })} />
+                  <div>
+                    <label className="block text-xs text-surface/50 mb-1.5">Image (optionnel — visuel du produit/pack)</label>
+                    <ImageUploadField userId={userId} value={plan.imageUrl} onChange={(imageUrl) => update({ imageUrl })} />
+                  </div>
+                  {!isComparison && (
+                    <textarea
+                      className={inputClass}
+                      placeholder={'Une fonctionnalité par ligne'}
+                      rows={3}
+                      value={(plan.features || []).join('\n')}
+                      onChange={(e) => update({ features: e.target.value.split('\n') })}
+                    />
+                  )}
                   <label className="flex items-center gap-2 text-sm text-surface/70">
                     <input type="checkbox" checked={!!plan.highlight} onChange={(e) => update({ highlight: e.target.checked })} />
                     Mettre en avant
@@ -243,8 +318,40 @@ function BlockFields({ type, content, set, userId, blockId, onGenerateImage, ima
               )}
             />
           </Field>
+          {isComparison && (
+            <Field label="Lignes de comparaison (partagées entre toutes les offres)" hint="Une coche par offre indique si la ligne est incluse dans cette offre.">
+              <ListEditor
+                items={content.comparisonRows || []}
+                onChange={(comparisonRows) => set({ comparisonRows })}
+                emptyItem={{ label: '', values: Array(planCount).fill(true) }}
+                addLabel="Ajouter une ligne"
+                renderRow={(row, updateRow) => (
+                  <>
+                    <input className={inputClass} placeholder="Ex : Accompagnement 6 mois" value={row.label || ''} onChange={(e) => updateRow({ label: e.target.value })} />
+                    <div className="flex flex-wrap gap-3">
+                      {(content.plans || []).map((plan, pi) => (
+                        <label key={pi} className="flex items-center gap-1.5 text-xs text-surface/60">
+                          <input
+                            type="checkbox"
+                            checked={Boolean(row.values?.[pi])}
+                            onChange={(e) => {
+                              const next = [...(row.values || [])];
+                              next[pi] = e.target.checked;
+                              updateRow({ values: next });
+                            }}
+                          />
+                          {plan.name || `Offre ${pi + 1}`}
+                        </label>
+                      ))}
+                    </div>
+                  </>
+                )}
+              />
+            </Field>
+          )}
         </div>
       );
+    }
 
     case 'form':
       return (
