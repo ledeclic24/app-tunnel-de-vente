@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import {
   ArrowLeft, ExternalLink, Plus, X, Pencil, Trash2, Users, Check, Lock, Unlock, Palette, Copy,
-  GripVertical, Undo2, Redo2, Eye, Settings, BookmarkPlus, Sparkles, Wand2,
+  GripVertical, Undo2, Redo2, Eye, Settings, BookmarkPlus, Sparkles, Wand2, Megaphone,
 } from 'lucide-react';
 import {
   DndContext, closestCenter, PointerSensor, KeyboardSensor, useSensor, useSensors,
@@ -13,7 +13,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import {
-  fetchFunnel, updateFunnel, fetchSteps, addStep, deleteStep, reorderSteps,
+  fetchFunnel, updateFunnel, fetchSteps, addStep, deleteStep, reorderSteps, updateStep,
   fetchBlocks, addBlock, updateBlock, deleteBlock, reorderBlocks, countLeads, toggleBlockLock,
 } from '../../lib/funnelsApi';
 import { BLOCK_TYPES, createDefaultContent } from '../../lib/blockTypes';
@@ -29,6 +29,7 @@ import BlockEditorPanel from '../../components/blocks/BlockEditorPanel';
 import ElementStylePanel from '../../components/blocks/ElementStylePanel';
 import BrandKitPanel from '../../components/app/BrandKitPanel';
 import FunnelSettingsPanel from '../../components/app/FunnelSettingsPanel';
+import PageSettingsPanel from '../../components/app/PageSettingsPanel';
 import FunnelPreviewModal from '../../components/app/FunnelPreviewModal';
 import HealthScoreCard from '../../components/app/HealthScoreCard';
 
@@ -187,6 +188,7 @@ export default function FunnelEditorPage() {
   const [paletteTab, setPaletteTab] = useState('new');
   const [showBrandKit, setShowBrandKit] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [showPageSettings, setShowPageSettings] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [showAiAssistant, setShowAiAssistant] = useState(false);
   const [aiMessages, setAiMessages] = useState([
@@ -516,6 +518,11 @@ export default function FunnelEditorPage() {
     setFunnel((f) => ({ ...f, ...patch }));
   };
 
+  const handleSaveChrome = async (chrome) => {
+    await updateStep(selectedStepId, { chrome });
+    setSteps((prev) => prev.map((s) => (s.id === selectedStepId ? { ...s, chrome } : s)));
+  };
+
   const reconcileToSnapshot = useCallback(async (snapshot) => {
     const currentIds = new Set(blocks.map((b) => b.id));
     const snapshotIds = new Set(snapshot.map((b) => b.id));
@@ -727,10 +734,16 @@ export default function FunnelEditorPage() {
             <Settings className="w-4 h-4" /> Réglages
           </button>
           <button
-            onClick={() => { setShowBrandKit((v) => !v); setShowSettings(false); setShowAiAssistant(false); }}
+            onClick={() => { setShowBrandKit((v) => !v); setShowSettings(false); setShowAiAssistant(false); setShowPageSettings(false); }}
             className={`magnetic-btn flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-semibold border ${showBrandKit ? 'bg-accent/10 border-accent text-accent' : 'border-surface/10 text-surface/70'}`}
           >
             <Palette className="w-4 h-4" /> Design
+          </button>
+          <button
+            onClick={() => { setShowPageSettings((v) => !v); setShowSettings(false); setShowBrandKit(false); setShowAiAssistant(false); }}
+            className={`magnetic-btn flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-semibold border ${showPageSettings ? 'bg-accent/10 border-accent text-accent' : 'border-surface/10 text-surface/70'}`}
+          >
+            <Megaphone className="w-4 h-4" /> Page
           </button>
           {plan.aiAccess && (
             <button
@@ -765,6 +778,12 @@ export default function FunnelEditorPage() {
       {showSettings && (
         <div className="mb-6 max-w-2xl">
           <FunnelSettingsPanel funnel={funnel} plan={plan} onSave={handleSaveSettings} />
+        </div>
+      )}
+
+      {showPageSettings && (
+        <div className="mb-6 max-w-2xl">
+          <PageSettingsPanel step={steps.find((s) => s.id === selectedStepId)} steps={steps} plan={plan} onSave={handleSaveChrome} />
         </div>
       )}
 

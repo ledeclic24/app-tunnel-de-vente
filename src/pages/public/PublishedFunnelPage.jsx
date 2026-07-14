@@ -3,6 +3,9 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { fetchFunnelBySlug, fetchSteps, fetchBlocks, insertLead, incrementStepView } from '../../lib/funnelsApi';
 import { brandStyleVars } from '../../lib/colorUtils';
 import BlockRenderer from '../../components/blocks/BlockRenderer';
+import CountdownBar from '../../components/public/CountdownBar';
+import PurchaseNotification from '../../components/public/PurchaseNotification';
+import StickyFooterCta from '../../components/public/StickyFooterCta';
 
 const META_PIXEL_RE = /^[0-9]{5,20}$/;
 const GA_ID_RE = /^(G|UA|AW)-[A-Z0-9-]{4,20}$/i;
@@ -93,6 +96,10 @@ export default function PublishedFunnelPage({ funnelSlugOverride } = {}) {
     if (next) navigate(`${basePath}/${next.slug}`);
   };
 
+  const handleNavigateToStep = (slug) => {
+    if (steps.some((s) => s.slug === slug)) navigate(`${basePath}/${slug}`);
+  };
+
   const handleSubmitLead = async ({ name, email }) => {
     await insertLead({ funnelId: funnel.id, stepId: currentStep.id, name, email });
   };
@@ -115,9 +122,12 @@ export default function PublishedFunnelPage({ funnelSlugOverride } = {}) {
     );
   }
 
+  const chrome = currentStep?.chrome || {};
+
   return (
     <div className="min-h-screen bg-background text-surface font-sans" style={brandStyleVars(funnel.brand)}>
-      <div className="max-w-4xl mx-auto py-8 space-y-6">
+      <CountdownBar config={chrome.countdownBar} />
+      <div className={`max-w-4xl mx-auto py-8 space-y-6 ${chrome.stickyFooterCta?.enabled ? 'pb-24' : ''}`}>
         {funnel.brand?.logoUrl && (
           <img src={funnel.brand.logoUrl} alt={funnel.name} className="h-10 mx-auto object-contain" />
         )}
@@ -136,6 +146,8 @@ export default function PublishedFunnelPage({ funnelSlugOverride } = {}) {
           Propulsé par <Link to="/" className="text-accent hover:underline">Vendeko</Link>
         </footer>
       )}
+      <PurchaseNotification config={chrome.purchaseNotification} liftForFooter={Boolean(chrome.stickyFooterCta?.enabled)} />
+      <StickyFooterCta config={chrome.stickyFooterCta} onNavigateToStep={handleNavigateToStep} onAdvance={handleAdvance} />
     </div>
   );
 }
