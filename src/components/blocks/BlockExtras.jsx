@@ -77,19 +77,18 @@ function ExtraItem({ extra, bg, editable, onUpdate, onRemove, userId, dragHandle
           onClick={(e) => { props.onClick?.(e); fileRef.current?.click(); }}
         />
       ) : (
-        <button
-          type="button"
-          onClick={() => fileRef.current?.click()}
-          disabled={uploading}
+        <label
           className={cx(
-            'w-full flex items-center justify-center gap-2 py-8 rounded-xl border border-dashed transition-colors disabled:opacity-50 hover:border-accent hover:text-accent',
+            'w-full flex items-center justify-center gap-2 py-8 rounded-xl border border-dashed transition-colors cursor-pointer hover:border-accent hover:text-accent',
+            uploading && 'opacity-50 pointer-events-none',
             bg.isDark ? 'border-background/20 text-background/50' : 'border-surface/20 text-surface/50',
           )}
         >
           <Upload className="w-4 h-4" /> {uploading ? 'Envoi...' : 'Choisir une image'}
-        </button>
+          <input type="file" accept="image/*" className="hidden" onChange={handleFile} />
+        </label>
       )}
-      {extra.type === 'image' && <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFile} />}
+      {extra.type === 'image' && extra.value && <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFile} />}
     </div>
   );
 }

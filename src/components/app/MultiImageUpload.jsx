@@ -1,10 +1,10 @@
-import React, { useRef, useState } from 'react';
+import React, { useState } from 'react';
 import { ImageIcon, Upload, X } from 'lucide-react';
 import { uploadImage } from '../../lib/storage';
+import { cx } from '../../lib/blockStyle';
 import ImagePickerModal from './ImagePickerModal';
 
 export default function MultiImageUpload({ userId, images, onChange, max = 5 }) {
-  const fileRef = useRef(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
   const [showPicker, setShowPicker] = useState(false);
@@ -47,14 +47,15 @@ export default function MultiImageUpload({ userId, images, onChange, max = 5 }) 
       )}
       {images.length < max && (
         <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={() => fileRef.current?.click()}
-            disabled={uploading || !userId}
-            className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border border-dashed border-surface/20 text-sm text-surface/60 hover:border-accent hover:text-accent transition-colors disabled:opacity-50"
+          <label
+            className={cx(
+              'flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border border-dashed border-surface/20 text-sm text-surface/60 hover:border-accent hover:text-accent transition-colors cursor-pointer',
+              (uploading || !userId) && 'opacity-50 pointer-events-none',
+            )}
           >
             <Upload className="w-4 h-4" /> {uploading ? 'Envoi...' : `Importer (${images.length}/${max})`}
-          </button>
+            <input type="file" accept="image/*" multiple className="hidden" onChange={handleFiles} disabled={uploading || !userId} />
+          </label>
           <button
             type="button"
             onClick={() => setShowPicker(true)}
@@ -64,7 +65,6 @@ export default function MultiImageUpload({ userId, images, onChange, max = 5 }) 
           </button>
         </div>
       )}
-      <input ref={fileRef} type="file" accept="image/*" multiple className="hidden" onChange={handleFiles} />
       {error && <p className="text-xs text-red-500">{error}</p>}
       <ImagePickerModal
         open={showPicker}

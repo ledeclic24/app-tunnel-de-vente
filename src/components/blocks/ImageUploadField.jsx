@@ -1,6 +1,7 @@
-import React, { useRef, useState } from 'react';
+import React, { useState } from 'react';
 import { ImageIcon, Upload, Wand2 } from 'lucide-react';
 import { uploadImage } from '../../lib/storage';
+import { cx } from '../../lib/blockStyle';
 import ImagePickerModal from '../app/ImagePickerModal';
 
 // onGenerate/generating sont optionnels : sans eux, comportement inchangé
@@ -10,7 +11,6 @@ import ImagePickerModal from '../app/ImagePickerModal';
 // le bouton "Générer" ouvre d'abord un petit menu de types avant d'appeler
 // onGenerate(typeKey) — sinon onGenerate() est appelé directement sans argument.
 export default function ImageUploadField({ userId, value, onChange, onGenerate, generating, generateTypes }) {
-  const fileRef = useRef(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
   const [showPicker, setShowPicker] = useState(false);
@@ -46,14 +46,15 @@ export default function ImageUploadField({ userId, value, onChange, onGenerate, 
           value={value || ''}
           onChange={(e) => onChange(e.target.value)}
         />
-        <button
-          type="button"
-          onClick={() => fileRef.current?.click()}
-          disabled={uploading || !userId}
-          className="shrink-0 flex items-center gap-1.5 px-3 py-2.5 rounded-xl border border-surface/10 text-sm text-surface/70 hover:border-accent hover:text-accent transition-colors disabled:opacity-50"
+        <label
+          className={cx(
+            'shrink-0 flex items-center gap-1.5 px-3 py-2.5 rounded-xl border border-surface/10 text-sm text-surface/70 hover:border-accent hover:text-accent transition-colors cursor-pointer',
+            (uploading || !userId) && 'opacity-50 pointer-events-none',
+          )}
         >
           <Upload className="w-4 h-4" /> {uploading ? 'Envoi...' : 'Importer'}
-        </button>
+          <input type="file" accept="image/*" className="hidden" onChange={handleFile} disabled={uploading || !userId} />
+        </label>
         <button
           type="button"
           onClick={() => setShowPicker(true)}
@@ -92,7 +93,6 @@ export default function ImageUploadField({ userId, value, onChange, onGenerate, 
             )}
           </div>
         )}
-        <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFile} />
       </div>
       {error && <p className="text-xs text-red-500">{error}</p>}
       <ImagePickerModal

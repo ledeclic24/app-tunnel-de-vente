@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useState } from 'react';
 import { ArrowRight, ImagePlus, Upload, Image as LibraryIcon, Wand2 } from 'lucide-react';
 import { getButtonStyle, getEditableProps, getContentEditableProps, cx } from '../../lib/blockStyle';
 import { uploadImage } from '../../lib/storage';
@@ -47,7 +47,6 @@ export default function HeroBlock({ content, onAdvance, editMode, selectedElemen
   const buttonProps = editable('button', 'button', 'Bouton');
   const buttonStyle = { ...getButtonStyle(content.style), ...buttonProps.style };
 
-  const fileInputRef = useRef(null);
   const [uploading, setUploading] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   const [showPicker, setShowPicker] = useState(false);
@@ -101,19 +100,18 @@ export default function HeroBlock({ content, onAdvance, editMode, selectedElemen
 
   const imageMenu = editMode && (
     <>
-      <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
       {showMenu && (
         <div
           className="absolute top-3 right-3 z-30 bg-background border border-surface/10 rounded-xl shadow-lg overflow-hidden min-w-[220px]"
           onClick={(e) => e.stopPropagation()}
         >
-          <button
-            type="button"
-            onClick={() => { setShowMenu(false); fileInputRef.current?.click(); }}
-            className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-surface/80 hover:bg-primary/5 hover:text-accent text-left"
+          <label
+            onClick={() => setShowMenu(false)}
+            className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-surface/80 hover:bg-primary/5 hover:text-accent text-left cursor-pointer"
           >
             <Upload className="w-4 h-4 shrink-0" /> {uploading ? 'Envoi...' : 'Importer depuis mon ordinateur'}
-          </button>
+            <input type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
+          </label>
           <button
             type="button"
             onClick={() => { setShowMenu(false); setShowPicker(true); }}
