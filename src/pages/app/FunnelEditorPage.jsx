@@ -38,7 +38,7 @@ const HISTORY_LIMIT = 20;
 function BlockCard({
   block, onDelete, onDuplicate, isExpanded, onToggle, onChange, userId, selectedElement, onSelectElement,
   dragHandleProps, onSaveToLibrary, canUseLibrary, onToggleLock, onRegenerate, canRegenerate, isRegenerating,
-  onGenerateImage, isGeneratingImage, defaultBg,
+  onGenerateImage, isGeneratingImage, defaultBg, siblingSteps,
 }) {
   const def = BLOCK_TYPES.find((b) => b.type === block.type);
   const Icon = def?.icon;
@@ -114,6 +114,7 @@ function BlockCard({
           onContentChange={onChange}
           userId={userId}
           defaultBg={defaultBg}
+          siblingSteps={siblingSteps}
         />
       </div>
 
@@ -125,6 +126,7 @@ function BlockCard({
             userId={userId}
             onGenerateImage={onGenerateImage}
             imageGenerating={isGeneratingImage}
+            steps={siblingSteps}
           />
         </div>
       )}
@@ -861,6 +863,7 @@ export default function FunnelEditorPage() {
                   key={block.id}
                   block={block}
                   defaultBg={blockIndex % 2 === 0 ? 'primary' : 'white'}
+                  siblingSteps={steps}
                   onDelete={() => handleDeleteBlock(block)}
                   onDuplicate={() => handleDuplicateBlock(block)}
                   isExpanded={expandedBlockId === block.id}

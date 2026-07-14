@@ -1,6 +1,6 @@
 import {
   LayoutTemplate, Type, Image, LayoutGrid, MessageSquareQuote,
-  Tag, Mail, Timer, HelpCircle, MousePointerClick, ListChecks, Video,
+  Tag, Mail, Timer, HelpCircle, MousePointerClick, ListChecks, Video, ListVideo,
 } from 'lucide-react';
 
 export const BLOCK_TYPES = [
@@ -129,6 +129,16 @@ export const BLOCK_TYPES = [
       heading: 'Regarde cette vidéo',
       videoUrl: '',
       description: '',
+    }),
+  },
+  {
+    type: 'video-nav',
+    label: 'Navigation vidéo',
+    icon: ListVideo,
+    tier: 'createur',
+    defaultContent: () => ({
+      targetSlugs: [],
+      labels: [],
     }),
   },
   {

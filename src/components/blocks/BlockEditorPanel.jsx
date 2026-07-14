@@ -59,7 +59,7 @@ function ListEditor({ items, onChange, renderRow, emptyItem, addLabel }) {
   );
 }
 
-function BlockFields({ type, content, set, userId, blockId, onGenerateImage, imageGenerating }) {
+function BlockFields({ type, content, set, userId, blockId, onGenerateImage, imageGenerating, steps }) {
   switch (type) {
     case 'hero':
       return (
@@ -343,12 +343,65 @@ function BlockFields({ type, content, set, userId, blockId, onGenerateImage, ima
         </div>
       );
 
+    case 'video-nav': {
+      const targetSlugs = content.targetSlugs || [];
+      const labels = content.labels || [];
+      const toggleStep = (slug) => {
+        if (targetSlugs.includes(slug)) {
+          const idx = targetSlugs.indexOf(slug);
+          set({
+            targetSlugs: targetSlugs.filter((s) => s !== slug),
+            labels: labels.filter((_, i) => i !== idx),
+          });
+        } else {
+          set({ targetSlugs: [...targetSlugs, slug], labels: [...labels, ''] });
+        }
+      };
+      const setLabel = (slug, label) => {
+        const idx = targetSlugs.indexOf(slug);
+        if (idx === -1) return;
+        const nextLabels = [...labels];
+        nextLabels[idx] = label;
+        set({ labels: nextLabels });
+      };
+      return (
+        <div className="space-y-3">
+          <p className="text-xs text-surface/50">
+            Choisis les pages vers lesquelles ce bloc doit permettre de naviguer directement (ex. les 3 pages vidéo d'un webinaire).
+          </p>
+          {(steps || []).length === 0 && (
+            <p className="text-xs text-surface/40">Ajoute d'abord d'autres pages à ce tunnel.</p>
+          )}
+          {(steps || []).map((s) => {
+            const idx = targetSlugs.indexOf(s.slug);
+            const checked = idx !== -1;
+            return (
+              <div key={s.id} className="border border-surface/10 rounded-xl p-3 space-y-2">
+                <label className="flex items-center gap-2 text-sm text-surface cursor-pointer">
+                  <input type="checkbox" checked={checked} onChange={() => toggleStep(s.slug)} />
+                  {s.name}
+                </label>
+                {checked && (
+                  <input
+                    className={inputClass}
+                    placeholder={`Libellé affiché (par défaut : "${s.name}")`}
+                    value={labels[idx] || ''}
+                    onChange={(e) => setLabel(s.slug, e.target.value)}
+                  />
+                )}
+              </div>
+            );
+          })}
+        </div>
+      );
+    }
+
     default:
       return <p className="text-sm text-surface/50">Aucun réglage pour ce bloc.</p>;
   }
 }
 
-export default function BlockEditorPanel({ block, onChange, userId, onGenerateImage, imageGenerating }) {
+export default function BlockEditorPanel({ block, onChange, userId, onGenerateImage, imageGenerating, steps }) {
   const { type, content } = block;
   const set = (patch) => onChange({ ...content, ...patch });
 
@@ -362,6 +415,7 @@ export default function BlockEditorPanel({ block, onChange, userId, onGenerateIm
         blockId={block.id}
         onGenerateImage={onGenerateImage}
         imageGenerating={imageGenerating}
+        steps={steps}
       />
       <p className="pt-4 mt-2 border-t border-surface/10 text-xs text-surface/40">
         Astuce : cliquez directement sur un titre, un bouton, une image ou une carte dans l'aperçu ci-dessus pour personnaliser sa couleur, sa police et ses effets.

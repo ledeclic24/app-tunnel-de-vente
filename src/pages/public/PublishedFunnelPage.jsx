@@ -138,6 +138,9 @@ export default function PublishedFunnelPage({ funnelSlugOverride } = {}) {
             onAdvance={handleAdvance}
             onSubmitLead={handleSubmitLead}
             defaultBg={i % 2 === 0 ? 'primary' : 'white'}
+            siblingSteps={steps}
+            onNavigateToStep={handleNavigateToStep}
+            currentStepSlug={currentStep?.slug}
           />
         ))}
       </div>

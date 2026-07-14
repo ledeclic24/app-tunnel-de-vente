@@ -11,6 +11,7 @@ import FaqBlock from './FaqBlock';
 import CtaBlock from './CtaBlock';
 import QuizBlock from './QuizBlock';
 import VideoBlock from './VideoBlock';
+import VideoNavBlock from './VideoNavBlock';
 import { getEditableProps, buildDesktopStyleTag, cx } from '../../lib/blockStyle';
 import useScrollReveal from '../../lib/useScrollReveal';
 
@@ -27,9 +28,13 @@ const COMPONENTS = {
   cta: CtaBlock,
   quiz: QuizBlock,
   video: VideoBlock,
+  'video-nav': VideoNavBlock,
 };
 
-export default function BlockRenderer({ block, onAdvance, onSubmitLead, editMode, selectedElement, onSelectElement, onContentChange, userId, defaultBg }) {
+export default function BlockRenderer({
+  block, onAdvance, onSubmitLead, editMode, selectedElement, onSelectElement, onContentChange, userId, defaultBg,
+  siblingSteps, onNavigateToStep, currentStepSlug,
+}) {
   const Component = COMPONENTS[block.type];
   const reveal = useScrollReveal(editMode);
   if (!Component) return null;
@@ -65,6 +70,9 @@ export default function BlockRenderer({ block, onAdvance, onSubmitLead, editMode
           onContentChange={onContentChange}
           userId={userId}
           defaultBg={defaultBg}
+          siblingSteps={siblingSteps}
+          onNavigateToStep={onNavigateToStep}
+          currentStepSlug={currentStepSlug}
         />
       </div>
     </>
