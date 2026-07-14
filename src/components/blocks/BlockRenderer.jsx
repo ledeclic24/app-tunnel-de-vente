@@ -12,6 +12,11 @@ import CtaBlock from './CtaBlock';
 import QuizBlock from './QuizBlock';
 import VideoBlock from './VideoBlock';
 import VideoNavBlock from './VideoNavBlock';
+import ProcessBlock from './ProcessBlock';
+import BonusStackBlock from './BonusStackBlock';
+import StatsBlock from './StatsBlock';
+import TeamBlock from './TeamBlock';
+import LogosBlock from './LogosBlock';
 import { getEditableProps, buildDesktopStyleTag, cx } from '../../lib/blockStyle';
 import useScrollReveal from '../../lib/useScrollReveal';
 
@@ -29,6 +34,11 @@ const COMPONENTS = {
   quiz: QuizBlock,
   video: VideoBlock,
   'video-nav': VideoNavBlock,
+  process: ProcessBlock,
+  'bonus-stack': BonusStackBlock,
+  stats: StatsBlock,
+  team: TeamBlock,
+  logos: LogosBlock,
 };
 
 export default function BlockRenderer({

@@ -503,6 +503,143 @@ function BlockFields({ type, content, set, userId, blockId, onGenerateImage, ima
       );
     }
 
+    case 'process':
+      return (
+        <div className="space-y-4">
+          <Field label="Titre de la section">
+            <input className={inputClass} value={content.heading || ''} onChange={(e) => set({ heading: e.target.value })} />
+          </Field>
+          <Field label="Mise en page">
+            <div className="flex bg-primary/5 rounded-xl p-1 gap-1">
+              {[{ v: 'grid', l: 'Grille' }, { v: 'circular', l: 'Liste numérotée' }].map((o) => (
+                <button
+                  key={o.v}
+                  type="button"
+                  onClick={() => set({ layout: o.v })}
+                  className={`flex-1 py-2 rounded-lg text-xs font-medium transition-colors ${(content.layout || 'grid') === o.v ? 'bg-background text-surface shadow-sm' : 'text-surface/50'}`}
+                >
+                  {o.l}
+                </button>
+              ))}
+            </div>
+          </Field>
+          <Field label="Étapes">
+            <ListEditor
+              items={content.items || []}
+              onChange={(items) => set({ items })}
+              emptyItem={{ title: 'Nouvelle étape', description: '' }}
+              addLabel="Ajouter une étape"
+              renderRow={(item, update) => (
+                <>
+                  <input className={inputClass} placeholder="Titre" value={item.title || ''} onChange={(e) => update({ title: e.target.value })} />
+                  <textarea className={inputClass} placeholder="Description" rows={2} value={item.description || ''} onChange={(e) => update({ description: e.target.value })} />
+                </>
+              )}
+            />
+          </Field>
+        </div>
+      );
+
+    case 'bonus-stack':
+      return (
+        <div className="space-y-4">
+          <Field label="Titre de la section">
+            <input className={inputClass} value={content.heading || ''} onChange={(e) => set({ heading: e.target.value })} />
+          </Field>
+          <Field label="Bonus">
+            <ListEditor
+              items={content.items || []}
+              onChange={(items) => set({ items })}
+              emptyItem={{ title: 'Nouveau bonus', description: '' }}
+              addLabel="Ajouter un bonus"
+              renderRow={(item, update) => (
+                <>
+                  <input className={inputClass} placeholder="Titre" value={item.title || ''} onChange={(e) => update({ title: e.target.value })} />
+                  <textarea className={inputClass} placeholder="Description" rows={2} value={item.description || ''} onChange={(e) => update({ description: e.target.value })} />
+                  <div>
+                    <label className="block text-xs text-surface/50 mb-1.5">
+                      Image (dépose la tienne ou choisis-en une dans ta bibliothèque — la génération IA par image individuelle n'est pas encore disponible pour ce champ)
+                    </label>
+                    <ImageUploadField userId={userId} value={item.imageUrl} onChange={(imageUrl) => update({ imageUrl })} />
+                  </div>
+                </>
+              )}
+            />
+          </Field>
+        </div>
+      );
+
+    case 'stats':
+      return (
+        <div className="space-y-4">
+          <Field label="Chiffres">
+            <ListEditor
+              items={content.items || []}
+              onChange={(items) => set({ items })}
+              emptyItem={{ value: '', label: '' }}
+              addLabel="Ajouter un chiffre"
+              renderRow={(item, update) => (
+                <div className="flex gap-2">
+                  <input className={inputClass} placeholder="Ex : 500+" value={item.value || ''} onChange={(e) => update({ value: e.target.value })} />
+                  <input className={inputClass} placeholder="Ex : Clients satisfaits" value={item.label || ''} onChange={(e) => update({ label: e.target.value })} />
+                </div>
+              )}
+            />
+          </Field>
+        </div>
+      );
+
+    case 'team':
+      return (
+        <div className="space-y-4">
+          <Field label="Titre de la section">
+            <input className={inputClass} value={content.heading || ''} onChange={(e) => set({ heading: e.target.value })} />
+          </Field>
+          <Field label="Membres">
+            <ListEditor
+              items={content.items || []}
+              onChange={(items) => set({ items })}
+              emptyItem={{ name: '', role: '', bio: '' }}
+              addLabel="Ajouter un membre"
+              renderRow={(item, update) => (
+                <>
+                  <input className={inputClass} placeholder="Nom" value={item.name || ''} onChange={(e) => update({ name: e.target.value })} />
+                  <input className={inputClass} placeholder="Rôle (optionnel)" value={item.role || ''} onChange={(e) => update({ role: e.target.value })} />
+                  <textarea className={inputClass} placeholder="Bio (optionnel)" rows={2} value={item.bio || ''} onChange={(e) => update({ bio: e.target.value })} />
+                  <div>
+                    <label className="block text-xs text-surface/50 mb-1.5">Photo (optionnel)</label>
+                    <ImageUploadField userId={userId} value={item.photoUrl} onChange={(photoUrl) => update({ photoUrl })} />
+                  </div>
+                </>
+              )}
+            />
+          </Field>
+        </div>
+      );
+
+    case 'logos':
+      return (
+        <div className="space-y-4">
+          <Field label="Titre de la section (optionnel)">
+            <input className={inputClass} value={content.heading || ''} onChange={(e) => set({ heading: e.target.value })} />
+          </Field>
+          <Field label="Logos">
+            <ListEditor
+              items={content.items || []}
+              onChange={(items) => set({ items })}
+              emptyItem={{ name: '', logoUrl: '' }}
+              addLabel="Ajouter un logo"
+              renderRow={(item, update) => (
+                <>
+                  <input className={inputClass} placeholder="Nom (pour l'accessibilité)" value={item.name || ''} onChange={(e) => update({ name: e.target.value })} />
+                  <ImageUploadField userId={userId} value={item.logoUrl} onChange={(logoUrl) => update({ logoUrl })} />
+                </>
+              )}
+            />
+          </Field>
+        </div>
+      );
+
     default:
       return <p className="text-sm text-surface/50">Aucun réglage pour ce bloc.</p>;
   }
