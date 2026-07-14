@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { ArrowRight, CheckCircle2 } from 'lucide-react';
 import { getButtonStyle, getEditableProps, getContentEditableProps, getSectionBackground, cx } from '../../lib/blockStyle';
+import BlockExtras from './BlockExtras';
 
-export default function FormBlock({ content, onSubmitLead, onAdvance, editMode, selectedElement, onSelectElement, onContentChange, defaultBg }) {
+export default function FormBlock({ content, onSubmitLead, onAdvance, editMode, selectedElement, onSelectElement, onContentChange, userId, defaultBg }) {
   const { headline, buttonText, successMessage } = content;
   const editable = (elementKey, kind, label) =>
     getEditableProps({ elementKey, kind, styles: content.styles, editMode, selectedElement, onSelectElement, label });
@@ -95,6 +96,16 @@ export default function FormBlock({ content, onSubmitLead, onAdvance, editMode, 
           </form>
         )}
       </div>
+      <BlockExtras
+        extras={content.extras}
+        styles={content.styles}
+        onChange={(extras) => onContentChange?.({ ...content, extras })}
+        editMode={editMode}
+        selectedElement={selectedElement}
+        onSelectElement={onSelectElement}
+        bg={bg}
+        userId={userId}
+      />
     </section>
   );
 }

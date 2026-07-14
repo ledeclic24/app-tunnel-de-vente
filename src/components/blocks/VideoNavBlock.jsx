@@ -1,22 +1,39 @@
 import React from 'react';
 import { Play } from 'lucide-react';
 import { getSectionBackground, cx } from '../../lib/blockStyle';
+import BlockExtras from './BlockExtras';
 
 // Navigation directe entre les pages vidéo d'un tunnel webinaire (cahier
 // des charges "tunnel webinaire") : vignettes cliquables vers des étapes
 // précises, choisies explicitement par le créateur (jamais déduites
 // implicitement — robuste si l'ordre/le nombre d'étapes change).
-export default function VideoNavBlock({ content, defaultBg, siblingSteps, onNavigateToStep, currentStepSlug, editMode }) {
+export default function VideoNavBlock({
+  content, defaultBg, siblingSteps, onNavigateToStep, currentStepSlug, editMode,
+  selectedElement, onSelectElement, onContentChange, userId,
+}) {
   const { targetSlugs = [], labels = [] } = content;
   const bg = getSectionBackground(content.styles, defaultBg || 'white');
+  const extrasProps = {
+    extras: content.extras,
+    styles: content.styles,
+    onChange: (extras) => onContentChange?.({ ...content, extras }),
+    editMode,
+    selectedElement,
+    onSelectElement,
+    bg,
+    userId,
+  };
 
   if (targetSlugs.length === 0) {
-    if (!editMode) return null;
+    if (!editMode && !(content.extras?.length > 0)) return null;
     return (
       <section className={cx('px-6 py-8 md:px-16 max-w-3xl mx-auto text-center', bg.sectionClassName)}>
-        <p className={cx('text-sm', bg.isDark ? 'text-background/60' : 'text-surface/50')}>
-          Choisis les pages vidéo à afficher dans les réglages de ce bloc.
-        </p>
+        {editMode && (
+          <p className={cx('text-sm', bg.isDark ? 'text-background/60' : 'text-surface/50')}>
+            Choisis les pages vidéo à afficher dans les réglages de ce bloc.
+          </p>
+        )}
+        <BlockExtras {...extrasProps} />
       </section>
     );
   }
@@ -47,6 +64,7 @@ export default function VideoNavBlock({ content, defaultBg, siblingSteps, onNavi
           );
         })}
       </div>
+      <BlockExtras {...extrasProps} />
     </section>
   );
 }

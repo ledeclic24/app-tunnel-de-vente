@@ -2,10 +2,15 @@ import React, { useRef, useState } from 'react';
 import { ArrowRight, ImagePlus } from 'lucide-react';
 import { getButtonStyle, getEditableProps, getContentEditableProps, cx } from '../../lib/blockStyle';
 import { uploadImage } from '../../lib/storage';
+import BlockExtras from './BlockExtras';
 
 export default function HeroBlock({ content, onAdvance, editMode, selectedElement, onSelectElement, onContentChange, userId }) {
   const { eyebrow, heading, subheading, imageUrl, ctaText, externalUrl, layout, trustBadges = [] } = content;
   const isSplit = layout === 'split';
+  // Hero est toujours sombre (bg-primary), quelle que soit sa position —
+  // pas de calcul via getSectionBackground ici, donc un objet "bg" de
+  // substitution pour que BlockExtras hérite du bon contraste de texte.
+  const heroBg = { headingClassName: 'text-background', bodyClassName: 'text-background/70', isDark: true };
   const editable = (elementKey, kind, label) =>
     getEditableProps({ elementKey, kind, styles: content.styles, editMode, selectedElement, onSelectElement, label });
   const editableText = (field, multiline) => getContentEditableProps({ editMode, onContentChange, content, field, multiline });
@@ -130,6 +135,16 @@ export default function HeroBlock({ content, onAdvance, editMode, selectedElemen
                 {trustBadges.map((b, i) => <span key={i}>{b}</span>)}
               </div>
             )}
+            <BlockExtras
+              extras={content.extras}
+              styles={content.styles}
+              onChange={(extras) => onContentChange?.({ ...content, extras })}
+              editMode={editMode}
+              selectedElement={selectedElement}
+              onSelectElement={onSelectElement}
+              bg={heroBg}
+              userId={userId}
+            />
           </div>
         </div>
       </section>
@@ -185,6 +200,16 @@ export default function HeroBlock({ content, onAdvance, editMode, selectedElemen
           </p>
         )}
         {cta}
+        <BlockExtras
+          extras={content.extras}
+          styles={content.styles}
+          onChange={(extras) => onContentChange?.({ ...content, extras })}
+          editMode={editMode}
+          selectedElement={selectedElement}
+          onSelectElement={onSelectElement}
+          bg={heroBg}
+          userId={userId}
+        />
       </div>
     </section>
   );

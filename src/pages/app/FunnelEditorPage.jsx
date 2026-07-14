@@ -854,7 +854,12 @@ export default function FunnelEditorPage() {
         <HealthScoreCard score={score} checks={checks} />
       </div>
 
-      <div className="space-y-4 max-w-2xl" style={brandStyleVars(funnel.brand)}>
+      <div
+        className="space-y-4 max-w-2xl"
+        style={brandStyleVars(funnel.brand)}
+        onDragOver={(e) => e.preventDefault()}
+        onDrop={(e) => e.preventDefault()}
+      >
         <DndContext sensors={blockSensors} collisionDetection={closestCenter} onDragEnd={handleBlockDragEnd}>
           <SortableContext items={blocks.map((b) => b.id)} strategy={verticalListSortingStrategy}>
             <div className="space-y-4">

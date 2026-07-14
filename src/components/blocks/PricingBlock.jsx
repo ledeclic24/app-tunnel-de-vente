@@ -1,6 +1,7 @@
 import React from 'react';
 import { Check, X } from 'lucide-react';
 import { getEditableProps, getContentEditableProps, getSectionBackground, cx } from '../../lib/blockStyle';
+import BlockExtras from './BlockExtras';
 
 const GRID_COLS_CLASS = { 1: '', 2: 'md:grid-cols-2', 3: 'md:grid-cols-3' };
 
@@ -30,7 +31,7 @@ function ComparisonRows({ rows, planIndex, highlight }) {
   );
 }
 
-export default function PricingBlock({ content, onAdvance, editMode, selectedElement, onSelectElement, onContentChange, defaultBg }) {
+export default function PricingBlock({ content, onAdvance, editMode, selectedElement, onSelectElement, onContentChange, userId, defaultBg }) {
   const { heading, plans = [], layout, comparisonRows } = content;
   const isComparison = layout === 'comparison' && (comparisonRows || []).length > 0;
   const gridClass = GRID_COLS_CLASS[Math.min(plans.length, 3)] || '';
@@ -148,6 +149,16 @@ export default function PricingBlock({ content, onAdvance, editMode, selectedEle
           );
         })}
       </div>
+      <BlockExtras
+        extras={content.extras}
+        styles={content.styles}
+        onChange={(extras) => onContentChange?.({ ...content, extras })}
+        editMode={editMode}
+        selectedElement={selectedElement}
+        onSelectElement={onSelectElement}
+        bg={bg}
+        userId={userId}
+      />
     </section>
   );
 }

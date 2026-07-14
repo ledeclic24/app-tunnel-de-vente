@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { ArrowRight } from 'lucide-react';
 import { getEditableProps, getContentEditableProps, getSectionBackground, cx } from '../../lib/blockStyle';
+import BlockExtras from './BlockExtras';
 
-export default function QuizBlock({ content, onAdvance, editMode, selectedElement, onSelectElement, onContentChange, defaultBg }) {
+export default function QuizBlock({ content, onAdvance, editMode, selectedElement, onSelectElement, onContentChange, userId, defaultBg }) {
   const { heading, questions = [], resultButtonText } = content;
   const [step, setStep] = useState(0);
   const editable = (elementKey, kind, label) =>
@@ -95,6 +96,16 @@ export default function QuizBlock({ content, onAdvance, editMode, selectedElemen
           </div>
         )}
       </div>
+      <BlockExtras
+        extras={content.extras}
+        styles={content.styles}
+        onChange={(extras) => onContentChange?.({ ...content, extras })}
+        editMode={editMode}
+        selectedElement={selectedElement}
+        onSelectElement={onSelectElement}
+        bg={bg}
+        userId={userId}
+      />
     </section>
   );
 }

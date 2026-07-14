@@ -1,8 +1,9 @@
 import React from 'react';
 import { Quote } from 'lucide-react';
 import { getEditableProps, getContentEditableProps, getSectionBackground, cx } from '../../lib/blockStyle';
+import BlockExtras from './BlockExtras';
 
-export default function TestimonialsBlock({ content, editMode, selectedElement, onSelectElement, onContentChange, defaultBg }) {
+export default function TestimonialsBlock({ content, editMode, selectedElement, onSelectElement, onContentChange, userId, defaultBg }) {
   const { heading, items = [], layout } = content;
   const isCarousel = layout === 'carousel';
   const editable = (elementKey, kind, label) =>
@@ -64,6 +65,16 @@ export default function TestimonialsBlock({ content, editMode, selectedElement, 
           );
         })}
       </div>
+      <BlockExtras
+        extras={content.extras}
+        styles={content.styles}
+        onChange={(extras) => onContentChange?.({ ...content, extras })}
+        editMode={editMode}
+        selectedElement={selectedElement}
+        onSelectElement={onSelectElement}
+        bg={bg}
+        userId={userId}
+      />
     </section>
   );
 }

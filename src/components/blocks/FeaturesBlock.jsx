@@ -1,8 +1,9 @@
 import React from 'react';
 import { Check } from 'lucide-react';
 import { getEditableProps, getContentEditableProps, getSectionBackground, cx } from '../../lib/blockStyle';
+import BlockExtras from './BlockExtras';
 
-export default function FeaturesBlock({ content, editMode, selectedElement, onSelectElement, onContentChange, defaultBg }) {
+export default function FeaturesBlock({ content, editMode, selectedElement, onSelectElement, onContentChange, userId, defaultBg }) {
   const { heading, items = [], layout } = content;
   const isRows = layout === 'rows';
   const editable = (elementKey, kind, label) =>
@@ -107,6 +108,16 @@ export default function FeaturesBlock({ content, editMode, selectedElement, onSe
           })}
         </div>
       )}
+      <BlockExtras
+        extras={content.extras}
+        styles={content.styles}
+        onChange={(extras) => onContentChange?.({ ...content, extras })}
+        editMode={editMode}
+        selectedElement={selectedElement}
+        onSelectElement={onSelectElement}
+        bg={bg}
+        userId={userId}
+      />
     </section>
   );
 }

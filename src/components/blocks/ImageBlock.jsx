@@ -2,6 +2,7 @@ import React, { useRef, useState } from 'react';
 import { ImagePlus } from 'lucide-react';
 import { getEditableProps, getContentEditableProps, getSectionBackground, cx } from '../../lib/blockStyle';
 import { uploadImage } from '../../lib/storage';
+import BlockExtras from './BlockExtras';
 
 export default function ImageBlock({ content, editMode, selectedElement, onSelectElement, onContentChange, userId, defaultBg }) {
   const { url, caption, alt } = content;
@@ -31,7 +32,7 @@ export default function ImageBlock({ content, editMode, selectedElement, onSelec
     setUploading(false);
   };
 
-  if (!url && !editMode) return null;
+  if (!url && !editMode && !(content.extras?.length > 0)) return null;
 
   return (
     <section className={cx('px-6 py-8 md:px-16 max-w-4xl mx-auto', bg.sectionClassName)}>
@@ -70,6 +71,16 @@ export default function ImageBlock({ content, editMode, selectedElement, onSelec
       {(caption || editMode) && (
         <p className={cx('text-center text-sm mt-3 outline-none', bg.isDark ? 'text-background/60' : 'text-surface/50')} {...captionProps}>{caption}</p>
       )}
+      <BlockExtras
+        extras={content.extras}
+        styles={content.styles}
+        onChange={(extras) => onContentChange?.({ ...content, extras })}
+        editMode={editMode}
+        selectedElement={selectedElement}
+        onSelectElement={onSelectElement}
+        bg={bg}
+        userId={userId}
+      />
     </section>
   );
 }

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { getEditableProps, getContentEditableProps, getSectionBackground, cx } from '../../lib/blockStyle';
+import BlockExtras from './BlockExtras';
 
 function getRemaining(targetDate) {
   const rawDiff = new Date(targetDate).getTime() - Date.now();
@@ -11,7 +12,7 @@ function getRemaining(targetDate) {
   return { days, hours, minutes, seconds, expired: rawDiff <= 0 };
 }
 
-export default function CountdownBlock({ content, editMode, selectedElement, onSelectElement, onContentChange, defaultBg }) {
+export default function CountdownBlock({ content, editMode, selectedElement, onSelectElement, onContentChange, userId, defaultBg }) {
   const { headline, targetDate } = content;
   const [remaining, setRemaining] = useState(() => getRemaining(targetDate));
   const headlineProps = getEditableProps({ elementKey: 'headline', kind: 'text', styles: content.styles, editMode, selectedElement, onSelectElement, label: 'Titre' });
@@ -54,6 +55,16 @@ export default function CountdownBlock({ content, editMode, selectedElement, onS
           ))}
         </div>
       )}
+      <BlockExtras
+        extras={content.extras}
+        styles={content.styles}
+        onChange={(extras) => onContentChange?.({ ...content, extras })}
+        editMode={editMode}
+        selectedElement={selectedElement}
+        onSelectElement={onSelectElement}
+        bg={bg}
+        userId={userId}
+      />
     </section>
   );
 }
