@@ -10,6 +10,7 @@ import {
   startMetaAdsConnect, fetchMetaAdAccounts, disconnectMetaAdAccount,
   fetchMetaAdCampaigns, fetchMetaAdsSummary,
 } from '../../lib/metaAdsApi';
+import { useConfirm } from '../../components/app/ConfirmDialog';
 
 // Le code est prêt (OAuth, tableau de bord, coût par lead) mais attend les
 // identifiants de l'App Facebook côté serveur — passer à false dès qu'ils
@@ -134,6 +135,7 @@ export default function AdsPage() {
   const [datePreset, setDatePreset] = useState('last_30d');
   const [connecting, setConnecting] = useState(false);
   const [error, setError] = useState('');
+  const confirm = useConfirm();
 
   const justConnected = searchParams.get('connected');
   const oauthError = searchParams.get('error');
@@ -183,7 +185,7 @@ export default function AdsPage() {
   };
 
   const handleDisconnect = async (accountId) => {
-    if (!window.confirm('Déconnecter ce compte publicitaire ?')) return;
+    if (!(await confirm('Déconnecter ce compte publicitaire ?'))) return;
     try {
       await disconnectMetaAdAccount(accountId);
       if (selectedAccountId === accountId) setSelectedAccountId(null);

@@ -9,6 +9,7 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { getEditableProps, cx } from '../../lib/blockStyle';
 import { uploadImage } from '../../lib/storage';
+import { useToast } from '../app/Toast';
 
 // Éléments texte/image librement ajoutés par glisser-déposer à la fin
 // d'une section, en plus de ses champs fixes (cahier des charges "plus de
@@ -17,6 +18,7 @@ import { uploadImage } from '../../lib/storage';
 function ExtraItem({ extra, bg, editable, onUpdate, onRemove, userId, dragHandleProps, isDragging }) {
   const fileRef = useRef(null);
   const [uploading, setUploading] = useState(false);
+  const toast = useToast();
   const props = editable(`extra-${extra.id}`, extra.type === 'text' ? 'text' : 'image', extra.type === 'text' ? 'Texte' : 'Image');
 
   const handleFile = async (e) => {
@@ -28,7 +30,7 @@ function ExtraItem({ extra, bg, editable, onUpdate, onRemove, userId, dragHandle
       const url = await uploadImage(userId, file);
       onUpdate(url);
     } catch (err) {
-      window.alert(err.message || "L'image n'a pas pu être importée.");
+      toast.error(err.message || "L'image n'a pas pu être importée.");
     }
     setUploading(false);
   };
@@ -107,6 +109,7 @@ function SortableExtraItem(props) {
 export default function BlockExtras({ extras = [], styles, onChange, editMode, selectedElement, onSelectElement, bg, userId }) {
   const [dragOver, setDragOver] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const toast = useToast();
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
@@ -158,7 +161,7 @@ export default function BlockExtras({ extras = [], styles, onChange, editMode, s
         const url = await uploadImage(userId, file);
         insertExtra('image', url);
       } catch (err) {
-        window.alert(err.message || "L'image n'a pas pu être importée.");
+        toast.error(err.message || "L'image n'a pas pu être importée.");
       }
       setUploading(false);
       return;

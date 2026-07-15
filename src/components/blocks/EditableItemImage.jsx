@@ -3,6 +3,7 @@ import { Upload, ImageIcon, Pencil } from 'lucide-react';
 import { uploadImage } from '../../lib/storage';
 import ImagePickerModal from '../app/ImagePickerModal';
 import { cx } from '../../lib/blockStyle';
+import { useToast } from '../app/Toast';
 
 // Rend cliquable une image déjà présente dans un bloc (photo d'équipe, logo,
 // visuel de tarif, capture témoignage...) : Importer / Choisir dans ma
@@ -16,6 +17,7 @@ export default function EditableItemImage({
   const [uploading, setUploading] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   const [showPicker, setShowPicker] = useState(false);
+  const toast = useToast();
 
   if (!editMode) {
     return src ? <img src={src} alt={alt} loading="lazy" className={className} /> : (placeholder || null);
@@ -30,7 +32,7 @@ export default function EditableItemImage({
       const url = await uploadImage(userId, file);
       onChange(url);
     } catch (err) {
-      window.alert(err.message || "L'image n'a pas pu être importée.");
+      toast.error(err.message || "L'image n'a pas pu être importée.");
     }
     setUploading(false);
   };
@@ -78,7 +80,14 @@ export default function EditableItemImage({
           onClick={(e) => e.stopPropagation()}
         >
           <label
-            onClick={() => setShowMenu(false)}
+            // Fermer le menu de façon DIFFÉRÉE (pas dans le même clic) :
+            // le <label> déclenche l'ouverture native du sélecteur de
+            // fichier sur son <input> imbriqué APRÈS la phase de bulle des
+            // événements JS — si on démonte le menu (donc l'input) de façon
+            // synchrone ici, le navigateur n'a plus de cible et le
+            // sélecteur ne s'ouvre jamais. Vérifié : cause exacte du bug
+            // "Importer depuis mon ordinateur n'ouvre pas l'explorateur".
+            onClick={() => setTimeout(() => setShowMenu(false), 0)}
             className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-surface/80 hover:bg-primary/5 hover:text-accent text-left cursor-pointer"
           >
             <Upload className="w-4 h-4 shrink-0" /> {uploading ? 'Envoi...' : 'Importer depuis mon ordinateur'}

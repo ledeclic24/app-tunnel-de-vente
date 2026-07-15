@@ -18,6 +18,7 @@ import {
 } from '../../lib/ebooksApi';
 import { useAuth } from '../../context/AuthContext';
 import ImageUploadField from '../../components/blocks/ImageUploadField';
+import { useConfirm } from '../../components/app/ConfirmDialog';
 
 const ERROR_MESSAGES = {
   plan_required: "Le générateur d'ebook nécessite le plan Pro ou Entreprise.",
@@ -168,6 +169,7 @@ export default function EbookEditorPage() {
 
   const [ebook, setEbook] = useState(null);
   const [chapters, setChapters] = useState([]);
+  const confirm = useConfirm();
   const [generatingId, setGeneratingId] = useState(null);
   const [downloading, setDownloading] = useState(false);
   const [error, setError] = useState('');
@@ -232,7 +234,7 @@ export default function EbookEditorPage() {
   };
 
   const handleDeleteChapter = async (chapterId) => {
-    if (!window.confirm('Supprimer ce chapitre ?')) return;
+    if (!(await confirm('Supprimer ce chapitre ?'))) return;
     await deleteChapter(chapterId);
     setChapters((prev) => prev.filter((c) => c.id !== chapterId));
   };
@@ -304,7 +306,7 @@ export default function EbookEditorPage() {
   };
 
   const handleBulkDelete = async () => {
-    if (!window.confirm(`Supprimer ${selectedIds.size} chapitre${selectedIds.size > 1 ? 's' : ''} ?`)) return;
+    if (!(await confirm(`Supprimer ${selectedIds.size} chapitre${selectedIds.size > 1 ? 's' : ''} ?`))) return;
     setError('');
     setBulkBusy(true);
     try {
@@ -401,7 +403,7 @@ export default function EbookEditorPage() {
   // chapitre régénéré, annoncé avant de lancer.
   const handleChangeToneAndRegenerateAll = async () => {
     if (chapters.length === 0) return;
-    if (!window.confirm(`Régénérer les ${chapters.length} chapitre(s) avec ce nouveau ton va consommer ${chapters.length} génération(s) de ton quota mensuel. Continuer ?`)) return;
+    if (!(await confirm(`Régénérer les ${chapters.length} chapitre(s) avec ce nouveau ton va consommer ${chapters.length} génération(s) de ton quota mensuel. Continuer ?`))) return;
     setError('');
     setRegeneratingAll(true);
     try {

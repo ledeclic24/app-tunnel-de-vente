@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { BookOpen, Lock, Plus, Trash2, Wand2 } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { BookOpen, BookOpenText, Download, FileText, Lock, Plus, Trash2, Wand2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { getPlan } from '../../lib/plans';
-import { fetchEbooks, generateOutline, deleteEbook } from '../../lib/ebooksApi';
+import { fetchEbooks, generateOutline, deleteEbook, downloadEbookPdf, downloadEbookEpub } from '../../lib/ebooksApi';
 import { generateImages } from '../../lib/imagesApi';
 import ImageUploadField from '../../components/blocks/ImageUploadField';
+import { useConfirm } from '../../components/app/ConfirmDialog';
+import { useToast } from '../../components/app/Toast';
 
 const ERROR_MESSAGES = {
   plan_required: "Le générateur d'ebook nécessite le plan Pro ou Entreprise.",
@@ -59,6 +61,9 @@ export default function EbooksPage() {
   const [generatingCover, setGeneratingCover] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState('');
+  const [exportingKey, setExportingKey] = useState(null);
+  const confirm = useConfirm();
+  const toast = useToast();
 
   useEffect(() => {
     if (!plan.ebookAccess) return;
@@ -123,9 +128,21 @@ export default function EbooksPage() {
   };
 
   const handleDelete = async (ebook) => {
-    if (!window.confirm(`Supprimer "${ebook.title}" ?`)) return;
+    if (!(await confirm(`Supprimer "${ebook.title}" ?`))) return;
     await deleteEbook(ebook.id);
     setEbooks((prev) => prev.filter((e) => e.id !== ebook.id));
+  };
+
+  const handleExport = async (ebook, format) => {
+    const key = `${ebook.id}:${format}`;
+    setExportingKey(key);
+    try {
+      if (format === 'pdf') await downloadEbookPdf(ebook.id, `${ebook.title}.pdf`);
+      else await downloadEbookEpub(ebook.id, `${ebook.title}.epub`);
+    } catch {
+      toast.error(`L'export ${format.toUpperCase()} a échoué. Réessaie.`);
+    }
+    setExportingKey(null);
   };
 
   return (
@@ -318,14 +335,37 @@ export default function EbooksPage() {
 
       <div className="space-y-3">
         {ebooks?.map((ebook) => (
-          <div key={ebook.id} className="flex items-center justify-between bg-background border border-surface/10 rounded-2xl px-5 py-4">
+          <div key={ebook.id} className="flex items-center justify-between gap-2 bg-background border border-surface/10 rounded-2xl px-5 py-4">
             <button onClick={() => navigate(`/app/ebooks/${ebook.id}`)} className="text-left flex-1 min-w-0">
               <p className="font-semibold text-surface truncate">{ebook.title}</p>
               {ebook.subtitle && <p className="text-sm text-surface/50 truncate">{ebook.subtitle}</p>}
             </button>
-            <button onClick={() => handleDelete(ebook)} className="p-2 rounded-lg text-surface/30 hover:text-red-500 shrink-0" aria-label="Supprimer">
-              <Trash2 className="w-4 h-4" />
-            </button>
+            <div className="flex items-center gap-1 shrink-0">
+              <Link to={`/app/ebooks/${ebook.id}/lire`} className="p-2 rounded-lg text-surface/40 hover:text-surface" aria-label="Lire">
+                <BookOpenText className="w-4 h-4" />
+              </Link>
+              <button
+                onClick={() => handleExport(ebook, 'pdf')}
+                disabled={exportingKey === `${ebook.id}:pdf`}
+                className="p-2 rounded-lg text-surface/40 hover:text-surface disabled:opacity-50"
+                aria-label="Exporter en PDF"
+                title="Exporter en PDF"
+              >
+                <Download className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => handleExport(ebook, 'epub')}
+                disabled={exportingKey === `${ebook.id}:epub`}
+                className="p-2 rounded-lg text-surface/40 hover:text-surface disabled:opacity-50"
+                aria-label="Exporter en EPUB"
+                title="Exporter en EPUB"
+              >
+                <FileText className="w-4 h-4" />
+              </button>
+              <button onClick={() => handleDelete(ebook)} className="p-2 rounded-lg text-surface/30 hover:text-red-500" aria-label="Supprimer">
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </div>
           </div>
         ))}
       </div>

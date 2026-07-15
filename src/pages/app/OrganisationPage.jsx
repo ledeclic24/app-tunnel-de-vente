@@ -4,6 +4,7 @@ import { Users, ShieldCheck, CreditCard, Trash2, Lock, Info, UserPlus } from 'lu
 import { useAuth } from '../../context/AuthContext';
 import { getPlan } from '../../lib/plans';
 import { fetchOrgMembers, inviteOrgMember, removeOrgMember } from '../../lib/growthApi';
+import { useConfirm } from '../../components/app/ConfirmDialog';
 import BillingPage from './BillingPage';
 
 const TABS = [
@@ -25,6 +26,7 @@ function TeamTab() {
   const [inviteError, setInviteError] = useState('');
   const [inviteSuccess, setInviteSuccess] = useState('');
   const [removingId, setRemovingId] = useState(null);
+  const confirm = useConfirm();
 
   const loadMembers = useCallback(async () => {
     if (!isOwner || !effectiveOwnerId) {
@@ -97,7 +99,7 @@ function TeamTab() {
 
   const handleRemove = async (member) => {
     const label = member.invited_email || 'ce membre';
-    if (!window.confirm(`Retirer ${label} de l'équipe ?`)) return;
+    if (!(await confirm(`Retirer ${label} de l'équipe ?`))) return;
     setRemovingId(member.id);
     try {
       await removeOrgMember(member.id);

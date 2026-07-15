@@ -5,6 +5,7 @@ import { uploadImage } from '../../lib/storage';
 import SlotList from './SlotList';
 import ImagePickerModal from '../app/ImagePickerModal';
 import { TUNNEL_IMAGE_TYPES } from './BlockEditorPanel';
+import { useToast } from '../app/Toast';
 
 // L'image principale reste hors du système d'emplacements (comme pour
 // Hero) : c'est l'ancrage central du bloc, pas un élément de flux parmi
@@ -27,6 +28,7 @@ export default function ImageBlock({ content, editMode, selectedElement, onSelec
   const [showMenu, setShowMenu] = useState(false);
   const [showPicker, setShowPicker] = useState(false);
   const [showTypeMenu, setShowTypeMenu] = useState(false);
+  const toast = useToast();
 
   const handleImageClick = (e) => {
     imageProps.onClick?.(e);
@@ -42,7 +44,7 @@ export default function ImageBlock({ content, editMode, selectedElement, onSelec
       const newUrl = await uploadImage(userId, file);
       onContentChange?.({ ...content, url: newUrl });
     } catch (err) {
-      window.alert(err.message || "L'image n'a pas pu être importée.");
+      toast.error(err.message || "L'image n'a pas pu être importée.");
     }
     setUploading(false);
   };
@@ -55,7 +57,11 @@ export default function ImageBlock({ content, editMode, selectedElement, onSelec
           onClick={(e) => e.stopPropagation()}
         >
           <label
-            onClick={() => setShowMenu(false)}
+            // Fermeture DIFFÉRÉE du menu (voir EditableItemImage.jsx) :
+            // le démonter de façon synchrone dans ce clic empêche le
+            // navigateur d'ouvrir le sélecteur de fichier natif sur
+            // l'input imbriqué (qui n'existe déjà plus quand il essaie).
+            onClick={() => setTimeout(() => setShowMenu(false), 0)}
             className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-surface/80 hover:bg-primary/5 hover:text-accent text-left cursor-pointer"
           >
             <Upload className="w-4 h-4 shrink-0" /> {uploading ? 'Envoi...' : 'Importer depuis mon ordinateur'}

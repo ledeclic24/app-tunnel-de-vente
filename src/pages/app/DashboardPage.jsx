@@ -4,6 +4,7 @@ import { Plus, ExternalLink, Pencil, Trash2, Rocket, Mail, Eye, Layers, CheckCir
 import { useAuth } from '../../context/AuthContext';
 import { fetchUserFunnels, deleteFunnel, fetchLeadsForUser, fetchFunnelStepsAnalytics } from '../../lib/funnelsApi';
 import { getPlan } from '../../lib/plans';
+import { useConfirm } from '../../components/app/ConfirmDialog';
 
 function KpiCard({ icon: Icon, label, value }) {
   return (
@@ -79,6 +80,7 @@ export default function DashboardPage() {
   const [leads7d, setLeads7d] = useState(0);
   const [totalViews, setTotalViews] = useState(0);
   const [error, setError] = useState('');
+  const confirm = useConfirm();
 
   const plan = getPlan(effectiveProfile?.plan);
   const atLimit = funnels && funnels.length >= plan.maxFunnels;
@@ -108,7 +110,7 @@ export default function DashboardPage() {
   }, [effectiveOwnerId]);
 
   const handleDelete = async (funnel) => {
-    if (!window.confirm(`Supprimer le tunnel "${funnel.name}" ? Cette action est irréversible.`)) return;
+    if (!(await confirm(`Supprimer le tunnel "${funnel.name}" ? Cette action est irréversible.`))) return;
     try {
       await deleteFunnel(funnel.id);
       setFunnels((prev) => prev.filter((f) => f.id !== funnel.id));

@@ -3,6 +3,8 @@ import { ImageIcon, Lock, Sparkles, Copy, Check, Wand2, Download, Trash2, Refres
 import { useAuth } from '../../context/AuthContext';
 import { getPlan } from '../../lib/plans';
 import { generateImages, fetchImageUsageThisMonth, fetchImages, deleteImage, downloadImage } from '../../lib/imagesApi';
+import { useConfirm } from '../../components/app/ConfirmDialog';
+import { useToast } from '../../components/app/Toast';
 
 const COMING_SOON = false;
 
@@ -106,6 +108,8 @@ export default function ImageStudioPage() {
   const [generating, setGenerating] = useState(false);
   const [regeneratingId, setRegeneratingId] = useState(null);
   const [error, setError] = useState('');
+  const confirm = useConfirm();
+  const toast = useToast();
 
   useEffect(() => {
     if (COMING_SOON || !plan.imageGeneration) return;
@@ -186,12 +190,12 @@ export default function ImageStudioPage() {
   };
 
   const handleDelete = async (image) => {
-    if (!window.confirm('Supprimer ce visuel de ta bibliothèque ?')) return;
+    if (!(await confirm('Supprimer ce visuel de ta bibliothèque ?'))) return;
     try {
       await deleteImage(image.id);
       setImages((prev) => prev.filter((i) => i.id !== image.id));
     } catch {
-      window.alert("La suppression a échoué. Réessaie.");
+      toast.error("La suppression a échoué. Réessaie.");
     }
   };
 

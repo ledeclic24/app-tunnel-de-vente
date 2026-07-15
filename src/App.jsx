@@ -4,6 +4,8 @@ import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
 import { AuthProvider } from './context/AuthContext';
+import { ConfirmProvider } from './components/app/ConfirmDialog';
+import { ToastProvider } from './components/app/Toast';
 import ProtectedRoute from './components/app/ProtectedRoute';
 import AdminRoute from './components/app/AdminRoute';
 import AppShell from './components/app/AppShell';
@@ -110,6 +112,8 @@ function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
+      <ToastProvider>
+      <ConfirmProvider>
         <Suspense fallback={<RouteFallback />}>
           <CustomDomainGate>
           <Routes>
@@ -156,6 +160,8 @@ function App() {
           </Routes>
           </CustomDomainGate>
         </Suspense>
+      </ConfirmProvider>
+      </ToastProvider>
       </AuthProvider>
     </BrowserRouter>
   );

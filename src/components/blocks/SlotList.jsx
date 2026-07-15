@@ -10,6 +10,7 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { getEditableProps, cx } from '../../lib/blockStyle';
 import { uploadImage } from '../../lib/storage';
+import { useToast } from '../app/Toast';
 
 // Remplace BlockExtras.jsx : une section n'est plus "champs fixes puis
 // extras ajoutés en bas", mais une liste ordonnée d'emplacements
@@ -62,6 +63,7 @@ function RemoveButton({ onRemove }) {
 function ExtraLeaf({ extra, bg, editable, onUpdate, userId, compact }) {
   const fileRef = useRef(null);
   const [uploading, setUploading] = useState(false);
+  const toast = useToast();
   const props = editable(`extra-${extra.id}`, extra.kind === 'text' ? 'text' : 'image', extra.kind === 'text' ? 'Texte' : 'Image');
 
   const handleFile = async (e) => {
@@ -73,7 +75,7 @@ function ExtraLeaf({ extra, bg, editable, onUpdate, userId, compact }) {
       const url = await uploadImage(userId, file);
       onUpdate(url);
     } catch (err) {
-      window.alert(err.message || "L'image n'a pas pu être importée.");
+      toast.error(err.message || "L'image n'a pas pu être importée.");
     }
     setUploading(false);
   };
@@ -147,6 +149,7 @@ function SortableContainerChild(props) {
 // enfants, réordonnancement interne indépendant de la liste parente.
 function ContainerSlot({ container, bg, editable, userId, onUpdateItems, onRemoveContainer }) {
   const [dragOver, setDragOver] = useState(false);
+  const toast = useToast();
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
   const handleDragEnd = (event) => {
@@ -169,7 +172,7 @@ function ContainerSlot({ container, bg, editable, userId, onUpdateItems, onRemov
         const url = await uploadImage(userId, file);
         onUpdateItems([...container.items, { id: newId(), kind: 'image', value: url }]);
       } catch (err) {
-        window.alert(err.message || "L'image n'a pas pu être importée.");
+        toast.error(err.message || "L'image n'a pas pu être importée.");
       }
       return;
     }
@@ -328,6 +331,7 @@ export default function SlotList({ slots, onSlotsChange, renderField, bg, userId
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   );
+  const toast = useToast();
   const editable = (elementKey, kind, label) =>
     getEditableProps({ elementKey, kind, styles, editMode, selectedElement, onSelectElement, label });
 
@@ -367,7 +371,7 @@ export default function SlotList({ slots, onSlotsChange, renderField, bg, userId
         const url = await uploadImage(userId, file);
         insertAt(index, { id: newId(), kind: 'image', value: url });
       } catch (err) {
-        window.alert(err.message || "L'image n'a pas pu être importée.");
+        toast.error(err.message || "L'image n'a pas pu être importée.");
       }
       return;
     }

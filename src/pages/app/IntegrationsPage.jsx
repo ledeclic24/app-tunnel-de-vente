@@ -5,6 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 import { fetchUserFunnels } from '../../lib/funnelsApi';
 import { fetchWebhooks, createWebhook, toggleWebhook, deleteWebhook, fetchWebhookLogs } from '../../lib/growthApi';
 import { getPlan } from '../../lib/plans';
+import { useConfirm } from '../../components/app/ConfirmDialog';
 
 function Spinner() {
   return (
@@ -112,6 +113,7 @@ export default function IntegrationsPage() {
   const [logs, setLogs] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [error, setError] = useState('');
+  const confirm = useConfirm();
 
   const loadWebhooks = async (ownerId) => {
     const data = await fetchWebhooks(ownerId);
@@ -169,7 +171,7 @@ export default function IntegrationsPage() {
   };
 
   const handleDelete = async (webhook) => {
-    if (!window.confirm(`Supprimer le webhook "${webhook.label}" ?`)) return;
+    if (!(await confirm(`Supprimer le webhook "${webhook.label}" ?`))) return;
     try {
       await deleteWebhook(webhook.id);
       await loadWebhooks(effectiveOwnerId);

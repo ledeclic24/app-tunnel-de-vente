@@ -23,6 +23,8 @@ import { getPlan } from '../../lib/plans';
 import { brandStyleVars } from '../../lib/colorUtils';
 import { computeHealthScore } from '../../lib/healthScore';
 import { fetchReusableBlocks, saveReusableBlock, deleteReusableBlock, incrementReusableBlockUsage } from '../../lib/growthApi';
+import { useConfirm } from '../../components/app/ConfirmDialog';
+import { useToast } from '../../components/app/Toast';
 import { editFunnelWithAI, regenerateBlockWithAI, generateBlockImageWithAI } from '../../lib/aiApi';
 import BlockRenderer from '../../components/blocks/BlockRenderer';
 import BlockEditorPanel from '../../components/blocks/BlockEditorPanel';
@@ -212,6 +214,8 @@ export default function FunnelEditorPage() {
   const [libraryLoading, setLibraryLoading] = useState(false);
   const [libraryError, setLibraryError] = useState('');
   const [historyState, setHistoryState] = useState({ stack: [], index: -1 });
+  const confirm = useConfirm();
+  const toast = useToast();
 
   const contentHistoryTimer = useRef(null);
 
@@ -349,8 +353,8 @@ export default function FunnelEditorPage() {
   };
 
   const handleDeleteStep = async (step) => {
-    if (steps.length <= 1) { window.alert('Un tunnel doit garder au moins une page.'); return; }
-    if (!window.confirm(`Supprimer la page "${step.name}" ?`)) return;
+    if (steps.length <= 1) { toast.error('Un tunnel doit garder au moins une page.'); return; }
+    if (!(await confirm(`Supprimer la page "${step.name}" ?`))) return;
     try {
       await deleteStep(step.id);
       const remaining = steps.filter((s) => s.id !== step.id);
@@ -425,7 +429,7 @@ export default function FunnelEditorPage() {
   };
 
   const handleDeleteBlock = async (block) => {
-    if (!window.confirm('Supprimer ce bloc ?')) return;
+    if (!(await confirm('Supprimer ce bloc ?'))) return;
     try {
       await deleteBlock(block.id);
       const next = blocks.filter((b) => b.id !== block.id);
@@ -627,7 +631,7 @@ export default function FunnelEditorPage() {
   };
 
   const handleDeleteLibraryBlock = async (id) => {
-    if (!window.confirm('Supprimer ce bloc de ta bibliothèque ?')) return;
+    if (!(await confirm('Supprimer ce bloc de ta bibliothèque ?'))) return;
     try {
       await deleteReusableBlock(id);
       setLibraryBlocks((prev) => prev.filter((b) => b.id !== id));

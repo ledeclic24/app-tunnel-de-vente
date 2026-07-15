@@ -3,6 +3,7 @@ import { Search, ExternalLink, Trash2 } from 'lucide-react';
 import { fetchAllProfiles, fetchAllFunnels, fetchAllLeadCounts, deleteFunnelAsAdmin } from '../../../lib/adminApi';
 import { logAuditEvent } from '../../../lib/growthApi';
 import { useAuth } from '../../../context/AuthContext';
+import { useConfirm } from '../../../components/app/ConfirmDialog';
 
 export default function AdminFunnelsPage() {
   const { user } = useAuth();
@@ -11,6 +12,7 @@ export default function AdminFunnelsPage() {
   const [leadCounts, setLeadCounts] = useState(null);
   const [query, setQuery] = useState('');
   const [busyId, setBusyId] = useState(null);
+  const confirm = useConfirm();
 
   const load = async () => {
     const [p, f, l] = await Promise.all([fetchAllProfiles(), fetchAllFunnels(), fetchAllLeadCounts()]);
@@ -40,7 +42,7 @@ export default function AdminFunnelsPage() {
   }, [funnels, query, profileById]);
 
   const handleDelete = async (funnel) => {
-    if (!window.confirm(`Supprimer définitivement "${funnel.name}" ? Cette action est irréversible.`)) return;
+    if (!(await confirm(`Supprimer définitivement "${funnel.name}" ? Cette action est irréversible.`))) return;
     setBusyId(funnel.id);
     await deleteFunnelAsAdmin(funnel.id);
     await logAuditEvent({
