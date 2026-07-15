@@ -126,12 +126,12 @@ export default function ImageBlock({ content, editMode, selectedElement, onSelec
   return (
     <section className={cx('px-6 py-8 md:px-16 max-w-4xl mx-auto', bg.sectionClassName)}>
       {url ? (
-        <div className="relative group/img">
+        <div className="relative group/img overflow-hidden rounded-[2rem]">
           <img
             src={url}
             alt={alt || caption || ''}
             loading="lazy"
-            className={cx('w-full h-auto rounded-[2rem] object-cover', imageProps.className)}
+            className={cx('w-full h-auto rounded-[2rem] object-cover transition-transform duration-700 ease-out group-hover/img:scale-105', imageProps.className)}
             style={imageProps.style}
             onClick={handleImageClick}
           />

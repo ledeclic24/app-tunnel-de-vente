@@ -41,7 +41,7 @@ export default function FaqBlock({ content, editMode, selectedElement, onSelectE
     return (
       <details
         open={isOpen}
-        className={cx('group bg-background border border-surface/10 rounded-2xl p-5 [&_summary::-webkit-details-marker]:hidden', itemProps.className)}
+        className={cx('group hover-card bg-background border border-surface/10 hover:border-accent/30 rounded-2xl p-5 [&_summary::-webkit-details-marker]:hidden', itemProps.className)}
         style={itemProps.style}
         onClick={itemProps.onClick}
         onToggle={(e) => {

@@ -44,7 +44,7 @@ export default function TestimonialsBlock({ content, editMode, selectedElement, 
     return (
       <div
         className={cx(
-          'bg-background border border-surface/10 rounded-[2rem] p-6 shadow-sm',
+          'group hover-card bg-background border border-surface/10 rounded-[2rem] p-6 shadow-sm overflow-hidden',
           isCarousel && 'shrink-0 w-[85%] sm:w-[45%] snap-center',
           cardProps.className,
         )}
@@ -57,7 +57,7 @@ export default function TestimonialsBlock({ content, editMode, selectedElement, 
             userId={userId}
             editMode={editMode}
             onChange={(screenshotUrl) => updateItem(i, { screenshotUrl })}
-            className="w-full h-auto rounded-xl object-cover"
+            className="w-full h-auto rounded-xl object-cover transition-transform duration-700 ease-out group-hover:scale-105"
           />
         ) : (
           <>

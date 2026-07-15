@@ -36,8 +36,8 @@ export default function StatsBlock({ content, editMode, selectedElement, onSelec
     if (!item) return null;
     const cardProps = editable(`stat-${i}`, 'card', `Chiffre ${i + 1}`);
     return (
-      <div className={cx('min-w-[110px]', cardProps.className)} style={cardProps.style} onClick={cardProps.onClick}>
-        <div className={cx('font-sans font-extrabold text-3xl md:text-4xl outline-none', bg.headingClassName)} {...itemField(i, 'value')}>{item.value}</div>
+      <div className={cx('group min-w-[110px]', cardProps.className)} style={cardProps.style} onClick={cardProps.onClick}>
+        <div className={cx('font-sans font-extrabold text-3xl md:text-4xl outline-none transition-transform duration-300 group-hover:scale-110', bg.headingClassName)} {...itemField(i, 'value')}>{item.value}</div>
         <div className={cx('text-sm mt-1 outline-none', bg.bodyClassName)} {...itemField(i, 'label')}>{item.label}</div>
       </div>
     );

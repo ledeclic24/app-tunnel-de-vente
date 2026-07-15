@@ -41,18 +41,20 @@ export default function BonusStackBlock({ content, editMode, selectedElement, on
     const cardProps = editable(`bonus-${i}`, 'card', `Bonus ${i + 1}`);
     return (
       <div
-        className={cx('bg-background border border-surface/10 rounded-[2rem] p-6 flex flex-col md:flex-row gap-6 items-center', cardProps.className)}
+        className={cx('group hover-card bg-background border border-surface/10 rounded-[2rem] p-6 flex flex-col md:flex-row gap-6 items-center', cardProps.className)}
         style={cardProps.style}
         onClick={cardProps.onClick}
       >
         {item.imageUrl && (
-          <EditableItemImage
-            src={item.imageUrl}
-            userId={userId}
-            editMode={editMode}
-            onChange={(imageUrl) => updateItem(i, { imageUrl })}
-            className="w-full md:w-40 aspect-square rounded-xl object-cover shrink-0"
-          />
+          <div className="w-full md:w-40 aspect-square rounded-xl overflow-hidden shrink-0">
+            <EditableItemImage
+              src={item.imageUrl}
+              userId={userId}
+              editMode={editMode}
+              onChange={(imageUrl) => updateItem(i, { imageUrl })}
+              className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+            />
+          </div>
         )}
         <div>
           <span className="text-xs font-bold uppercase tracking-wider text-accent">Bonus {i + 1}</span>

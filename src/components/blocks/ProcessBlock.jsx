@@ -57,7 +57,7 @@ export default function ProcessBlock({ content, editMode, selectedElement, onSel
     }
     return (
       <div
-        className={cx('bg-background border border-surface/10 rounded-[2rem] p-6 shadow-sm', cardProps.className)}
+        className={cx('hover-card bg-background border border-surface/10 rounded-[2rem] p-6 shadow-sm', cardProps.className)}
         style={cardProps.style}
         onClick={cardProps.onClick}
       >

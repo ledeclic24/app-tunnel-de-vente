@@ -78,7 +78,7 @@ export default function PricingBlock({ content, onAdvance, editMode, selectedEle
     return (
       <div
         className={cx(
-          `relative rounded-[2rem] p-8 border ${plan.highlight ? 'bg-primary text-background border-accent/30 shadow-2xl' : 'bg-background text-surface border-surface/10 shadow-sm'}`,
+          `hover-card relative rounded-[2rem] p-8 border ${plan.highlight ? 'bg-primary text-background border-accent/30 shadow-2xl' : 'bg-background text-surface border-surface/10 shadow-sm'}`,
           cardProps.className
         )}
         style={cardProps.style}

@@ -221,7 +221,7 @@ export default function HeroBlock({ content, onAdvance, editMode, selectedElemen
               <img
                 src={imageUrl}
                 alt=""
-                className={cx('w-full h-full object-cover', imageProps.className)}
+                className={cx('w-full h-full object-cover transition-transform duration-700 ease-out group-hover/img:scale-105', imageProps.className)}
                 style={imageProps.style}
                 onClick={handleImageClick}
               />

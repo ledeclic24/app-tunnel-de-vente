@@ -41,7 +41,7 @@ export default function TeamBlock({ content, editMode, selectedElement, onSelect
     const cardProps = editable(`team-${i}`, 'card', `Membre ${i + 1}`);
     return (
       <div
-        className={cx('bg-background border border-surface/10 rounded-[2rem] p-6 text-center', cardProps.className)}
+        className={cx('group hover-card bg-background border border-surface/10 rounded-[2rem] p-6 text-center', cardProps.className)}
         style={cardProps.style}
         onClick={cardProps.onClick}
       >
@@ -50,7 +50,7 @@ export default function TeamBlock({ content, editMode, selectedElement, onSelect
           userId={userId}
           editMode={editMode}
           onChange={(photoUrl) => updateItem(i, { photoUrl })}
-          className="w-20 h-20 rounded-full object-cover mx-auto mb-4 bg-primary/10"
+          className="w-20 h-20 rounded-full object-cover mx-auto mb-4 bg-primary/10 transition-transform duration-500 group-hover:scale-110"
           placeholder={<div className="w-20 h-20 rounded-full bg-primary/10 mx-auto mb-4" />}
         />
         <h3 className="font-sans font-semibold text-surface outline-none" {...itemField(i, 'name')}>{item.name}</h3>

@@ -142,6 +142,58 @@ export const FUNNEL_TEMPLATES = [
     ],
   },
 
+  {
+    key: 'guide-thematique',
+    name: 'Guide thématique (page dense)',
+    description: "Page d'inscription riche : pour qui c'est, ce que ça contient, preuve sociale — avant de demander l'email.",
+    category: 'Génération de leads',
+    categoryKey: 'leads',
+    icon: Mail,
+    tier: 'createur',
+    steps: [
+      {
+        name: 'Inscription',
+        slug: 'inscription',
+        step_type: 'opt-in',
+        blocks: [
+          { type: 'hero', content: {
+            eyebrow: 'Gratuit',
+            heading: 'Le résultat concret que ton guide promet',
+            subheading: "Une phrase qui donne envie de laisser son email tout de suite.",
+            imageUrl: 'https://images.unsplash.com/photo-1499750310107-5fef28a66643?q=80&w=1600&auto=format&fit=crop',
+            ctaText: 'Je le reçois gratuitement', externalUrl: '',
+          } },
+          { type: 'process', content: { heading: 'Ce guide est fait pour toi si...', layout: 'grid', items: [
+            { title: 'Profil concerné n°1', description: 'Décris une situation précise dans laquelle ta cible se reconnaît.' },
+            { title: 'Profil concerné n°2', description: 'Une seconde situation, différente de la première.' },
+            { title: 'Profil concerné n°3', description: 'Une troisième situation pour couvrir large sans devenir vague.' },
+          ] } },
+          { type: 'features', content: { heading: 'Ce que tu vas y trouver', items: [
+            { title: 'Bénéfice concret n°1', description: 'Un résultat précis que le guide permet d\'obtenir.' },
+            { title: 'Bénéfice concret n°2', description: 'Un second bénéfice, complémentaire du premier.' },
+            { title: 'Bénéfice concret n°3', description: 'Un troisième bénéfice qui lève une objection courante.' },
+          ] } },
+          { type: 'testimonials', content: { heading: 'Ce qu\'en disent celles et ceux qui l\'ont déjà reçu', items: [
+            { name: 'Prénom N.', role: 'Abonné·e', quote: 'Un retour concret sur un résultat obtenu grâce au guide.' },
+          ] } },
+          { type: 'faq', content: { heading: 'Questions fréquentes', items: [
+            { question: 'Est-ce vraiment gratuit ?', answer: 'Oui, sans engagement ni carte bancaire demandée.' },
+            { question: 'Combien de temps pour le recevoir ?', answer: 'Immédiatement après inscription, dans la boîte mail.' },
+          ] } },
+          { type: 'form', content: { headline: 'Reçois-le maintenant', buttonText: 'Je le télécharge', successMessage: 'Merci ! Vérifie ta boîte mail (et tes spams).' } },
+        ],
+      },
+      {
+        name: 'Merci',
+        slug: 'merci',
+        step_type: 'thankyou',
+        blocks: [
+          { type: 'text', content: { heading: 'C\'est envoyé !', body: 'Vérifie ta boîte mail : ton guide vient de t\'être envoyé.' } },
+        ],
+      },
+    ],
+  },
+
   // ============ Vente ============
   {
     key: 'vente',
@@ -398,6 +450,64 @@ export const FUNNEL_TEMPLATES = [
     ],
   },
 
+  {
+    key: 'lancement-formation',
+    name: 'Lancement de formation (bon de commande complet)',
+    description: "Page de vente dense avec paliers de prix, bonus, garantie et FAQ — pour un lancement de formation ou de programme.",
+    category: 'Vente',
+    categoryKey: 'vente',
+    icon: Rocket,
+    tier: 'createur',
+    steps: [
+      {
+        name: 'Vente',
+        slug: 'vente',
+        step_type: 'sales',
+        blocks: [
+          { type: 'hero', content: {
+            eyebrow: 'Places limitées',
+            heading: 'Le résultat concret que ta formation apporte',
+            subheading: "Une phrase qui pointe vers la transformation précise promise.",
+            imageUrl: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=1600&auto=format&fit=crop',
+            ctaText: 'Je rejoins la formation', externalUrl: '',
+          } },
+          { type: 'text', content: { heading: 'Voici l\'offre complète', body: 'Présentation détaillée de ce que contient la formation.' } },
+          { type: 'bonus-stack', content: { heading: 'Les bonus inclus', items: [
+            { title: 'Bonus n°1 — valeur estimée', description: 'Un bonus concret, réservé aux personnes qui rejoignent maintenant.', imageUrl: '', imagePrompt: 'Visuel de ce premier bonus', imageType: 'photo' },
+            { title: 'Bonus n°2 — valeur estimée', description: 'Un second bonus, différent du premier.', imageUrl: '', imagePrompt: 'Visuel de ce second bonus', imageType: 'photo' },
+          ] } },
+          { type: 'testimonials', content: { heading: 'Ils ont déjà rejoint le programme', items: [
+            { name: 'Prénom N.', role: 'Membre du programme', quote: 'Un retour concret sur un résultat obtenu.' },
+            { name: 'Prénom N.', role: 'Membre du programme', quote: 'Un second témoignage, sur un bénéfice différent.' },
+          ] } },
+          { type: 'pricing', content: { heading: 'Choisis ton accès', layout: 'comparison', plans: [
+            { name: 'Accès standard', originalPrice: '', price: '—', period: '', highlight: false, paymentLinks: [] },
+            { name: 'Accès VIP', originalPrice: '', price: '—', period: '', badge: '', highlight: true, paymentLinks: [] },
+          ], comparisonRows: [
+            { label: 'Accès complet au programme', values: [true, true] },
+            { label: 'Bonus de lancement', values: [false, true] },
+            { label: 'Support prioritaire', values: [false, true] },
+          ] } },
+          { type: 'text', content: { heading: 'Garantie satisfait ou remboursé', body: 'Explique la garantie proposée (délai réel, conditions).', styles: { section: { background: 'accent' } } } },
+          { type: 'faq', content: { heading: 'Questions fréquentes', items: [
+            { question: 'Y a-t-il une garantie ?', answer: 'Oui, satisfait ou remboursé — précise le délai réel.' },
+            { question: 'Cette offre est-elle faite pour moi ?', answer: 'Réponds à l\'objection la plus fréquente de la cible.' },
+            { question: 'Le programme est-il accessible à vie ?', answer: 'Précise la durée réelle d\'accès au contenu.' },
+          ] } },
+          { type: 'form', content: { headline: 'Finalise ta commande', buttonText: 'Je commande maintenant', successMessage: 'Commande reçue ! Tu vas recevoir un email de confirmation.' } },
+        ],
+      },
+      {
+        name: 'Merci',
+        slug: 'merci',
+        step_type: 'thankyou',
+        blocks: [
+          { type: 'text', content: { heading: 'Bienvenue dans le programme !', body: 'Tu vas recevoir un email avec toutes les instructions d\'accès.' } },
+        ],
+      },
+    ],
+  },
+
   // ============ Webinaire ============
   {
     key: 'webinaire',
@@ -592,6 +702,180 @@ export const FUNNEL_TEMPLATES = [
         step_type: 'thankyou',
         blocks: [
           { type: 'text', content: { heading: 'Bienvenue dans le programme !', body: 'Confirmation d\'achat et prochaine étape : comment accéder au contenu et démarrer.' } },
+        ],
+      },
+    ],
+  },
+
+  {
+    key: 'webinaire-complet',
+    name: 'Webinaire complet (parcours 8 pages)',
+    description: "Le parcours webinaire complet : inscription, confirmation, 3 vidéos de préparation, replay, bon de commande et remerciement.",
+    category: 'Webinaire',
+    categoryKey: 'webinaire',
+    icon: Video,
+    tier: 'createur',
+    steps: [
+      {
+        name: 'Inscription',
+        slug: 'inscription',
+        step_type: 'opt-in',
+        blocks: [
+          { type: 'hero', content: {
+            eyebrow: 'Masterclass gratuite en direct',
+            heading: 'Le résultat concret que la masterclass permet d\'obtenir',
+            subheading: 'Une phrase qui pointe vers la transformation précise promise.',
+            imageUrl: 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?q=80&w=1600&auto=format&fit=crop',
+            ctaText: 'Je réserve ma place gratuite', externalUrl: '',
+          } },
+          { type: 'features', content: { heading: 'Les 3 secrets que tu vas découvrir', items: [
+            { title: 'Secret n°1 — la nouvelle opportunité', description: 'Casse la croyance sur la solution proposée.' },
+            { title: 'Secret n°2 — ta propre capacité', description: 'Casse la croyance sur sa capacité personnelle à réussir.' },
+            { title: 'Secret n°3 — les blocages extérieurs', description: 'Casse les objections externes qui semblent justifier l\'inaction.' },
+          ] } },
+          { type: 'text', content: { heading: 'Qui anime cette masterclass', body: 'Présente ton parcours, ton expérience et les résultats obtenus.' } },
+          { type: 'testimonials', content: { heading: 'Ils y ont participé', items: [
+            { name: 'Prénom N.', role: 'Participant·e', quote: 'Un résultat concret obtenu grâce à la méthode partagée pendant le live.' },
+          ] } },
+          { type: 'form', content: { headline: 'Réserve ta place (places limitées)', buttonText: 'Je m\'inscris gratuitement', successMessage: 'Inscription confirmée ! Vérifie ta boîte mail.' } },
+        ],
+      },
+      {
+        name: 'Inscription confirmée',
+        slug: 'inscription-confirmee',
+        step_type: 'thankyou',
+        blocks: [
+          { type: 'text', content: { heading: 'C\'est réservé, bravo !', body: 'La vidéo ci-dessous t\'explique comment rejoindre le groupe où seront envoyés le lien de connexion et tes cadeaux de préparation.' } },
+          { type: 'features', content: { heading: '3 étapes avant le live', items: [
+            { title: 'Ajoute la date à ton calendrier', description: 'Pour recevoir les rappels automatiques.' },
+            { title: 'Rejoins le groupe WhatsApp / Telegram', description: 'C\'est le canal principal de relance.' },
+            { title: 'Ajoute notre email à tes contacts', description: 'Pour ne rien manquer dans ta boîte mail.' },
+          ] } },
+        ],
+      },
+      {
+        name: 'Vidéo 1 — Histoire',
+        slug: 'video-1',
+        step_type: 'content',
+        blocks: [
+          { type: 'video', content: { heading: 'Vidéo 1 sur 3', videoUrl: '', description: 'Le parcours et l\'histoire derrière la méthode.' } },
+          { type: 'text', content: { heading: 'Ce que tu viens de découvrir', body: 'Résume les points clés de la vidéo pour renforcer la mémorisation.' } },
+        ],
+      },
+      {
+        name: 'Vidéo 2 — Nouvelle opportunité',
+        slug: 'video-2',
+        step_type: 'content',
+        blocks: [
+          { type: 'video', content: { heading: 'Vidéo 2 sur 3', videoUrl: '', description: 'La méthode elle-même, expliquée en détail.' } },
+          { type: 'text', content: { heading: 'Ce que tu viens de découvrir', body: 'Résume les points clés de la vidéo pour renforcer la mémorisation.' } },
+        ],
+      },
+      {
+        name: 'Vidéo 3 — Preuve sociale',
+        slug: 'video-3',
+        step_type: 'content',
+        blocks: [
+          { type: 'video', content: { heading: 'Vidéo 3 sur 3', videoUrl: '', description: 'Des preuves concrètes que la méthode fonctionne.' } },
+          { type: 'testimonials', content: { heading: 'Ils ont obtenu des résultats', items: [
+            { name: 'Prénom N.', role: 'Élève', quote: 'Un résultat concret obtenu grâce à la méthode.' },
+          ] } },
+        ],
+      },
+      {
+        name: 'Replay',
+        slug: 'replay',
+        step_type: 'content',
+        blocks: [
+          { type: 'video', content: { heading: 'Revoir le live', videoUrl: '', description: 'Le replay complet de la masterclass en direct.' } },
+        ],
+      },
+      {
+        name: 'Bon de commande',
+        slug: 'bon-de-commande',
+        step_type: 'order',
+        blocks: [
+          { type: 'text', content: { heading: 'Voici l\'offre complète', body: 'Présentation détaillée de ce que contient l\'offre, en lien avec ce qui a été montré pendant le live.' } },
+          { type: 'bonus-stack', content: { heading: 'Les bonus de lancement', items: [
+            { title: 'Bonus n°1 — valeur estimée', description: 'Un bonus concret, réservé aux personnes qui rejoignent maintenant.', imageUrl: '', imagePrompt: 'Visuel de ce premier bonus', imageType: 'photo' },
+            { title: 'Bonus n°2 — valeur estimée', description: 'Un second bonus, différent du premier.', imageUrl: '', imagePrompt: 'Visuel de ce second bonus', imageType: 'photo' },
+          ] } },
+          { type: 'testimonials', content: { heading: 'Ils ont déjà rejoint le programme', items: [
+            { name: 'Prénom N.', role: 'Membre du programme', quote: 'Témoignage à remplacer par un vrai retour client.' },
+          ] } },
+          { type: 'pricing', content: { heading: 'Choisis ton accès', layout: 'comparison', plans: [
+            { name: 'Accès standard', originalPrice: '', price: '—', period: '', highlight: false, paymentLinks: [] },
+            { name: 'Accès VIP', originalPrice: '', price: '—', period: '', badge: '', highlight: true, paymentLinks: [] },
+          ], comparisonRows: [
+            { label: 'Accès complet au programme', values: [true, true] },
+            { label: 'Bonus de lancement', values: [false, true] },
+            { label: 'Support prioritaire', values: [false, true] },
+          ] } },
+          { type: 'text', content: { heading: 'Garantie satisfait ou remboursé', body: 'Explique la garantie proposée (délai réel, conditions).', styles: { section: { background: 'accent' } } } },
+          { type: 'faq', content: { heading: 'Questions fréquentes', items: [
+            { question: 'Y a-t-il une garantie ?', answer: 'Oui, satisfait ou remboursé — précise le délai réel.' },
+            { question: 'Que se passe-t-il après mon achat ?', answer: 'Décris les prochaines étapes précises pour rassurer.' },
+          ] } },
+          { type: 'form', content: { headline: 'Finalise ta commande', buttonText: 'Je commande maintenant', successMessage: 'Commande reçue ! Tu vas recevoir un email de confirmation.' } },
+        ],
+      },
+      {
+        name: 'Merci pour ton achat',
+        slug: 'merci-achat',
+        step_type: 'thankyou',
+        blocks: [
+          { type: 'text', content: { heading: 'Bienvenue dans le programme !', body: 'Tu vas recevoir un email avec toutes les instructions d\'accès.' } },
+        ],
+      },
+    ],
+  },
+  {
+    key: 'masterclass-vsl',
+    name: 'Masterclass gratuite + VSL',
+    description: "Parcours court et percutant : inscription à forte urgence, vidéo de vente (VSL), puis remerciement.",
+    category: 'Webinaire',
+    categoryKey: 'webinaire',
+    icon: Video,
+    tier: 'createur',
+    steps: [
+      {
+        name: 'Inscription',
+        slug: 'inscription',
+        step_type: 'opt-in',
+        blocks: [
+          { type: 'hero', content: {
+            eyebrow: 'Session gratuite — places limitées',
+            heading: 'Découvre comment obtenir le résultat concret visé, même en partant de zéro',
+            subheading: 'Une phrase qui casse l\'objection principale de la cible dès le départ.',
+            imageUrl: 'https://images.unsplash.com/photo-1552664730-d307ca884978?q=80&w=1600&auto=format&fit=crop',
+            ctaText: 'Je m\'inscris gratuitement', externalUrl: '',
+          } },
+          { type: 'process', content: { heading: 'Cette session est faite pour toi si...', layout: 'grid', items: [
+            { title: 'Aspiration n°1', description: 'Une aspiration concrète de la cible.' },
+            { title: 'Aspiration n°2', description: 'Une seconde aspiration, différente de la première.' },
+            { title: 'Aspiration n°3', description: 'Une troisième aspiration qui mène vers l\'offre.' },
+          ] } },
+          { type: 'testimonials', content: { heading: 'Ce qu\'ils en disent', items: [
+            { name: 'Prénom N.', role: 'Participant·e', quote: 'Un résultat rapide obtenu grâce à la méthode.' },
+          ] } },
+          { type: 'form', content: { headline: 'Réserve ta place', buttonText: 'Je m\'inscris gratuitement', successMessage: 'Inscription confirmée !' } },
+        ],
+      },
+      {
+        name: 'Vidéo de présentation',
+        slug: 'vsl',
+        step_type: 'content',
+        blocks: [
+          { type: 'video', content: { heading: 'Regarde jusqu\'au bout', videoUrl: '', description: 'La vidéo qui explique la méthode et l\'offre en détail.' } },
+          { type: 'cta', content: { heading: 'Prêt·e à passer à l\'action ?', buttonText: 'J\'accède à l\'offre maintenant', externalUrl: '' } },
+        ],
+      },
+      {
+        name: 'Merci',
+        slug: 'merci',
+        step_type: 'thankyou',
+        blocks: [
+          { type: 'text', content: { heading: 'C\'est confirmé !', body: 'Tu vas recevoir un email avec les prochaines étapes.' } },
         ],
       },
     ],
@@ -803,6 +1087,62 @@ export const FUNNEL_TEMPLATES = [
     ],
   },
 
+  {
+    key: 'accompagnement-signature',
+    name: 'Accompagnement signature (page dense)',
+    description: "Storytelling de transformation + méthode + preuve sociale, avant la prise de rendez-vous. Pour du coaching ou un service d'accompagnement.",
+    category: 'Coaching',
+    categoryKey: 'coaching',
+    icon: CalendarCheck,
+    tier: 'createur',
+    steps: [
+      {
+        name: 'Découvrir la méthode',
+        slug: 'decouvrir',
+        step_type: 'booking',
+        blocks: [
+          { type: 'hero', content: {
+            eyebrow: 'Accompagnement personnalisé',
+            heading: 'La transformation précise que tu vas vivre',
+            subheading: 'Une phrase qui pointe vers le résultat concret de l\'accompagnement.',
+            imageUrl: 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?q=80&w=1600&auto=format&fit=crop',
+            ctaText: 'Je réserve mon appel découverte', externalUrl: '',
+          } },
+          { type: 'features', content: { heading: 'Est-ce que ça te parle ?', items: [
+            { title: 'Point de blocage n°1', description: 'Une situation précise dans laquelle la cible se reconnaît aujourd\'hui.' },
+            { title: 'Point de blocage n°2', description: 'Un second point de blocage, différent du premier.' },
+            { title: 'Point de blocage n°3', description: 'Un troisième point qui mène vers la méthode proposée.' },
+          ] } },
+          { type: 'process', content: { heading: 'La méthode, en 3 étapes', layout: 'circular', items: [
+            { title: 'Étape 1 — diagnostic', description: 'On fait le point ensemble sur la situation de départ.' },
+            { title: 'Étape 2 — plan d\'action', description: 'Un plan concret et personnalisé.' },
+            { title: 'Étape 3 — accompagnement', description: 'Un suivi régulier pour ajuster et tenir dans la durée.' },
+          ] } },
+          { type: 'team', content: { heading: 'Qui accompagne', items: [
+            { name: 'Prénom Nom', role: 'Titre professionnel', bio: 'Parcours et résultats concrets, les siens et ceux de ses client·es.', photoUrl: '', imagePrompt: 'Portrait professionnel du porteur de l\'offre', imageType: 'photo' },
+          ] } },
+          { type: 'testimonials', content: { heading: 'Ce qu\'ils et elles en disent', items: [
+            { name: 'Prénom N.', role: 'Accompagné·e', quote: 'Un résultat concret obtenu grâce à l\'accompagnement.' },
+            { name: 'Prénom N.', role: 'Accompagné·e', quote: 'Un second témoignage, sur une transformation différente.' },
+          ] } },
+          { type: 'form', content: { headline: 'Réserve ton appel découverte', buttonText: 'Je réserve mon créneau', successMessage: 'C\'est noté ! Tu vas recevoir un email pour confirmer l\'horaire.' } },
+          { type: 'faq', content: { heading: 'Questions fréquentes', items: [
+            { question: 'Combien de temps dure l\'appel ?', answer: 'Précise la durée réelle de l\'appel découverte.' },
+            { question: 'Est-ce vraiment sans engagement ?', answer: 'Oui, aucune obligation d\'achat à l\'issue de l\'appel.' },
+          ] } },
+        ],
+      },
+      {
+        name: 'Confirmation',
+        slug: 'confirmation',
+        step_type: 'thankyou',
+        blocks: [
+          { type: 'text', content: { heading: 'Rendez-vous confirmé', body: 'Tu vas recevoir un lien de connexion par email avant l\'appel.' } },
+        ],
+      },
+    ],
+  },
+
   // ============ E-commerce ============
   {
     key: 'ecommerce',
@@ -981,6 +1321,57 @@ export const FUNNEL_TEMPLATES = [
         step_type: 'thankyou',
         blocks: [
           { type: 'text', content: { heading: 'Bienvenue dans le programme !', body: 'Tu vas recevoir un email avec toutes les informations pour démarrer.' } },
+        ],
+      },
+    ],
+  },
+
+  {
+    key: 'produit-signature',
+    name: 'Produit à offre unique',
+    description: "Une seule offre, un prix, une garantie — pour une décision d'achat rapide (produit ou abonnement).",
+    category: 'E-commerce',
+    categoryKey: 'ecommerce',
+    icon: ShoppingBag,
+    tier: 'createur',
+    steps: [
+      {
+        name: 'Produit',
+        slug: 'produit',
+        step_type: 'sales',
+        blocks: [
+          { type: 'hero', content: {
+            eyebrow: 'Offre à durée limitée',
+            heading: 'Le bénéfice concret du produit',
+            subheading: 'Une phrase qui donne envie de commander tout de suite.',
+            imageUrl: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=1600&auto=format&fit=crop',
+            ctaText: 'Je commande maintenant', externalUrl: '',
+          } },
+          { type: 'features', content: { heading: 'Ce que tu obtiens', items: [
+            { title: 'Bénéfice concret n°1', description: 'Un avantage précis du produit.' },
+            { title: 'Bénéfice concret n°2', description: 'Un second avantage, différent du premier.' },
+            { title: 'Bénéfice concret n°3', description: 'Un troisième avantage qui lève une objection courante.' },
+          ] } },
+          { type: 'testimonials', content: { heading: 'Ils l\'ont déjà adopté', items: [
+            { name: 'Prénom N.', role: 'Client·e', quote: 'Un retour concret sur l\'utilisation du produit.' },
+          ] } },
+          { type: 'pricing', content: { heading: 'Ton offre', layout: 'grid', plans: [
+            { name: 'Offre unique', originalPrice: '', price: '—', period: '', highlight: true, features: ['Élément inclus n°1', 'Élément inclus n°2', 'Élément inclus n°3'], paymentLinks: [] },
+          ] } },
+          { type: 'text', content: { heading: 'Satisfait ou remboursé', body: 'Explique la garantie proposée (délai réel, conditions).', styles: { section: { background: 'accent' } } } },
+          { type: 'faq', content: { heading: 'Questions fréquentes', items: [
+            { question: 'Sous combien de temps est-ce livré/activé ?', answer: 'Précise le délai réel.' },
+            { question: 'Puis-je changer d\'avis après commande ?', answer: 'Rappelle brièvement la garantie déjà présentée plus haut.' },
+          ] } },
+          { type: 'cta', content: { heading: 'Prêt·e à commander ?', buttonText: 'Je commande maintenant', externalUrl: '' } },
+        ],
+      },
+      {
+        name: 'Merci',
+        slug: 'merci',
+        step_type: 'thankyou',
+        blocks: [
+          { type: 'text', content: { heading: 'Commande confirmée !', body: 'Tu vas recevoir un email de confirmation avec les prochaines étapes.' } },
         ],
       },
     ],
@@ -1506,6 +1897,49 @@ export const FUNNEL_TEMPLATES = [
           { type: 'cta', content: { heading: '', buttonText: 'Mon site web', externalUrl: '' } },
           { type: 'cta', content: { heading: '', buttonText: 'Mon Instagram', externalUrl: '' } },
           { type: 'cta', content: { heading: '', buttonText: 'Ma boutique', externalUrl: '' } },
+        ],
+      },
+    ],
+  },
+
+  {
+    key: 'reservation-prestataire',
+    name: 'Réservation prestataire (esthétique élégante)',
+    description: "Présente-toi, montre tes prestations et pousse vers la prise de rendez-vous — pour un·e prestataire indépendant·e.",
+    category: 'Marque personnelle',
+    categoryKey: 'marque-perso',
+    icon: UserCircle,
+    tier: 'createur',
+    steps: [
+      {
+        name: 'Accueil',
+        slug: 'accueil',
+        step_type: 'landing',
+        blocks: [
+          { type: 'hero', content: {
+            eyebrow: 'Prise de rendez-vous',
+            heading: 'Bienvenue chez [Nom de l\'enseigne]',
+            subheading: 'Une phrase qui présente la promesse de l\'expérience proposée.',
+            imageUrl: 'https://images.unsplash.com/photo-1560066984-138dadb4c035?q=80&w=1600&auto=format&fit=crop',
+            ctaText: 'Je réserve mon créneau', externalUrl: '',
+          } },
+          { type: 'text', content: { heading: 'À propos', body: 'Présente le parcours et l\'approche du/de la prestataire, en quelques phrases chaleureuses.' } },
+          { type: 'features', content: { heading: 'Les prestations', layout: 'rows', items: [
+            { title: 'Prestation n°1', description: 'Description courte de cette prestation.', imageUrl: '', imagePrompt: 'Visuel illustrant cette prestation', imageType: 'photo' },
+            { title: 'Prestation n°2', description: 'Description courte de cette prestation.', imageUrl: '', imagePrompt: 'Visuel illustrant cette prestation', imageType: 'photo' },
+          ] } },
+          { type: 'testimonials', content: { heading: 'Ce qu\'en disent les client·es', items: [
+            { name: 'Prénom N.', role: 'Client·e', quote: 'Un retour concret sur l\'expérience vécue.' },
+          ] } },
+          { type: 'form', content: { headline: 'Réserve ton créneau', buttonText: 'Je réserve maintenant', successMessage: 'Merci ! Ta demande de réservation a bien été reçue.' } },
+        ],
+      },
+      {
+        name: 'Merci',
+        slug: 'merci',
+        step_type: 'thankyou',
+        blocks: [
+          { type: 'text', content: { heading: 'Merci pour ta réservation !', body: 'Tu vas recevoir un email de confirmation avec tous les détails.' } },
         ],
       },
     ],

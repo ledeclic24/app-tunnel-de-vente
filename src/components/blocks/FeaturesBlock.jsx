@@ -51,13 +51,13 @@ export default function FeaturesBlock({ content, editMode, selectedElement, onSe
           style={cardProps.style}
           onClick={cardProps.onClick}
         >
-          <div className={cx('rounded-[2rem] overflow-hidden bg-primary/5 aspect-video', reversed && 'md:order-2')}>
+          <div className={cx('group rounded-[2rem] overflow-hidden bg-primary/5 aspect-video', reversed && 'md:order-2')}>
             <EditableItemImage
               src={item.imageUrl}
               userId={userId}
               editMode={editMode}
               onChange={(imageUrl) => updateItem(i, { imageUrl })}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
             />
           </div>
           <div className={reversed ? 'md:order-1' : undefined}>
@@ -87,7 +87,7 @@ export default function FeaturesBlock({ content, editMode, selectedElement, onSe
 
     return (
       <div
-        className={cx('bg-background border border-surface/10 rounded-[2rem] p-6 shadow-sm', cardProps.className)}
+        className={cx('hover-card bg-background border border-surface/10 rounded-[2rem] p-6 shadow-sm', cardProps.className)}
         style={cardProps.style}
         onClick={cardProps.onClick}
       >
