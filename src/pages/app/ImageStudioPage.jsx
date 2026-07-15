@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { ImageIcon, Lock, Sparkles, Copy, Check, Wand2 } from 'lucide-react';
+import { ImageIcon, Lock, Sparkles, Copy, Check, Wand2, Download, Trash2, RefreshCw } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { getPlan } from '../../lib/plans';
-import { generateImages, fetchImageUsageThisMonth } from '../../lib/imagesApi';
+import { generateImages, fetchImageUsageThisMonth, fetchImages, deleteImage, downloadImage } from '../../lib/imagesApi';
 
 const COMING_SOON = false;
 
@@ -21,21 +21,73 @@ const SIZES = [
   { key: '1024x1536', label: 'Portrait' },
 ];
 
-function CopyUrlButton({ url }) {
-  const [copied, setCopied] = useState(false);
+// Mêmes clés que TUNNEL_IMAGE_TYPES (BlockEditorPanel.jsx) — dupliquées
+// ici (petite liste statique) plutôt que d'importer tout ce module,
+// nettement plus lourd et sans rapport avec cette page.
+const IMAGE_TYPES = [
+  { key: 'photo', label: 'Image' },
+  { key: 'box', label: 'Coffret produit' },
+  { key: 'ebook-cover', label: 'Ebook' },
+  { key: 'mockup', label: 'Mockup' },
+  { key: 'mockup-screen', label: 'Mockup écran' },
+];
+
+// Même liste que STYLE_PRESETS côté backend (image-style-presets.ts) —
+// dupliquée ici seulement pour l'affichage des puces, la formulation du
+// prompt reste une responsabilité serveur.
+const STYLES = [
+  { key: 'photo-real', label: 'Photo réaliste' },
+  { key: 'illustration', label: 'Illustration' },
+  { key: '3d-render', label: 'Rendu 3D' },
+  { key: 'watercolor', label: 'Aquarelle' },
+  { key: 'minimal', label: 'Minimaliste' },
+  { key: 'neon', label: 'Néon' },
+];
+
+function IconButton({ onClick, children, className = '' }) {
   return (
     <button
       type="button"
-      onClick={() => {
-        navigator.clipboard.writeText(url);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 1500);
-      }}
-      className="absolute top-3 right-3 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-surface/70 text-background text-xs font-medium opacity-0 group-hover/img:opacity-100 transition-opacity"
+      onClick={onClick}
+      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-surface/70 text-background text-xs font-medium hover:bg-surface transition-colors ${className}`}
     >
-      {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-      {copied ? 'Copié' : "Copier l'URL"}
+      {children}
     </button>
+  );
+}
+
+function ImageCard({ image, onDelete, onRegenerate, regenerating }) {
+  const [copied, setCopied] = useState(false);
+
+  return (
+    <div className="relative group/img rounded-[1.5rem] overflow-hidden border border-surface/10">
+      <img src={image.url} alt="Visuel généré" className="w-full h-full object-cover" />
+      <div className="absolute top-3 right-3 flex flex-col items-end gap-1.5 opacity-0 group-hover/img:opacity-100 transition-opacity">
+        <IconButton
+          onClick={() => {
+            navigator.clipboard.writeText(image.url);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 1500);
+          }}
+        >
+          {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+          {copied ? 'Copié' : "Copier l'URL"}
+        </IconButton>
+        <IconButton onClick={() => downloadImage(image.url, `vendeko-${image.id || Date.now()}.webp`)}>
+          <Download className="w-3.5 h-3.5" /> Télécharger
+        </IconButton>
+        {image.id && (
+          <>
+            <IconButton onClick={() => onRegenerate(image)} className={regenerating ? 'opacity-50 pointer-events-none' : ''}>
+              <RefreshCw className="w-3.5 h-3.5" /> {regenerating ? 'Génération...' : 'Régénérer'}
+            </IconButton>
+            <IconButton onClick={() => onDelete(image)}>
+              <Trash2 className="w-3.5 h-3.5" /> Supprimer
+            </IconButton>
+          </>
+        )}
+      </div>
+    </div>
   );
 }
 
@@ -46,14 +98,21 @@ export default function ImageStudioPage() {
   const [prompt, setPrompt] = useState('');
   const [size, setSize] = useState('1024x1024');
   const [count, setCount] = useState(1);
+  const [style, setStyle] = useState('');
+  const [imageType, setImageType] = useState('');
+  const [transparent, setTransparent] = useState(false);
   const [images, setImages] = useState([]);
   const [usage, setUsage] = useState(null);
   const [generating, setGenerating] = useState(false);
+  const [regeneratingId, setRegeneratingId] = useState(null);
   const [error, setError] = useState('');
 
   useEffect(() => {
     if (COMING_SOON || !plan.imageGeneration) return;
     fetchImageUsageThisMonth().then(setUsage).catch(() => {});
+    // Bibliothèque persistée : sans ça, la galerie repartait vide à chaque
+    // visite alors que les images survivent bien côté serveur.
+    fetchImages().then(setImages).catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -88,19 +147,52 @@ export default function ImageStudioPage() {
     ? null : Math.max(plan.imageGenerationMonthlyLimit - usage, 0);
   const atLimit = remaining !== null && remaining <= 0;
 
+  const runGeneration = async ({ prompt: p, size: s, n, style: st, imageType: it, background: bg }) => {
+    const results = await generateImages({ prompt: p, size: s, n, style: st || undefined, imageType: it || undefined, background: bg || undefined });
+    setImages((prev) => [...results, ...prev]);
+    setUsage((u) => (u === null ? null : u + results.length));
+    return results;
+  };
+
   const handleGenerate = async (e) => {
     e.preventDefault();
     if (!prompt.trim() || generating || atLimit) return;
     setGenerating(true);
     setError('');
     try {
-      const urls = await generateImages({ prompt: prompt.trim(), size, n: count });
-      setImages((prev) => [...urls, ...prev]);
-      setUsage((u) => (u === null ? null : u + urls.length));
+      await runGeneration({
+        prompt: prompt.trim(), size, n: count, style, imageType,
+        background: transparent ? 'transparent' : undefined,
+      });
     } catch (err) {
       setError(ERROR_MESSAGES[err.message] || ERROR_MESSAGES.server_error);
     }
     setGenerating(false);
+  };
+
+  const handleRegenerate = async (image) => {
+    if (regeneratingId) return;
+    setRegeneratingId(image.id);
+    setError('');
+    try {
+      await runGeneration({
+        prompt: image.prompt, size: image.size || '1024x1024', n: 1,
+        style: image.style, imageType: image.imageType, background: image.background,
+      });
+    } catch (err) {
+      setError(ERROR_MESSAGES[err.message] || ERROR_MESSAGES.server_error);
+    }
+    setRegeneratingId(null);
+  };
+
+  const handleDelete = async (image) => {
+    if (!window.confirm('Supprimer ce visuel de ta bibliothèque ?')) return;
+    try {
+      await deleteImage(image.id);
+      setImages((prev) => prev.filter((i) => i.id !== image.id));
+    } catch {
+      window.alert("La suppression a échoué. Réessaie.");
+    }
   };
 
   return (
@@ -125,6 +217,53 @@ export default function ImageStudioPage() {
             className="w-full bg-primary/5 border border-surface/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-accent transition-colors text-surface"
           />
         </div>
+
+        <div>
+          <label className="block text-xs font-semibold text-surface/70 uppercase tracking-wider mb-2">Type d'image</label>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => setImageType('')}
+              className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${imageType === '' ? 'bg-primary text-background' : 'bg-primary/5 text-surface/60'}`}
+            >
+              Aucun
+            </button>
+            {IMAGE_TYPES.map((t) => (
+              <button
+                key={t.key}
+                type="button"
+                onClick={() => setImageType(t.key)}
+                className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${imageType === t.key ? 'bg-primary text-background' : 'bg-primary/5 text-surface/60'}`}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-xs font-semibold text-surface/70 uppercase tracking-wider mb-2">Style visuel</label>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => setStyle('')}
+              className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${style === '' ? 'bg-primary text-background' : 'bg-primary/5 text-surface/60'}`}
+            >
+              Aucun
+            </button>
+            {STYLES.map((s) => (
+              <button
+                key={s.key}
+                type="button"
+                onClick={() => setStyle(s.key)}
+                className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${style === s.key ? 'bg-primary text-background' : 'bg-primary/5 text-surface/60'}`}
+              >
+                {s.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block text-xs font-semibold text-surface/70 uppercase tracking-wider mb-2">Format</label>
@@ -139,6 +278,12 @@ export default function ImageStudioPage() {
             </select>
           </div>
         </div>
+
+        <label className="flex items-center gap-2 text-sm text-surface/70 cursor-pointer">
+          <input type="checkbox" checked={transparent} onChange={(e) => setTransparent(e.target.checked)} className="rounded border-surface/20" />
+          Fond transparent (détouré, pour poser le visuel sur un fond de couleur)
+        </label>
+
         {error && <p className="text-sm text-red-500">{error}</p>}
         {atLimit && <p className="text-sm text-red-500">{ERROR_MESSAGES.limit_reached}</p>}
         <button
@@ -152,11 +297,14 @@ export default function ImageStudioPage() {
 
       {images.length > 0 && (
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-          {images.map((url, i) => (
-            <div key={url + i} className="relative group/img rounded-[1.5rem] overflow-hidden border border-surface/10">
-              <img src={url} alt="Visuel généré" className="w-full h-full object-cover" />
-              <CopyUrlButton url={url} />
-            </div>
+          {images.map((image, i) => (
+            <ImageCard
+              key={image.id || image.url + i}
+              image={image}
+              onDelete={handleDelete}
+              onRegenerate={handleRegenerate}
+              regenerating={regeneratingId === image.id}
+            />
           ))}
         </div>
       )}

@@ -4,6 +4,8 @@ import { BookOpen, Lock, Plus, Trash2, Wand2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { getPlan } from '../../lib/plans';
 import { fetchEbooks, generateOutline, deleteEbook } from '../../lib/ebooksApi';
+import { generateImages } from '../../lib/imagesApi';
+import ImageUploadField from '../../components/blocks/ImageUploadField';
 
 const ERROR_MESSAGES = {
   plan_required: "Le générateur d'ebook nécessite le plan Pro ou Entreprise.",
@@ -25,14 +27,17 @@ const LANGUAGES = [
   { key: 'en', label: 'Anglais' },
 ];
 
-const LENGTHS = [
-  { key: 'short', label: 'Court', hint: '6-9 chapitres, ~20-35 pages' },
-  { key: 'medium', label: 'Moyen', hint: '14-20 chapitres, ~45-70 pages' },
-  { key: 'long', label: 'Long', hint: '20-28 chapitres, ~70-110 pages' },
+// Les 3 presets restent des raccourcis pratiques mais renseignent
+// désormais un nombre de chapitres précis et modifiable (chapterCount),
+// plutôt qu'un preset fixe côté serveur.
+const LENGTH_PRESETS = [
+  { key: 'short', label: 'Court', chapterCount: 8, hint: '~8 chapitres, ~20-35 pages' },
+  { key: 'medium', label: 'Moyen', chapterCount: 17, hint: '~17 chapitres, ~45-70 pages' },
+  { key: 'long', label: 'Long', chapterCount: 24, hint: '~24 chapitres, ~70-110 pages' },
 ];
 
 export default function EbooksPage() {
-  const { effectiveProfile } = useAuth();
+  const { effectiveProfile, effectiveOwnerId } = useAuth();
   const plan = getPlan(effectiveProfile?.plan);
   const navigate = useNavigate();
 
@@ -44,9 +49,14 @@ export default function EbooksPage() {
   const [description, setDescription] = useState('');
   const [tone, setTone] = useState('pro');
   const [language, setLanguage] = useState('fr');
-  const [length, setLength] = useState('medium');
+  const [chapterCount, setChapterCount] = useState(17);
+  const [targetAudience, setTargetAudience] = useState('');
+  const [goal, setGoal] = useState('');
   const [primaryColor, setPrimaryColor] = useState('#0B2818');
   const [accentColor, setAccentColor] = useState('#22C55E');
+  const [coverUrl, setCoverUrl] = useState('');
+  const [coverIsGenerated, setCoverIsGenerated] = useState(false);
+  const [generatingCover, setGeneratingCover] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState('');
 
@@ -66,6 +76,25 @@ export default function EbooksPage() {
     );
   }
 
+  const handleGenerateCover = async () => {
+    if (!title.trim() || generatingCover) return;
+    setGeneratingCover(true);
+    setError('');
+    try {
+      const [image] = await generateImages({
+        prompt: `Couverture d'ebook : "${title.trim()}".${description.trim() ? ` Sujet : ${description.trim().slice(0, 200)}` : ''}`,
+        imageType: 'ebook-cover',
+        size: '1024x1536',
+        n: 1,
+      });
+      setCoverUrl(image.url);
+      setCoverIsGenerated(true);
+    } catch (err) {
+      setError(ERROR_MESSAGES[err.message] || ERROR_MESSAGES.server_error);
+    }
+    setGeneratingCover(false);
+  };
+
   const handleGenerate = async (e) => {
     e.preventDefault();
     if (!title.trim() || !description.trim() || generating) return;
@@ -79,8 +108,12 @@ export default function EbooksPage() {
         authorName: authorName.trim() || undefined,
         tone,
         language,
-        length,
+        chapterCount,
+        targetAudience: targetAudience.trim() || undefined,
+        goal: goal.trim() || undefined,
         brand: { primaryColor, accentColor },
+        coverImageUrl: coverUrl || undefined,
+        coverIsGenerated: coverUrl ? coverIsGenerated : undefined,
       });
       navigate(`/app/ebooks/${ebook.id}`);
     } catch (err) {
@@ -153,6 +186,18 @@ export default function EbooksPage() {
               className="w-full bg-primary/5 border border-surface/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-accent transition-colors text-surface"
             />
           </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-surface/70 uppercase tracking-wider mb-2">Couverture (optionnel — modifiable ensuite)</label>
+            <ImageUploadField
+              userId={effectiveOwnerId}
+              value={coverUrl}
+              onChange={(url) => { setCoverUrl(url); setCoverIsGenerated(false); }}
+              onGenerate={handleGenerateCover}
+              generating={generatingCover}
+            />
+          </div>
+
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-semibold text-surface/70 uppercase tracking-wider mb-2">Ton d'écriture</label>
@@ -186,20 +231,50 @@ export default function EbooksPage() {
             </div>
           </div>
 
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-semibold text-surface/70 uppercase tracking-wider mb-2">Public cible (optionnel)</label>
+              <input
+                value={targetAudience}
+                onChange={(e) => setTargetAudience(e.target.value)}
+                placeholder="Ex : coachs indépendants qui démarrent leur activité"
+                className="w-full bg-primary/5 border border-surface/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-accent transition-colors text-surface"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-surface/70 uppercase tracking-wider mb-2">Objectif de l'ebook (optionnel)</label>
+              <input
+                value={goal}
+                onChange={(e) => setGoal(e.target.value)}
+                placeholder="Ex : capter des leads pour un appel découverte"
+                className="w-full bg-primary/5 border border-surface/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-accent transition-colors text-surface"
+              />
+            </div>
+          </div>
+
           <div>
             <label className="block text-xs font-semibold text-surface/70 uppercase tracking-wider mb-2">Longueur</label>
-            <div className="flex flex-wrap gap-2">
-              {LENGTHS.map((l) => (
+            <div className="flex flex-wrap gap-2 mb-3">
+              {LENGTH_PRESETS.map((l) => (
                 <button
                   key={l.key}
                   type="button"
-                  onClick={() => setLength(l.key)}
-                  className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${length === l.key ? 'bg-primary text-background' : 'bg-primary/5 text-surface/60'}`}
+                  onClick={() => setChapterCount(l.chapterCount)}
+                  className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${chapterCount === l.chapterCount ? 'bg-primary text-background' : 'bg-primary/5 text-surface/60'}`}
                 >
                   {l.label}
                 </button>
               ))}
             </div>
+            <label className="block text-xs text-surface/50 mb-1">Nombre de chapitres précis (introduction et conclusion inclus)</label>
+            <input
+              type="number"
+              min={3}
+              max={40}
+              value={chapterCount}
+              onChange={(e) => setChapterCount(Math.max(3, Math.min(40, Number(e.target.value) || 3)))}
+              className="w-32 bg-primary/5 border border-surface/10 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-accent transition-colors text-surface"
+            />
           </div>
 
           <div>
@@ -224,9 +299,6 @@ export default function EbooksPage() {
 
           <p className="text-xs text-surface/40">
             Le sommaire est toujours proposé en français ; seul le contenu rédigé suit la langue choisie ci-dessus.
-          </p>
-          <p className="text-xs text-surface/40">
-            Sommaire complet garanti : introduction, {LENGTHS.find((l) => l.key === length)?.hint}, conclusion.
           </p>
           {error && <p className="text-sm text-red-500">{error}</p>}
           <button

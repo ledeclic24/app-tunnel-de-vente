@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import {
-  ArrowLeft, Download, GripVertical, Pencil, Plus, Rocket, Sparkles, Trash2, Wand2, X,
+  ArrowLeft, BookOpenText, Download, FileText, GripVertical, Pencil, Plus, Rocket, Sparkles, Trash2, Wand2, X,
 } from 'lucide-react';
 import {
   DndContext, closestCenter, PointerSensor, KeyboardSensor, useSensor, useSensors,
@@ -12,7 +12,7 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import {
   fetchEbook, updateEbook, addChapter, updateChapter, deleteChapter,
-  reorderChapters, generateChapterContent, downloadEbookPdf,
+  reorderChapters, generateChapterContent, downloadEbookPdf, downloadEbookEpub,
   regenerateChapters, bulkDeleteChapters, generateMoreChapters,
   generateCover, generateChapterImage,
 } from '../../lib/ebooksApi';
@@ -60,6 +60,7 @@ function ChapterCard({
   const [editing, setEditing] = useState(false);
   const [title, setTitle] = useState(chapter.title);
   const [description, setDescription] = useState(chapter.description);
+  const [guidance, setGuidance] = useState('');
 
   const saveEdit = () => {
     onUpdate(chapter.id, { title, description });
@@ -123,18 +124,28 @@ function ChapterCard({
           </button>
         </div>
       </div>
-      <button
-        onClick={() => onGenerate(chapter.id)}
-        disabled={generating}
-        className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-accent disabled:opacity-50"
-      >
-        {generating ? (
-          <span className="w-3.5 h-3.5 border-2 border-surface/20 border-t-accent rounded-full animate-spin" />
-        ) : (
-          <Wand2 className="w-3.5 h-3.5" />
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        <button
+          onClick={() => onGenerate(chapter.id, guidance.trim() || undefined)}
+          disabled={generating}
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-accent disabled:opacity-50"
+        >
+          {generating ? (
+            <span className="w-3.5 h-3.5 border-2 border-surface/20 border-t-accent rounded-full animate-spin" />
+          ) : (
+            <Wand2 className="w-3.5 h-3.5" />
+          )}
+          {chapter.content ? 'Régénérer le contenu' : 'Générer le contenu de ce chapitre'}
+        </button>
+        {chapter.content && (
+          <input
+            value={guidance}
+            onChange={(e) => setGuidance(e.target.value)}
+            placeholder="Instructions pour la régénération (optionnel : plus court, plus de storytelling...)"
+            className="flex-1 min-w-[220px] bg-primary/5 border border-surface/10 rounded-lg px-2.5 py-1.5 text-xs text-surface focus:outline-none focus:border-accent"
+          />
         )}
-        {chapter.content ? 'Régénérer le contenu' : 'Générer le contenu de ce chapitre'}
-      </button>
+      </div>
     </div>
   );
 }
@@ -171,6 +182,10 @@ export default function EbookEditorPage() {
   const [moreGuidance, setMoreGuidance] = useState('');
   const [coverGenerating, setCoverGenerating] = useState(false);
   const [generatingImageId, setGeneratingImageId] = useState(null);
+  const [downloadingEpub, setDownloadingEpub] = useState(false);
+  const [showChangeTone, setShowChangeTone] = useState(false);
+  const [newTone, setNewTone] = useState('pro');
+  const [regeneratingAll, setRegeneratingAll] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -187,11 +202,11 @@ export default function EbookEditorPage() {
 
   if (!ebook) return <p className="text-sm text-surface/40 text-center py-16">Chargement...</p>;
 
-  const handleGenerateChapter = async (chapterId) => {
+  const handleGenerateChapter = async (chapterId, guidance) => {
     setGeneratingId(chapterId);
     setError('');
     try {
-      const updated = await generateChapterContent(chapterId);
+      const updated = await generateChapterContent(chapterId, guidance);
       setChapters((prev) => prev.map((c) => (c.id === chapterId ? updated : c)));
     } catch (err) {
       setError(ERROR_MESSAGES[err.message] || ERROR_MESSAGES.server_error);
@@ -369,6 +384,50 @@ export default function EbookEditorPage() {
     setDownloading(false);
   };
 
+  const handleDownloadEpub = async () => {
+    setDownloadingEpub(true);
+    setError('');
+    try {
+      await downloadEbookEpub(ebookId, `${ebook.title}.epub`);
+    } catch {
+      setError(ERROR_MESSAGES.server_error);
+    }
+    setDownloadingEpub(false);
+  };
+
+  // Change le ton PUIS régénère le contenu de TOUS les chapitres avec ce
+  // nouveau ton (pas seulement ceux sans contenu, contrairement à
+  // "Générer tout le contenu restant") — coût en quota = 1 unité par
+  // chapitre régénéré, annoncé avant de lancer.
+  const handleChangeToneAndRegenerateAll = async () => {
+    if (chapters.length === 0) return;
+    if (!window.confirm(`Régénérer les ${chapters.length} chapitre(s) avec ce nouveau ton va consommer ${chapters.length} génération(s) de ton quota mensuel. Continuer ?`)) return;
+    setError('');
+    setRegeneratingAll(true);
+    try {
+      const updatedEbook = await updateEbook(ebookId, { tone: newTone });
+      setEbook(updatedEbook);
+    } catch {
+      setError(ERROR_MESSAGES.server_error);
+      setRegeneratingAll(false);
+      return;
+    }
+    for (const chapter of chapters) {
+      setGeneratingId(chapter.id);
+      try {
+        // eslint-disable-next-line no-await-in-loop
+        const updated = await generateChapterContent(chapter.id);
+        setChapters((prev) => prev.map((c) => (c.id === chapter.id ? updated : c)));
+      } catch (err) {
+        setError(ERROR_MESSAGES[err.message] || ERROR_MESSAGES.server_error);
+        break;
+      }
+    }
+    setGeneratingId(null);
+    setRegeneratingAll(false);
+    setShowChangeTone(false);
+  };
+
   return (
     <div className="max-w-2xl mx-auto">
       <Link to="/app/ebooks" className="inline-flex items-center gap-2 text-sm text-surface/60 hover:text-surface mb-6">
@@ -490,6 +549,19 @@ export default function EbookEditorPage() {
           <Download className="w-4 h-4" /> {downloading ? 'Génération du PDF...' : 'Exporter en PDF'}
         </button>
         <button
+          onClick={handleDownloadEpub}
+          disabled={downloadingEpub || chapters.length === 0}
+          className="inline-flex items-center gap-2 bg-primary/5 border border-surface/10 text-surface px-5 py-3 rounded-full text-sm font-semibold disabled:opacity-50 hover:border-accent transition-colors"
+        >
+          <FileText className="w-4 h-4" /> {downloadingEpub ? 'Génération de l\'EPUB...' : 'Exporter en EPUB'}
+        </button>
+        <Link
+          to={`/app/ebooks/${ebookId}/lire`}
+          className="inline-flex items-center gap-2 bg-primary/5 border border-surface/10 text-surface px-5 py-3 rounded-full text-sm font-semibold hover:border-accent transition-colors"
+        >
+          <BookOpenText className="w-4 h-4" /> Lire
+        </Link>
+        <button
           onClick={handleCreateTunnel}
           disabled={chapters.length === 0}
           className="inline-flex items-center gap-2 bg-primary/5 border border-surface/10 text-surface px-5 py-3 rounded-full text-sm font-semibold disabled:opacity-50 hover:border-accent transition-colors"
@@ -497,6 +569,46 @@ export default function EbookEditorPage() {
           <Rocket className="w-4 h-4" /> Créer un tunnel pour cet ebook
         </button>
       </div>
+
+      {showChangeTone ? (
+        <div className="bg-background border border-surface/10 rounded-[1.5rem] p-4 mb-6 space-y-3">
+          <label className="block text-xs font-semibold text-surface/50 uppercase tracking-wider">Nouveau ton d'écriture</label>
+          <div className="flex flex-wrap gap-2">
+            {TONES.map((t) => (
+              <button
+                key={t.key}
+                type="button"
+                onClick={() => setNewTone(t.key)}
+                className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${newTone === t.key ? 'bg-primary text-background' : 'bg-primary/5 text-surface/60'}`}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+          <p className="text-xs text-surface/40">
+            Applique ce ton puis régénère le contenu des {chapters.length} chapitre(s) existants — {chapters.length} génération(s) consommée(s) sur ton quota mensuel.
+          </p>
+          <div className="flex gap-2">
+            <button
+              onClick={handleChangeToneAndRegenerateAll}
+              disabled={regeneratingAll || chapters.length === 0}
+              className="text-xs font-semibold text-accent disabled:opacity-50"
+            >
+              {regeneratingAll ? 'Régénération en cours...' : 'Changer le ton et tout régénérer'}
+            </button>
+            <button type="button" onClick={() => setShowChangeTone(false)} disabled={regeneratingAll} className="text-xs text-surface/50 inline-flex items-center gap-1 disabled:opacity-50">
+              <X className="w-3 h-3" /> Annuler
+            </button>
+          </div>
+        </div>
+      ) : (
+        <button
+          onClick={() => { setNewTone(ebook.tone || 'pro'); setShowChangeTone(true); }}
+          className="mb-6 inline-flex items-center gap-1.5 text-xs font-semibold text-surface/60 hover:text-accent transition-colors"
+        >
+          <Sparkles className="w-3.5 h-3.5" /> Changer le ton et tout régénérer
+        </button>
+      )}
 
       {error && <p className="text-sm text-red-500 mb-4">{error}</p>}
 

@@ -2,8 +2,14 @@ import { apiGet, apiPost, apiPatch, apiDelete, getAccessToken } from './apiClien
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
-export async function generateOutline({ title, description, tone, language, length, brand, subtitle, authorName }) {
-  return apiPost('/ebooks/generate-outline', { title, description, tone, language, length, brand, subtitle, authorName });
+export async function generateOutline({
+  title, description, tone, language, length, brand, subtitle, authorName,
+  chapterCount, targetAudience, goal, coverImageUrl, coverIsGenerated,
+}) {
+  return apiPost('/ebooks/generate-outline', {
+    title, description, tone, language, length, brand, subtitle, authorName,
+    chapterCount, targetAudience, goal, coverImageUrl, coverIsGenerated,
+  });
 }
 
 export async function fetchEbooks() {
@@ -38,8 +44,8 @@ export async function reorderChapters(chapterIdsInOrder) {
   await apiPost('/ebooks/chapters/reorder', { chapterIds: chapterIdsInOrder });
 }
 
-export async function generateChapterContent(chapterId) {
-  return apiPost(`/ebooks/chapters/${chapterId}/generate`);
+export async function generateChapterContent(chapterId, guidance) {
+  return apiPost(`/ebooks/chapters/${chapterId}/generate`, guidance ? { guidance } : undefined);
 }
 
 // Actions groupées sur le sommaire (sélection de chapitres).
@@ -88,6 +94,23 @@ export async function downloadEbookPdf(ebookId, filename) {
   const a = document.createElement('a');
   a.href = url;
   a.download = filename || 'ebook.pdf';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+export async function downloadEbookEpub(ebookId, filename) {
+  const res = await fetch(`${API_URL}/ebooks/${ebookId}/epub`, {
+    headers: { Authorization: `Bearer ${getAccessToken()}` },
+    credentials: 'include',
+  });
+  if (!res.ok) throw new Error('server_error');
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename || 'ebook.epub';
   document.body.appendChild(a);
   a.click();
   a.remove();

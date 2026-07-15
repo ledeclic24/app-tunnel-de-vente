@@ -30,6 +30,7 @@ const AdsPage = lazy(() => import('./pages/app/AdsPage'));
 const ImageStudioPage = lazy(() => import('./pages/app/ImageStudioPage'));
 const EbooksPage = lazy(() => import('./pages/app/EbooksPage'));
 const EbookEditorPage = lazy(() => import('./pages/app/EbookEditorPage'));
+const EbookReaderPage = lazy(() => import('./pages/app/EbookReaderPage'));
 const OrganisationPage = lazy(() => import('./pages/app/OrganisationPage'));
 const AdminOverviewPage = lazy(() => import('./pages/app/admin/AdminOverviewPage'));
 const AdminUsersPage = lazy(() => import('./pages/app/admin/AdminUsersPage'));
@@ -134,6 +135,7 @@ function App() {
                 <Route path="images" element={<ImageStudioPage />} />
                 <Route path="ebooks" element={<EbooksPage />} />
                 <Route path="ebooks/:ebookId" element={<EbookEditorPage />} />
+                <Route path="ebooks/:ebookId/lire" element={<EbookReaderPage />} />
                 <Route path="organisation" element={<OrganisationPage />} />
                 <Route path="billing" element={<BillingPage />} />
                 <Route path="account" element={<AccountPage />} />
