@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Pencil } from 'lucide-react';
 import { fetchEbook } from '../../lib/ebooksApi';
 import { brandStyleVars } from '../../lib/colorUtils';
+import { MarkdownLite } from '../../lib/markdownLite';
 
 // Lecture seule : pas d'édition ici, juste un aperçu confortable dans le
 // navigateur sans passer par l'export PDF/EPUB — réutilise fetchEbook,
@@ -53,9 +54,7 @@ export default function EbookReaderPage() {
               </div>
             )}
             {chapter.content ? (
-              <div className="space-y-4 text-surface/80 leading-relaxed whitespace-pre-line">
-                {chapter.content.split(/\n\s*\n/).map((p, j) => <p key={j}>{p.trim()}</p>)}
-              </div>
+              <MarkdownLite text={chapter.content} className="space-y-4 text-surface/80 leading-relaxed" />
             ) : (
               <p className="text-sm text-surface/40 italic">{chapter.description}</p>
             )}

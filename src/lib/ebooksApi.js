@@ -5,10 +5,12 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 export async function generateOutline({
   title, description, tone, language, length, brand, subtitle, authorName,
   chapterCount, targetAudience, goal, coverImageUrl, coverIsGenerated,
+  keyPoints, callToAction, avoid, examples,
 }) {
   return apiPost('/ebooks/generate-outline', {
     title, description, tone, language, length, brand, subtitle, authorName,
     chapterCount, targetAudience, goal, coverImageUrl, coverIsGenerated,
+    keyPoints, callToAction, avoid, examples,
   });
 }
 
@@ -111,6 +113,23 @@ export async function downloadEbookEpub(ebookId, filename) {
   const a = document.createElement('a');
   a.href = url;
   a.download = filename || 'ebook.epub';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+export async function downloadEbookTxt(ebookId, filename) {
+  const res = await fetch(`${API_URL}/ebooks/${ebookId}/txt`, {
+    headers: { Authorization: `Bearer ${getAccessToken()}` },
+    credentials: 'include',
+  });
+  if (!res.ok) throw new Error('server_error');
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename || 'ebook.txt';
   document.body.appendChild(a);
   a.click();
   a.remove();

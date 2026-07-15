@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
+import JSZip from 'jszip';
 import { ImageIcon, Lock, Sparkles, Copy, Check, Wand2, Download, Trash2, RefreshCw } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { getPlan } from '../../lib/plans';
-import { generateImages, fetchImageUsageThisMonth, fetchImages, deleteImage, downloadImage } from '../../lib/imagesApi';
+import { generateImages, fetchImageUsageThisMonth, fetchImages, deleteImage, downloadImage, fetchImageBlob } from '../../lib/imagesApi';
 import { useConfirm } from '../../components/app/ConfirmDialog';
 import { useToast } from '../../components/app/Toast';
 
@@ -58,11 +59,20 @@ function IconButton({ onClick, children, className = '' }) {
   );
 }
 
-function ImageCard({ image, onDelete, onRegenerate, regenerating }) {
+function ImageCard({ image, onDelete, onRegenerate, regenerating, onDownload, downloading, selected, onToggleSelect }) {
   const [copied, setCopied] = useState(false);
 
   return (
-    <div className="relative group/img rounded-[1.5rem] overflow-hidden border border-surface/10">
+    <div className={`relative group/img rounded-[1.5rem] overflow-hidden border transition-colors ${selected ? 'border-accent ring-2 ring-accent/40' : 'border-surface/10'}`}>
+      {image.id && (
+        <input
+          type="checkbox"
+          checked={selected}
+          onChange={() => onToggleSelect(image.id)}
+          className="absolute top-3 left-3 z-10 w-4 h-4 rounded cursor-pointer accent-accent"
+          aria-label="Sélectionner ce visuel"
+        />
+      )}
       <img src={image.url} alt="Visuel généré" className="w-full h-full object-cover" />
       <div className="absolute top-3 right-3 flex flex-col items-end gap-1.5 opacity-0 group-hover/img:opacity-100 transition-opacity">
         <IconButton
@@ -75,11 +85,11 @@ function ImageCard({ image, onDelete, onRegenerate, regenerating }) {
           {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
           {copied ? 'Copié' : "Copier l'URL"}
         </IconButton>
-        <IconButton onClick={() => downloadImage(image.url, `vendeko-${image.id || Date.now()}.webp`)}>
-          <Download className="w-3.5 h-3.5" /> Télécharger
-        </IconButton>
         {image.id && (
           <>
+            <IconButton onClick={() => onDownload(image)} className={downloading ? 'opacity-50 pointer-events-none' : ''}>
+              <Download className="w-3.5 h-3.5" /> {downloading ? 'Téléchargement...' : 'Télécharger'}
+            </IconButton>
             <IconButton onClick={() => onRegenerate(image)} className={regenerating ? 'opacity-50 pointer-events-none' : ''}>
               <RefreshCw className="w-3.5 h-3.5" /> {regenerating ? 'Génération...' : 'Régénérer'}
             </IconButton>
@@ -107,6 +117,9 @@ export default function ImageStudioPage() {
   const [usage, setUsage] = useState(null);
   const [generating, setGenerating] = useState(false);
   const [regeneratingId, setRegeneratingId] = useState(null);
+  const [downloadingId, setDownloadingId] = useState(null);
+  const [selectedIds, setSelectedIds] = useState(() => new Set());
+  const [bulkBusy, setBulkBusy] = useState(false);
   const [error, setError] = useState('');
   const confirm = useConfirm();
   const toast = useToast();
@@ -189,14 +202,76 @@ export default function ImageStudioPage() {
     setRegeneratingId(null);
   };
 
+  const handleDownload = async (image) => {
+    setDownloadingId(image.id);
+    try {
+      await downloadImage(image.id, `vendeko-${image.id}.webp`);
+    } catch {
+      toast.error("Le téléchargement a échoué. Réessaie.");
+    }
+    setDownloadingId(null);
+  };
+
   const handleDelete = async (image) => {
     if (!(await confirm('Supprimer ce visuel de ta bibliothèque ?'))) return;
     try {
       await deleteImage(image.id);
       setImages((prev) => prev.filter((i) => i.id !== image.id));
+      setSelectedIds((prev) => { const next = new Set(prev); next.delete(image.id); return next; });
     } catch {
       toast.error("La suppression a échoué. Réessaie.");
     }
+  };
+
+  const toggleSelect = (id) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const handleBulkDelete = async () => {
+    if (!(await confirm(`Supprimer ${selectedIds.size} visuel${selectedIds.size > 1 ? 's' : ''} de ta bibliothèque ?`))) return;
+    setBulkBusy(true);
+    const ids = Array.from(selectedIds);
+    for (const id of ids) {
+      try {
+        // eslint-disable-next-line no-await-in-loop
+        await deleteImage(id);
+        setImages((prev) => prev.filter((i) => i.id !== id));
+      } catch {
+        toast.error('Une suppression a échoué. Les autres visuels sélectionnés ont été traités.');
+        break;
+      }
+    }
+    setSelectedIds(new Set());
+    setBulkBusy(false);
+  };
+
+  const handleBulkDownload = async () => {
+    setBulkBusy(true);
+    try {
+      const zip = new JSZip();
+      const ids = Array.from(selectedIds);
+      for (const id of ids) {
+        // eslint-disable-next-line no-await-in-loop
+        const blob = await fetchImageBlob(id);
+        zip.file(`vendeko-${id}.webp`, blob);
+      }
+      const zipBlob = await zip.generateAsync({ type: 'blob' });
+      const url = URL.createObjectURL(zipBlob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `visuels-vendeko-${Date.now()}.zip`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch {
+      toast.error("Le téléchargement groupé a échoué. Réessaie.");
+    }
+    setBulkBusy(false);
   };
 
   return (
@@ -299,6 +374,21 @@ export default function ImageStudioPage() {
         </button>
       </form>
 
+      {selectedIds.size > 0 && (
+        <div className="flex flex-wrap items-center gap-3 bg-accent/5 border border-accent/20 rounded-2xl px-4 py-3 mb-4">
+          <span className="text-xs font-semibold text-surface/60">{selectedIds.size} sélectionné{selectedIds.size > 1 ? 's' : ''}</span>
+          <button onClick={handleBulkDownload} disabled={bulkBusy} className="inline-flex items-center gap-1.5 text-xs font-semibold text-accent disabled:opacity-50">
+            <Download className="w-3.5 h-3.5" /> Télécharger en ZIP
+          </button>
+          <button onClick={handleBulkDelete} disabled={bulkBusy} className="inline-flex items-center gap-1.5 text-xs font-semibold text-red-500 disabled:opacity-50">
+            <Trash2 className="w-3.5 h-3.5" /> Supprimer
+          </button>
+          <button onClick={() => setSelectedIds(new Set())} className="ml-auto text-xs text-surface/50 hover:text-surface">
+            Tout désélectionner
+          </button>
+        </div>
+      )}
+
       {images.length > 0 && (
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
           {images.map((image, i) => (
@@ -308,6 +398,10 @@ export default function ImageStudioPage() {
               onDelete={handleDelete}
               onRegenerate={handleRegenerate}
               regenerating={regeneratingId === image.id}
+              onDownload={handleDownload}
+              downloading={downloadingId === image.id}
+              selected={selectedIds.has(image.id)}
+              onToggleSelect={toggleSelect}
             />
           ))}
         </div>

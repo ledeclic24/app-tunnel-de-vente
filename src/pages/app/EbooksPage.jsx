@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { BookOpen, BookOpenText, Download, FileText, Lock, Plus, Trash2, Wand2 } from 'lucide-react';
+import { BookOpen, BookOpenText, Lock, Plus, Trash2, Wand2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { getPlan } from '../../lib/plans';
-import { fetchEbooks, generateOutline, deleteEbook, downloadEbookPdf, downloadEbookEpub } from '../../lib/ebooksApi';
+import { fetchEbooks, generateOutline, deleteEbook } from '../../lib/ebooksApi';
 import { generateImages } from '../../lib/imagesApi';
 import ImageUploadField from '../../components/blocks/ImageUploadField';
+import DownloadMenu from '../../components/app/DownloadMenu';
 import { useConfirm } from '../../components/app/ConfirmDialog';
 import { useToast } from '../../components/app/Toast';
 
@@ -24,9 +25,19 @@ const TONES = [
   { key: 'direct', label: 'Direct' },
 ];
 
+// Les langues africaines sont moins bien couvertes par les modèles IA que
+// le français/anglais — `hint` le signale honnêtement plutôt que de le
+// cacher à l'utilisateur (retour explicite demandé côté contenu généré).
 const LANGUAGES = [
   { key: 'fr', label: 'Français' },
   { key: 'en', label: 'Anglais' },
+  { key: 'sw', label: 'Swahili' },
+  { key: 'ha', label: 'Haoussa' },
+  { key: 'yo', label: 'Yoruba' },
+  { key: 'am', label: 'Amharique' },
+  { key: 'wo', label: 'Wolof', hint: 'qualité de rédaction IA plus limitée' },
+  { key: 'ln', label: 'Lingala', hint: 'qualité de rédaction IA plus limitée' },
+  { key: 'bm', label: 'Bambara', hint: 'qualité de rédaction IA plus limitée' },
 ];
 
 // Les 3 presets restent des raccourcis pratiques mais renseignent
@@ -54,6 +65,10 @@ export default function EbooksPage() {
   const [chapterCount, setChapterCount] = useState(17);
   const [targetAudience, setTargetAudience] = useState('');
   const [goal, setGoal] = useState('');
+  const [keyPoints, setKeyPoints] = useState('');
+  const [callToAction, setCallToAction] = useState('');
+  const [avoid, setAvoid] = useState('');
+  const [examples, setExamples] = useState('');
   const [primaryColor, setPrimaryColor] = useState('#0B2818');
   const [accentColor, setAccentColor] = useState('#22C55E');
   const [coverUrl, setCoverUrl] = useState('');
@@ -61,7 +76,8 @@ export default function EbooksPage() {
   const [generatingCover, setGeneratingCover] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState('');
-  const [exportingKey, setExportingKey] = useState(null);
+  const [selectedIds, setSelectedIds] = useState(() => new Set());
+  const [bulkBusy, setBulkBusy] = useState(false);
   const confirm = useConfirm();
   const toast = useToast();
 
@@ -116,6 +132,10 @@ export default function EbooksPage() {
         chapterCount,
         targetAudience: targetAudience.trim() || undefined,
         goal: goal.trim() || undefined,
+        keyPoints: keyPoints.trim() || undefined,
+        callToAction: callToAction.trim() || undefined,
+        avoid: avoid.trim() || undefined,
+        examples: examples.trim() || undefined,
         brand: { primaryColor, accentColor },
         coverImageUrl: coverUrl || undefined,
         coverIsGenerated: coverUrl ? coverIsGenerated : undefined,
@@ -131,18 +151,33 @@ export default function EbooksPage() {
     if (!(await confirm(`Supprimer "${ebook.title}" ?`))) return;
     await deleteEbook(ebook.id);
     setEbooks((prev) => prev.filter((e) => e.id !== ebook.id));
+    setSelectedIds((prev) => { const next = new Set(prev); next.delete(ebook.id); return next; });
   };
 
-  const handleExport = async (ebook, format) => {
-    const key = `${ebook.id}:${format}`;
-    setExportingKey(key);
-    try {
-      if (format === 'pdf') await downloadEbookPdf(ebook.id, `${ebook.title}.pdf`);
-      else await downloadEbookEpub(ebook.id, `${ebook.title}.epub`);
-    } catch {
-      toast.error(`L'export ${format.toUpperCase()} a échoué. Réessaie.`);
+  const toggleSelect = (id) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const handleBulkDelete = async () => {
+    if (!(await confirm(`Supprimer ${selectedIds.size} ebook${selectedIds.size > 1 ? 's' : ''} ?`))) return;
+    setBulkBusy(true);
+    const ids = Array.from(selectedIds);
+    for (const id of ids) {
+      try {
+        // eslint-disable-next-line no-await-in-loop
+        await deleteEbook(id);
+        setEbooks((prev) => prev.filter((e) => e.id !== id));
+      } catch {
+        toast.error('Une suppression a échoué. Les autres ebooks sélectionnés ont été traités.');
+        break;
+      }
     }
-    setExportingKey(null);
+    setSelectedIds(new Set());
+    setBulkBusy(false);
   };
 
   return (
@@ -245,6 +280,9 @@ export default function EbooksPage() {
                   </button>
                 ))}
               </div>
+              {LANGUAGES.find((l) => l.key === language)?.hint && (
+                <p className="text-xs text-surface/40 mt-1.5">⚠ {LANGUAGES.find((l) => l.key === language).hint}</p>
+              )}
             </div>
           </div>
 
@@ -264,6 +302,50 @@ export default function EbooksPage() {
                 value={goal}
                 onChange={(e) => setGoal(e.target.value)}
                 placeholder="Ex : capter des leads pour un appel découverte"
+                className="w-full bg-primary/5 border border-surface/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-accent transition-colors text-surface"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-semibold text-surface/70 uppercase tracking-wider mb-2">Éléments à absolument inclure (optionnel)</label>
+              <textarea
+                value={keyPoints}
+                onChange={(e) => setKeyPoints(e.target.value)}
+                rows={2}
+                placeholder="Ex : la méthode des 3 piliers, un chiffre clé, telle étude de cas"
+                className="w-full bg-primary/5 border border-surface/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-accent transition-colors text-surface"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-surface/70 uppercase tracking-wider mb-2">Exemples / anecdotes à intégrer (optionnel)</label>
+              <textarea
+                value={examples}
+                onChange={(e) => setExamples(e.target.value)}
+                rows={2}
+                placeholder="Ex : le parcours d'un client, une anecdote personnelle"
+                className="w-full bg-primary/5 border border-surface/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-accent transition-colors text-surface"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-semibold text-surface/70 uppercase tracking-wider mb-2">Appel à l'action final (optionnel)</label>
+              <input
+                value={callToAction}
+                onChange={(e) => setCallToAction(e.target.value)}
+                placeholder="Ex : réserver un appel découverte via ce lien"
+                className="w-full bg-primary/5 border border-surface/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-accent transition-colors text-surface"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-surface/70 uppercase tracking-wider mb-2">À éviter (optionnel)</label>
+              <input
+                value={avoid}
+                onChange={(e) => setAvoid(e.target.value)}
+                placeholder="Ex : jargon technique, promesses chiffrées"
                 className="w-full bg-primary/5 border border-surface/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-accent transition-colors text-surface"
               />
             </div>
@@ -333,9 +415,28 @@ export default function EbooksPage() {
         <p className="text-sm text-surface/40 text-center py-12">Aucun ebook pour l'instant. Crée le premier avec le bouton ci-dessus.</p>
       )}
 
+      {selectedIds.size > 0 && (
+        <div className="flex flex-wrap items-center gap-3 bg-accent/5 border border-accent/20 rounded-2xl px-4 py-3 mb-4">
+          <span className="text-xs font-semibold text-surface/60">{selectedIds.size} sélectionné{selectedIds.size > 1 ? 's' : ''}</span>
+          <button onClick={handleBulkDelete} disabled={bulkBusy} className="inline-flex items-center gap-1.5 text-xs font-semibold text-red-500 disabled:opacity-50">
+            <Trash2 className="w-3.5 h-3.5" /> Supprimer
+          </button>
+          <button onClick={() => setSelectedIds(new Set())} className="ml-auto text-xs text-surface/50 hover:text-surface">
+            Tout désélectionner
+          </button>
+        </div>
+      )}
+
       <div className="space-y-3">
         {ebooks?.map((ebook) => (
-          <div key={ebook.id} className="flex items-center justify-between gap-2 bg-background border border-surface/10 rounded-2xl px-5 py-4">
+          <div key={ebook.id} className={`flex items-center justify-between gap-2 bg-background border rounded-2xl px-5 py-4 transition-colors ${selectedIds.has(ebook.id) ? 'border-accent' : 'border-surface/10'}`}>
+            <input
+              type="checkbox"
+              checked={selectedIds.has(ebook.id)}
+              onChange={() => toggleSelect(ebook.id)}
+              className="w-4 h-4 rounded cursor-pointer accent-accent shrink-0"
+              aria-label="Sélectionner cet ebook"
+            />
             <button onClick={() => navigate(`/app/ebooks/${ebook.id}`)} className="text-left flex-1 min-w-0">
               <p className="font-semibold text-surface truncate">{ebook.title}</p>
               {ebook.subtitle && <p className="text-sm text-surface/50 truncate">{ebook.subtitle}</p>}
@@ -344,24 +445,7 @@ export default function EbooksPage() {
               <Link to={`/app/ebooks/${ebook.id}/lire`} className="p-2 rounded-lg text-surface/40 hover:text-surface" aria-label="Lire">
                 <BookOpenText className="w-4 h-4" />
               </Link>
-              <button
-                onClick={() => handleExport(ebook, 'pdf')}
-                disabled={exportingKey === `${ebook.id}:pdf`}
-                className="p-2 rounded-lg text-surface/40 hover:text-surface disabled:opacity-50"
-                aria-label="Exporter en PDF"
-                title="Exporter en PDF"
-              >
-                <Download className="w-4 h-4" />
-              </button>
-              <button
-                onClick={() => handleExport(ebook, 'epub')}
-                disabled={exportingKey === `${ebook.id}:epub`}
-                className="p-2 rounded-lg text-surface/40 hover:text-surface disabled:opacity-50"
-                aria-label="Exporter en EPUB"
-                title="Exporter en EPUB"
-              >
-                <FileText className="w-4 h-4" />
-              </button>
+              <DownloadMenu ebookId={ebook.id} title={ebook.title} compact />
               <button onClick={() => handleDelete(ebook)} className="p-2 rounded-lg text-surface/30 hover:text-red-500" aria-label="Supprimer">
                 <Trash2 className="w-4 h-4" />
               </button>

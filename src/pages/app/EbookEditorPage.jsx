@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import {
-  ArrowLeft, BookOpenText, Download, FileText, GripVertical, Pencil, Plus, Rocket, Sparkles, Trash2, Wand2, X,
+  ArrowLeft, BookOpenText, GripVertical, Pencil, Plus, Rocket, Sparkles, Trash2, Wand2, X,
 } from 'lucide-react';
 import {
   DndContext, closestCenter, PointerSensor, KeyboardSensor, useSensor, useSensors,
@@ -12,13 +12,15 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import {
   fetchEbook, updateEbook, addChapter, updateChapter, deleteChapter,
-  reorderChapters, generateChapterContent, downloadEbookPdf, downloadEbookEpub,
+  reorderChapters, generateChapterContent,
   regenerateChapters, bulkDeleteChapters, generateMoreChapters,
   generateCover, generateChapterImage,
 } from '../../lib/ebooksApi';
 import { useAuth } from '../../context/AuthContext';
 import ImageUploadField from '../../components/blocks/ImageUploadField';
 import { useConfirm } from '../../components/app/ConfirmDialog';
+import DownloadMenu from '../../components/app/DownloadMenu';
+import { stripMarkdown } from '../../lib/markdownLite';
 
 const ERROR_MESSAGES = {
   plan_required: "Le générateur d'ebook nécessite le plan Pro ou Entreprise.",
@@ -111,7 +113,7 @@ function ChapterCard({
                 </div>
               )}
               {chapter.content && (
-                <p className="text-xs text-surface/40 mt-2 line-clamp-3 whitespace-pre-line">{chapter.content}</p>
+                <p className="text-xs text-surface/40 mt-2 line-clamp-3 whitespace-pre-line">{stripMarkdown(chapter.content)}</p>
               )}
             </>
           )}
@@ -171,7 +173,6 @@ export default function EbookEditorPage() {
   const [chapters, setChapters] = useState([]);
   const confirm = useConfirm();
   const [generatingId, setGeneratingId] = useState(null);
-  const [downloading, setDownloading] = useState(false);
   const [error, setError] = useState('');
   const [showSettings, setShowSettings] = useState(false);
   const [showAddChapter, setShowAddChapter] = useState(false);
@@ -184,7 +185,6 @@ export default function EbookEditorPage() {
   const [moreGuidance, setMoreGuidance] = useState('');
   const [coverGenerating, setCoverGenerating] = useState(false);
   const [generatingImageId, setGeneratingImageId] = useState(null);
-  const [downloadingEpub, setDownloadingEpub] = useState(false);
   const [showChangeTone, setShowChangeTone] = useState(false);
   const [newTone, setNewTone] = useState('pro');
   const [regeneratingAll, setRegeneratingAll] = useState(false);
@@ -375,28 +375,6 @@ export default function EbookEditorPage() {
     setCoverGenerating(false);
   };
 
-  const handleDownload = async () => {
-    setDownloading(true);
-    setError('');
-    try {
-      await downloadEbookPdf(ebookId, `${ebook.title}.pdf`);
-    } catch {
-      setError(ERROR_MESSAGES.server_error);
-    }
-    setDownloading(false);
-  };
-
-  const handleDownloadEpub = async () => {
-    setDownloadingEpub(true);
-    setError('');
-    try {
-      await downloadEbookEpub(ebookId, `${ebook.title}.epub`);
-    } catch {
-      setError(ERROR_MESSAGES.server_error);
-    }
-    setDownloadingEpub(false);
-  };
-
   // Change le ton PUIS régénère le contenu de TOUS les chapitres avec ce
   // nouveau ton (pas seulement ceux sans contenu, contrairement à
   // "Générer tout le contenu restant") — coût en quota = 1 unité par
@@ -543,20 +521,7 @@ export default function EbookEditorPage() {
       )}
 
       <div className="flex flex-wrap gap-3 mb-6">
-        <button
-          onClick={handleDownload}
-          disabled={downloading || chapters.length === 0}
-          className="magnetic-btn inline-flex items-center gap-2 bg-accent text-background px-5 py-3 rounded-full text-sm font-semibold disabled:opacity-50"
-        >
-          <Download className="w-4 h-4" /> {downloading ? 'Génération du PDF...' : 'Exporter en PDF'}
-        </button>
-        <button
-          onClick={handleDownloadEpub}
-          disabled={downloadingEpub || chapters.length === 0}
-          className="inline-flex items-center gap-2 bg-primary/5 border border-surface/10 text-surface px-5 py-3 rounded-full text-sm font-semibold disabled:opacity-50 hover:border-accent transition-colors"
-        >
-          <FileText className="w-4 h-4" /> {downloadingEpub ? 'Génération de l\'EPUB...' : 'Exporter en EPUB'}
-        </button>
+        <DownloadMenu ebookId={ebookId} title={ebook.title} disabled={chapters.length === 0} />
         <Link
           to={`/app/ebooks/${ebookId}/lire`}
           className="inline-flex items-center gap-2 bg-primary/5 border border-surface/10 text-surface px-5 py-3 rounded-full text-sm font-semibold hover:border-accent transition-colors"
