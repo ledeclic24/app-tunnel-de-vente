@@ -78,7 +78,7 @@ export default function PricingBlock({ content, onAdvance, editMode, selectedEle
     return (
       <div
         className={cx(
-          `hover-card relative rounded-[2rem] p-8 border ${plan.highlight ? 'bg-primary text-background border-accent/30 shadow-2xl' : 'bg-background text-surface border-surface/10 shadow-sm'}`,
+          `hover-card relative rounded-xl p-8 ${plan.highlight ? 'bg-primary text-background border-2 border-accent shadow-2xl' : 'bg-background text-surface border border-accent/20 shadow-sm'}`,
           cardProps.className
         )}
         style={cardProps.style}
@@ -163,7 +163,7 @@ export default function PricingBlock({ content, onAdvance, editMode, selectedEle
   const effectiveSlots = slots && isSlotsValid(slots, plans.length) ? slots : buildDefaultSlots(plans.length);
 
   return (
-    <section className={cx('px-6 py-12 md:px-16 md:py-16 max-w-5xl mx-auto', bg.sectionClassName)}>
+    <section className={cx('px-6 py-16 md:px-16 md:py-24 max-w-5xl mx-auto', bg.sectionClassName)}>
       {heading && (
         <h2
           className={cx('font-sans font-bold text-2xl md:text-3xl text-center mb-10 outline-none', bg.headingClassName, headingProps.className)}
@@ -187,7 +187,7 @@ export default function PricingBlock({ content, onAdvance, editMode, selectedEle
           onSelectElement={onSelectElement}
         />
       ) : (
-        <div className={`grid grid-cols-1 gap-6 ${gridClass}`}>
+        <div className={`stagger-children grid grid-cols-1 gap-6 ${gridClass}`}>
           {effectiveSlots.map((slot) => <SlotReadOnly key={slot.id} slot={slot} renderField={renderField} bg={bg} />)}
         </div>
       )}

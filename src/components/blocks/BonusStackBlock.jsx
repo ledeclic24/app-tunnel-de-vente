@@ -41,7 +41,7 @@ export default function BonusStackBlock({ content, editMode, selectedElement, on
     const cardProps = editable(`bonus-${i}`, 'card', `Bonus ${i + 1}`);
     return (
       <div
-        className={cx('group hover-card bg-background border border-surface/10 rounded-[2rem] p-6 flex flex-col md:flex-row gap-6 items-center', cardProps.className)}
+        className={cx('group hover-card bg-background border border-accent/20 rounded-xl p-6 flex flex-col md:flex-row gap-6 items-center', cardProps.className)}
         style={cardProps.style}
         onClick={cardProps.onClick}
       >
@@ -73,7 +73,7 @@ export default function BonusStackBlock({ content, editMode, selectedElement, on
   const effectiveSlots = slots && isSlotsValid(slots, items.length) ? slots : buildDefaultSlots(items.length);
 
   return (
-    <section className={cx('px-6 py-12 md:px-16 md:py-16 max-w-4xl mx-auto', bg.sectionClassName)}>
+    <section className={cx('px-6 py-16 md:px-16 md:py-24 max-w-4xl mx-auto', bg.sectionClassName)}>
       {heading && (
         <h2
           className={cx('font-sans font-bold text-2xl md:text-3xl text-center mb-10 outline-none', bg.headingClassName, headingProps.className)}
@@ -97,7 +97,7 @@ export default function BonusStackBlock({ content, editMode, selectedElement, on
           onSelectElement={onSelectElement}
         />
       ) : (
-        <div className="space-y-6">
+        <div className="stagger-children space-y-6">
           {effectiveSlots.map((slot) => <SlotReadOnly key={slot.id} slot={slot} renderField={renderField} bg={bg} />)}
         </div>
       )}

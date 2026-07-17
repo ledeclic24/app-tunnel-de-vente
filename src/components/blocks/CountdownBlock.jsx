@@ -32,7 +32,7 @@ export default function CountdownBlock({ content, editMode, selectedElement, onS
   ];
 
   return (
-    <section className={cx('px-6 py-12 md:px-16 md:py-16 max-w-2xl mx-auto text-center', bg.sectionClassName)}>
+    <section className={cx('px-6 py-16 md:px-16 md:py-24 max-w-2xl mx-auto text-center', bg.sectionClassName)}>
       {headline && (
         <h3
           className={cx('font-sans font-semibold text-xl mb-6 outline-none', bg.headingClassName, headlineProps.className)}

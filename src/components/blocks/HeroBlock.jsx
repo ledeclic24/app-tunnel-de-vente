@@ -1,11 +1,35 @@
 import React, { useRef, useState } from 'react';
-import { ArrowRight, ImagePlus, Upload, Image as LibraryIcon, Wand2 } from 'lucide-react';
+import { ArrowRight, ImagePlus, Upload, Image as LibraryIcon, Wand2, Sparkles } from 'lucide-react';
 import { getButtonStyle, getEditableProps, getContentEditableProps, cx } from '../../lib/blockStyle';
 import { uploadImage } from '../../lib/storage';
 import SlotList from './SlotList';
 import ImagePickerModal from '../app/ImagePickerModal';
 import { TUNNEL_IMAGE_TYPES } from './BlockEditorPanel';
 import { useToast } from '../app/Toast';
+
+// Visuel de repli quand aucune image n'est fournie (auto-génération IA
+// indisponible, ou tunnel encore sans photo) : une composition en couches
+// (halos animés + cadre accent) plutôt qu'un espace vide ou un simple
+// pictogramme centré, pour garder autant de présence visuelle qu'une photo.
+function HeroVisualPlaceholder({ variant }) {
+  if (variant === 'overlay') {
+    return (
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="ambient-pulse absolute -top-20 -right-20 w-72 h-72 rounded-full bg-accent/10 blur-3xl" />
+        <div className="ambient-pulse absolute -bottom-24 -left-24 w-64 h-64 rounded-full bg-accent/10 blur-3xl" style={{ animationDelay: '2s' }} />
+      </div>
+    );
+  }
+  return (
+    <div className="absolute inset-0 flex items-center justify-center overflow-hidden pointer-events-none">
+      <div className="ambient-pulse absolute w-56 h-56 rounded-full bg-accent/20 blur-3xl" />
+      <div className="ambient-pulse absolute w-36 h-36 rounded-full bg-accent/30 blur-2xl" style={{ animationDelay: '1.5s' }} />
+      <div className="relative w-28 h-28 rounded-3xl border border-accent/30 bg-background/5 backdrop-blur-sm flex items-center justify-center">
+        <Sparkles className="w-9 h-9 text-accent" />
+      </div>
+    </div>
+  );
+}
 
 // L'image de Hero reste hors du système d'emplacements dans les deux
 // mises en page : en plein cadre (overlay) c'est un arrière-plan absolu,
@@ -229,11 +253,14 @@ export default function HeroBlock({ content, onAdvance, editMode, selectedElemen
                 onClick={handleImageClick}
               />
             ) : (
-              editMode && (
-                <button type="button" onClick={handleImageClick} className="absolute inset-0 flex items-center justify-center text-background/50 text-sm">
-                  <ImagePlus className="w-5 h-5 mr-2" /> {uploading ? 'Import...' : 'Ajouter une image'}
-                </button>
-              )
+              <>
+                <HeroVisualPlaceholder variant="split" />
+                {editMode && (
+                  <button type="button" onClick={handleImageClick} className="absolute inset-0 z-10 flex items-center justify-center text-background/50 text-sm bg-primary/40">
+                    <ImagePlus className="w-5 h-5 mr-2" /> {uploading ? 'Import...' : 'Ajouter une image'}
+                  </button>
+                )}
+              </>
             )}
             {imageUrl && editMode && (
               <button
@@ -246,7 +273,7 @@ export default function HeroBlock({ content, onAdvance, editMode, selectedElemen
             )}
             {imageMenu}
           </div>
-          <div className="px-6 py-12 md:px-12 md:py-16">
+          <div className={cx('px-6 py-12 md:px-12 md:py-16', !editMode && 'stagger-children')}>
             {textColumn}
           </div>
         </div>
@@ -256,7 +283,7 @@ export default function HeroBlock({ content, onAdvance, editMode, selectedElemen
 
   return (
     <section className="relative overflow-hidden rounded-[2rem] bg-primary text-background">
-      {imageUrl && (
+      {imageUrl ? (
         <div className="absolute inset-0 group/img">
           <img
             src={imageUrl}
@@ -277,8 +304,22 @@ export default function HeroBlock({ content, onAdvance, editMode, selectedElemen
           )}
           {imageMenu}
         </div>
+      ) : (
+        <div className="absolute inset-0 group/img">
+          <HeroVisualPlaceholder variant="overlay" />
+          {editMode && (
+            <button
+              type="button"
+              onClick={handleImageClick}
+              className="absolute top-3 right-3 z-20 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-surface/70 text-background text-xs font-medium opacity-0 group-hover/img:opacity-100 transition-opacity"
+            >
+              <ImagePlus className="w-3.5 h-3.5" /> {uploading ? 'Import...' : 'Ajouter une image'}
+            </button>
+          )}
+          {imageMenu}
+        </div>
       )}
-      <div className="relative z-10 px-6 py-16 md:px-16 md:py-24 max-w-3xl">
+      <div className={cx('relative z-10 px-6 py-16 md:px-16 md:py-24 max-w-3xl', !editMode && 'stagger-children')}>
         {textColumn}
       </div>
     </section>

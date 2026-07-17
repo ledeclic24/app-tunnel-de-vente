@@ -57,7 +57,7 @@ export default function ProcessBlock({ content, editMode, selectedElement, onSel
     }
     return (
       <div
-        className={cx('hover-card bg-background border border-surface/10 rounded-[2rem] p-6 shadow-sm', cardProps.className)}
+        className={cx('hover-card bg-background border border-accent/20 rounded-xl p-6 shadow-sm', cardProps.className)}
         style={cardProps.style}
         onClick={cardProps.onClick}
       >
@@ -74,10 +74,10 @@ export default function ProcessBlock({ content, editMode, selectedElement, onSel
   };
 
   const effectiveSlots = slots && isSlotsValid(slots, items.length) ? slots : buildDefaultSlots(items.length);
-  const readOnlyWrapperClass = isCircular ? 'space-y-8 max-w-2xl mx-auto' : 'grid grid-cols-1 md:grid-cols-3 gap-6';
+  const readOnlyWrapperClass = isCircular ? 'stagger-children space-y-8 max-w-2xl mx-auto' : 'stagger-children grid grid-cols-1 md:grid-cols-3 gap-6';
 
   return (
-    <section className={cx('px-6 py-12 md:px-16 md:py-16 max-w-5xl mx-auto', bg.sectionClassName)}>
+    <section className={cx('px-6 py-16 md:px-16 md:py-24 max-w-5xl mx-auto', bg.sectionClassName)}>
       {heading && (
         <h2
           className={cx('font-sans font-bold text-2xl md:text-3xl text-center mb-10 outline-none', bg.headingClassName, headingProps.className)}

@@ -44,7 +44,7 @@ export default function TestimonialsBlock({ content, editMode, selectedElement, 
     return (
       <div
         className={cx(
-          'group hover-card bg-background border border-surface/10 rounded-[2rem] p-6 shadow-sm overflow-hidden',
+          'group hover-card bg-background border border-accent/20 rounded-xl p-6 shadow-sm overflow-hidden',
           isCarousel && 'shrink-0 w-[85%] sm:w-[45%] snap-center',
           cardProps.className,
         )}
@@ -77,10 +77,10 @@ export default function TestimonialsBlock({ content, editMode, selectedElement, 
   };
 
   const effectiveSlots = slots && isSlotsValid(slots, items.length) ? slots : buildDefaultSlots(items.length);
-  const readOnlyWrapperClass = isCarousel ? 'flex gap-6 overflow-x-auto snap-x snap-mandatory pb-4 -mx-6 px-6 md:mx-0 md:px-0' : 'grid grid-cols-1 md:grid-cols-2 gap-6';
+  const readOnlyWrapperClass = isCarousel ? 'flex gap-6 overflow-x-auto snap-x snap-mandatory pb-4 -mx-6 px-6 md:mx-0 md:px-0' : 'stagger-children grid grid-cols-1 md:grid-cols-2 gap-6';
 
   return (
-    <section className={cx('px-6 py-12 md:px-16 md:py-16 max-w-5xl mx-auto', bg.sectionClassName)}>
+    <section className={cx('px-6 py-16 md:px-16 md:py-24 max-w-5xl mx-auto', bg.sectionClassName)}>
       {heading && (
         <h2
           className={cx('font-sans font-bold text-2xl md:text-3xl text-center mb-10 outline-none', bg.headingClassName, headingProps.className)}

@@ -41,7 +41,7 @@ export default function TeamBlock({ content, editMode, selectedElement, onSelect
     const cardProps = editable(`team-${i}`, 'card', `Membre ${i + 1}`);
     return (
       <div
-        className={cx('group hover-card bg-background border border-surface/10 rounded-[2rem] p-6 text-center', cardProps.className)}
+        className={cx('group hover-card bg-background border border-accent/20 rounded-xl p-6 text-center', cardProps.className)}
         style={cardProps.style}
         onClick={cardProps.onClick}
       >
@@ -68,7 +68,7 @@ export default function TeamBlock({ content, editMode, selectedElement, onSelect
   const effectiveSlots = slots && isSlotsValid(slots, items.length) ? slots : buildDefaultSlots(items.length);
 
   return (
-    <section className={cx('px-6 py-12 md:px-16 md:py-16 max-w-5xl mx-auto', bg.sectionClassName)}>
+    <section className={cx('px-6 py-16 md:px-16 md:py-24 max-w-5xl mx-auto', bg.sectionClassName)}>
       {heading && (
         <h2
           className={cx('font-sans font-bold text-2xl md:text-3xl text-center mb-10 outline-none', bg.headingClassName, headingProps.className)}
@@ -92,7 +92,7 @@ export default function TeamBlock({ content, editMode, selectedElement, onSelect
           onSelectElement={onSelectElement}
         />
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+        <div className="stagger-children grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
           {effectiveSlots.map((slot) => <SlotReadOnly key={slot.id} slot={slot} renderField={renderField} bg={bg} />)}
         </div>
       )}

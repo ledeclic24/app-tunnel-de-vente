@@ -68,7 +68,7 @@ export default function CtaBlock({ content, onAdvance, editMode, selectedElement
   const effectiveSlots = slots && isSlotsValid(slots) ? slots : buildDefaultSlots();
 
   return (
-    <section className={cx('px-6 py-16 md:px-16 md:py-20 text-center', bg.sectionClassName)}>
+    <section className={cx('px-6 py-16 md:px-16 md:py-24 text-center', bg.sectionClassName)}>
       <SlotList
         slots={effectiveSlots}
         onSlotsChange={(next) => onContentChange?.({ ...content, slots: next })}

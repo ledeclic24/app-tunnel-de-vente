@@ -84,7 +84,7 @@ export default function VideoBlock({ content, editMode, selectedElement, onSelec
   const effectiveSlots = slots && isSlotsValid(slots) ? slots : buildDefaultSlots();
 
   return (
-    <section className={cx('px-6 py-12 md:px-16 md:py-16 max-w-3xl mx-auto text-center', bg.sectionClassName)}>
+    <section className={cx('px-6 py-16 md:px-16 md:py-24 max-w-3xl mx-auto text-center', bg.sectionClassName)}>
       <SlotList
         slots={effectiveSlots}
         onSlotsChange={(next) => onContentChange?.({ ...content, slots: next })}

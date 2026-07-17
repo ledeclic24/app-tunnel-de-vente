@@ -90,7 +90,7 @@ export default function FaqBlock({ content, editMode, selectedElement, onSelectE
   const effectiveSlots = slots && isSlotsValid(slots, items.length) ? slots : buildDefaultSlots(items.length);
 
   return (
-    <section className={cx('px-6 py-12 md:px-16 md:py-16 max-w-3xl mx-auto', bg.sectionClassName)}>
+    <section className={cx('px-6 py-16 md:px-16 md:py-24 max-w-3xl mx-auto', bg.sectionClassName)}>
       {heading && (
         <h2
           className={cx('font-sans font-bold text-2xl md:text-3xl text-center mb-10 outline-none', bg.headingClassName, headingProps.className)}

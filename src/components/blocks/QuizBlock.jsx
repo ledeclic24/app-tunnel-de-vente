@@ -30,7 +30,7 @@ export default function QuizBlock({ content, onAdvance, editMode, selectedElemen
   const handleSelect = () => setStep((s) => s + 1);
 
   return (
-    <section className={cx('px-6 py-12 md:px-16 md:py-16 max-w-2xl mx-auto', bg.sectionClassName)}>
+    <section className={cx('px-6 py-16 md:px-16 md:py-24 max-w-2xl mx-auto', bg.sectionClassName)}>
       {heading && (
         <h2
           className={cx('font-sans font-bold text-2xl md:text-3xl text-center mb-8 outline-none', bg.headingClassName, headingProps.className)}
