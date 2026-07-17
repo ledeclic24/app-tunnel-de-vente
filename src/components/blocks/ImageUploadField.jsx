@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { ImageIcon, Upload, Wand2 } from 'lucide-react';
 import { uploadImage } from '../../lib/storage';
 import { cx } from '../../lib/blockStyle';
@@ -15,6 +15,7 @@ export default function ImageUploadField({ userId, value, onChange, onGenerate, 
   const [error, setError] = useState('');
   const [showPicker, setShowPicker] = useState(false);
   const [showTypeMenu, setShowTypeMenu] = useState(false);
+  const fileRef = useRef(null);
 
   const handleFile = async (e) => {
     const file = e.target.files?.[0];
@@ -46,15 +47,22 @@ export default function ImageUploadField({ userId, value, onChange, onGenerate, 
           value={value || ''}
           onChange={(e) => onChange(e.target.value)}
         />
-        <label
+        <button
+          type="button"
+          // <label>+<input type=file> ne transfère pas fiablement son clic
+          // vers l'input imbriqué dans cette version de React (vérifié
+          // empiriquement, voir EditableItemImage.jsx) : on déclenche
+          // l'ouverture nous-mêmes via une ref.
+          onClick={() => fileRef.current?.click()}
+          disabled={uploading || !userId}
           className={cx(
             'shrink-0 flex items-center gap-1.5 px-3 py-2.5 rounded-xl border border-surface/10 text-sm text-surface/70 hover:border-accent hover:text-accent transition-colors cursor-pointer',
             (uploading || !userId) && 'opacity-50 pointer-events-none',
           )}
         >
           <Upload className="w-4 h-4" /> {uploading ? 'Envoi...' : 'Importer'}
-          <input type="file" accept="image/*" className="hidden" onChange={handleFile} disabled={uploading || !userId} />
-        </label>
+          <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFile} disabled={uploading || !userId} />
+        </button>
         <button
           type="button"
           onClick={() => setShowPicker(true)}

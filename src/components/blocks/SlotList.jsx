@@ -106,7 +106,14 @@ function ExtraLeaf({ extra, bg, editable, onUpdate, userId, compact }) {
           onClick={(e) => { props.onClick?.(e); fileRef.current?.click(); }}
         />
       ) : (
-        <label
+        <button
+          type="button"
+          // <label>+<input type=file> ne transfère pas fiablement son clic
+          // vers l'input imbriqué dans cette version de React (vérifié
+          // empiriquement, voir EditableItemImage.jsx) : on déclenche
+          // l'ouverture via la même ref que pour le remplacement d'image
+          // existante ci-dessus.
+          onClick={() => fileRef.current?.click()}
           className={cx(
             'w-full flex items-center justify-center gap-2 py-8 rounded-xl border border-dashed transition-colors cursor-pointer hover:border-accent hover:text-accent',
             uploading && 'opacity-50 pointer-events-none',
@@ -114,14 +121,9 @@ function ExtraLeaf({ extra, bg, editable, onUpdate, userId, compact }) {
           )}
         >
           <Upload className="w-4 h-4" /> {uploading ? 'Envoi...' : 'Choisir une image'}
-          <input type="file" accept="image/*" className="hidden" onChange={handleFile} />
-        </label>
+        </button>
       )}
-      {/* Dédié au clic sur une image déjà présente (ci-dessus) : preventDefault
-          y est nécessaire pour la sélection d'élément, ce qui empêcherait le
-          transfert de clic natif d'un <label> vers son input — on garde donc
-          un input séparé déclenché via ref pour ce seul cas. */}
-      {extra.value && <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFile} />}
+      <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFile} />
     </>
   );
 }

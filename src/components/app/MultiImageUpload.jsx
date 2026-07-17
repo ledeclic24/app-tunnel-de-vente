@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { ImageIcon, Upload, X } from 'lucide-react';
 import { uploadImage } from '../../lib/storage';
 import { cx } from '../../lib/blockStyle';
@@ -8,6 +8,7 @@ export default function MultiImageUpload({ userId, images, onChange, max = 5 }) 
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
   const [showPicker, setShowPicker] = useState(false);
+  const fileRef = useRef(null);
 
   const handleFiles = async (e) => {
     const files = Array.from(e.target.files || []).slice(0, max - images.length);
@@ -47,15 +48,18 @@ export default function MultiImageUpload({ userId, images, onChange, max = 5 }) 
       )}
       {images.length < max && (
         <div className="flex gap-2">
-          <label
+          <button
+            type="button"
+            onClick={() => fileRef.current?.click()}
+            disabled={uploading || !userId}
             className={cx(
               'flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border border-dashed border-surface/20 text-sm text-surface/60 hover:border-accent hover:text-accent transition-colors cursor-pointer',
               (uploading || !userId) && 'opacity-50 pointer-events-none',
             )}
           >
             <Upload className="w-4 h-4" /> {uploading ? 'Envoi...' : `Importer (${images.length}/${max})`}
-            <input type="file" accept="image/*" multiple className="hidden" onChange={handleFiles} disabled={uploading || !userId} />
-          </label>
+            <input ref={fileRef} type="file" accept="image/*" multiple className="hidden" onChange={handleFiles} disabled={uploading || !userId} />
+          </button>
           <button
             type="button"
             onClick={() => setShowPicker(true)}

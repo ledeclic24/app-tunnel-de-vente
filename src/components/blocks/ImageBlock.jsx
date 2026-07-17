@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { ImagePlus, Upload, Image as LibraryIcon, Wand2 } from 'lucide-react';
 import { getEditableProps, getContentEditableProps, getSectionBackground, cx } from '../../lib/blockStyle';
 import { uploadImage } from '../../lib/storage';
@@ -29,6 +29,7 @@ export default function ImageBlock({ content, editMode, selectedElement, onSelec
   const [showPicker, setShowPicker] = useState(false);
   const [showTypeMenu, setShowTypeMenu] = useState(false);
   const toast = useToast();
+  const fileRef = useRef(null);
 
   const handleImageClick = (e) => {
     imageProps.onClick?.(e);
@@ -56,17 +57,19 @@ export default function ImageBlock({ content, editMode, selectedElement, onSelec
           className="absolute top-3 right-3 z-30 bg-background border border-surface/10 rounded-xl shadow-lg overflow-hidden min-w-[220px]"
           onClick={(e) => e.stopPropagation()}
         >
-          <label
-            // Fermeture DIFFÉRÉE du menu (voir EditableItemImage.jsx) :
-            // le démonter de façon synchrone dans ce clic empêche le
-            // navigateur d'ouvrir le sélecteur de fichier natif sur
-            // l'input imbriqué (qui n'existe déjà plus quand il essaie).
-            onClick={() => setTimeout(() => setShowMenu(false), 0)}
+          <button
+            type="button"
+            // Le <label> encapsulant un <input type=file> ne transfère pas
+            // fiablement son clic vers l'input imbriqué (vérifié
+            // empiriquement, voir EditableItemImage.jsx) : on déclenche
+            // l'ouverture nous-mêmes via une ref, fermeture du menu différée
+            // pour ne pas démonter l'input avant que le sélecteur ait eu la main.
+            onClick={() => { fileRef.current?.click(); setTimeout(() => setShowMenu(false), 0); }}
             className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-surface/80 hover:bg-primary/5 hover:text-accent text-left cursor-pointer"
           >
             <Upload className="w-4 h-4 shrink-0" /> {uploading ? 'Envoi...' : 'Importer depuis mon ordinateur'}
-            <input type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
-          </label>
+            <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
+          </button>
           <button
             type="button"
             onClick={() => { setShowMenu(false); setShowPicker(true); }}

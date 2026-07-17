@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { Upload, ImageIcon, Pencil } from 'lucide-react';
 import { uploadImage } from '../../lib/storage';
 import ImagePickerModal from '../app/ImagePickerModal';
@@ -18,6 +18,7 @@ export default function EditableItemImage({
   const [showMenu, setShowMenu] = useState(false);
   const [showPicker, setShowPicker] = useState(false);
   const toast = useToast();
+  const fileRef = useRef(null);
 
   if (!editMode) {
     return src ? <img src={src} alt={alt} loading="lazy" className={className} /> : (placeholder || null);
@@ -79,20 +80,23 @@ export default function EditableItemImage({
           className="absolute z-20 top-full left-0 mt-1 bg-background border border-surface/10 rounded-xl shadow-lg overflow-hidden min-w-[200px]"
           onClick={(e) => e.stopPropagation()}
         >
-          <label
-            // Fermer le menu de façon DIFFÉRÉE (pas dans le même clic) :
-            // le <label> déclenche l'ouverture native du sélecteur de
-            // fichier sur son <input> imbriqué APRÈS la phase de bulle des
-            // événements JS — si on démonte le menu (donc l'input) de façon
-            // synchrone ici, le navigateur n'a plus de cible et le
-            // sélecteur ne s'ouvre jamais. Vérifié : cause exacte du bug
-            // "Importer depuis mon ordinateur n'ouvre pas l'explorateur".
-            onClick={() => setTimeout(() => setShowMenu(false), 0)}
+          <button
+            type="button"
+            // Le <label> encapsulant un <input type=file> ne transfère pas
+            // fiablement son clic vers l'input dans cette version de React
+            // (vérifié empiriquement : le clic sur le label est bien reçu,
+            // mais l'input imbriqué ne reçoit jamais son propre événement
+            // "click" ni n'ouvre le sélecteur — reproductible même hors de
+            // toute logique de fermeture de menu). On déclenche donc
+            // l'ouverture nous-mêmes via une ref, ce qui fonctionne de façon
+            // fiable. Fermeture du menu différée (comme avant) pour ne pas
+            // démonter l'input avant que le sélecteur ait eu la main.
+            onClick={() => { fileRef.current?.click(); setTimeout(() => setShowMenu(false), 0); }}
             className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-surface/80 hover:bg-primary/5 hover:text-accent text-left cursor-pointer"
           >
             <Upload className="w-4 h-4 shrink-0" /> {uploading ? 'Envoi...' : 'Importer depuis mon ordinateur'}
-            <input type="file" accept="image/*" className="hidden" onChange={handleFile} />
-          </label>
+            <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFile} />
+          </button>
           <button
             type="button"
             onClick={() => { setShowMenu(false); setShowPicker(true); }}
