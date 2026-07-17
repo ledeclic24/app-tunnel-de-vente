@@ -1,16 +1,22 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, ExternalLink, Pencil, Trash2, Rocket, Mail, Eye, Layers, CheckCircle2, Circle, LayoutGrid } from 'lucide-react';
+import { Plus, ExternalLink, Pencil, Trash2, Rocket, Mail, Eye, Layers, CheckCircle2, Circle } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { fetchUserFunnels, deleteFunnel, fetchLeadsForUser, fetchFunnelStepsAnalytics } from '../../lib/funnelsApi';
 import { getPlan } from '../../lib/plans';
 import { useConfirm } from '../../components/app/ConfirmDialog';
-import PageHeader from '../../components/ui/PageHeader';
-import KpiCard from '../../components/ui/KpiCard';
-import Card from '../../components/ui/Card';
-import Badge from '../../components/ui/Badge';
-import Button from '../../components/ui/Button';
-import EmptyState from '../../components/ui/EmptyState';
+
+function KpiCard({ icon: Icon, label, value }) {
+  return (
+    <div className="bg-background border border-surface/10 rounded-xl p-4">
+      <div className="flex items-center gap-2 text-surface/40 mb-2">
+        <Icon className="w-4 h-4" />
+        <p className="text-[10px] uppercase tracking-wider font-mono">{label}</p>
+      </div>
+      <p className="text-2xl font-sans font-bold text-surface">{value}</p>
+    </div>
+  );
+}
 
 function OnboardingChecklist({ funnels, profileId }) {
   const dismissedKey = profileId ? `vendeko_onboarding_dismissed_${profileId}` : null;
@@ -49,7 +55,7 @@ function OnboardingChecklist({ funnels, profileId }) {
   if (!funnels || dismissed || allDone) return null;
 
   return (
-    <div className="bg-primary text-background rounded-[2rem] p-6 mb-8 shadow-soft">
+    <div className="bg-primary text-background rounded-[2rem] p-6 mb-8">
       <h2 className="font-sans font-semibold text-lg mb-1">Bien démarrer avec Vendeko</h2>
       <p className="text-sm text-background/60 mb-5">Trois étapes pour lancer ton premier tunnel de vente.</p>
       <div className="flex flex-col gap-3">
@@ -65,39 +71,6 @@ function OnboardingChecklist({ funnels, profileId }) {
         ))}
       </div>
     </div>
-  );
-}
-
-function FunnelCard({ funnel, onDelete }) {
-  return (
-    <Card interactive className="p-5 flex flex-col">
-      <div className="flex items-start gap-3 mb-4">
-        <div className="w-10 h-10 rounded-xl bg-accent/10 text-accent flex items-center justify-center shrink-0">
-          <LayoutGrid className="w-4 h-4" />
-        </div>
-        <div className="min-w-0 flex-1">
-          <h3 className="font-sans font-semibold text-surface truncate">{funnel.name}</h3>
-          <p className="text-xs text-surface/40 font-mono truncate">/{funnel.slug}</p>
-        </div>
-        <Badge variant={funnel.is_published ? 'success' : 'neutral'}>
-          {funnel.is_published ? 'Publié' : 'Brouillon'}
-        </Badge>
-      </div>
-
-      <div className="mt-auto flex items-center gap-2 pt-4 border-t border-surface/10">
-        <Button as={Link} to={`/app/funnels/${funnel.id}/edit`} variant="secondary" size="sm" className="flex-1">
-          <Pencil className="w-3.5 h-3.5" /> Modifier
-        </Button>
-        {funnel.is_published && (
-          <Button as="a" href={`/f/${funnel.slug}`} target="_blank" rel="noreferrer" variant="ghost" size="sm" className="px-2.5" aria-label="Voir la page publique">
-            <ExternalLink className="w-4 h-4" />
-          </Button>
-        )}
-        <Button variant="ghost" size="sm" className="px-2.5 text-surface/40 hover:text-red-500" onClick={() => onDelete(funnel)} aria-label="Supprimer">
-          <Trash2 className="w-4 h-4" />
-        </Button>
-      </div>
-    </Card>
   );
 }
 
@@ -148,22 +121,24 @@ export default function DashboardPage() {
 
   return (
     <div>
-      <PageHeader
-        title="Tes tunnels de vente"
-        description={`Plan ${plan.name} — ${funnels ? funnels.length : '…'} / ${plan.maxFunnels === Infinity ? '∞' : plan.maxFunnels} tunnel(s) utilisé(s)`}
-        actions={
-          atLimit ? (
-            <Button as={Link} to="/app/billing" variant="dark">
-              <Rocket className="w-4 h-4" /> Passer au plan supérieur
-            </Button>
-          ) : (
-            <Button as={Link} to="/app/funnels/new" variant="primary" className="btn-fill-slide group relative">
-              <span className="relative z-10 flex items-center gap-2"><Plus className="w-4 h-4" /> Créer un tunnel</span>
-              <div className="fill-layer bg-white/20 rounded-full"></div>
-            </Button>
-          )
-        }
-      />
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
+        <div>
+          <h1 className="text-2xl font-sans font-bold text-surface">Tes tunnels de vente</h1>
+          <p className="text-surface/60 text-sm mt-1">
+            Plan {plan.name} — {funnels ? funnels.length : '…'} / {plan.maxFunnels === Infinity ? '∞' : plan.maxFunnels} tunnel(s) utilisé(s)
+          </p>
+        </div>
+        {atLimit ? (
+          <Link to="/app/billing" className="magnetic-btn inline-flex items-center gap-2 bg-primary text-background px-5 py-3 rounded-full text-sm font-semibold">
+            <Rocket className="w-4 h-4" /> Passer au plan supérieur
+          </Link>
+        ) : (
+          <Link to="/app/funnels/new" className="magnetic-btn btn-fill-slide group relative inline-flex items-center gap-2 bg-accent text-background px-5 py-3 rounded-full text-sm font-semibold">
+            <span className="relative z-10 flex items-center gap-2"><Plus className="w-4 h-4" /> Créer un tunnel</span>
+            <div className="fill-layer bg-white/20 rounded-full"></div>
+          </Link>
+        )}
+      </div>
 
       {funnels && (
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
@@ -184,18 +159,38 @@ export default function DashboardPage() {
       )}
 
       {funnels && funnels.length === 0 && (
-        <EmptyState
-          icon={LayoutGrid}
-          title="Aucun tunnel pour l'instant"
-          description="Crée ton premier tunnel de vente pour commencer à capter des leads."
-          action={<Button as={Link} to="/app/funnels/new" variant="primary">Créer ton premier tunnel</Button>}
-        />
+        <div className="text-center py-16 border border-dashed border-surface/20 rounded-[2rem]">
+          <p className="text-surface/60 mb-4">Tu n'as pas encore de tunnel de vente.</p>
+          <Link to="/app/funnels/new" className="text-accent font-semibold hover:underline">Crée ton premier tunnel →</Link>
+        </div>
       )}
 
       {funnels && funnels.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {funnels.map((funnel) => (
-            <FunnelCard key={funnel.id} funnel={funnel} onDelete={handleDelete} />
+            <div key={funnel.id} className="bg-background border border-surface/10 rounded-[2rem] p-6 shadow-sm flex flex-col">
+              <div className="flex items-start justify-between mb-3">
+                <h3 className="font-sans font-semibold text-surface pr-2">{funnel.name}</h3>
+                <span className={`shrink-0 text-[10px] font-mono uppercase tracking-wider px-2 py-1 rounded-full ${funnel.is_published ? 'bg-green-500/10 text-green-600' : 'bg-surface/10 text-surface/50'}`}>
+                  {funnel.is_published ? 'Publié' : 'Brouillon'}
+                </span>
+              </div>
+              <p className="text-xs text-surface/40 font-mono mb-6">/{funnel.slug}</p>
+
+              <div className="mt-auto flex items-center gap-2">
+                <Link to={`/app/funnels/${funnel.id}/edit`} className="hover-lift flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-primary text-background text-sm font-medium">
+                  <Pencil className="w-3.5 h-3.5" /> Modifier
+                </Link>
+                {funnel.is_published && (
+                  <a href={`/f/${funnel.slug}`} target="_blank" rel="noreferrer" className="hover-lift p-2.5 rounded-xl border border-surface/10 text-surface/60" aria-label="Voir la page publique">
+                    <ExternalLink className="w-4 h-4" />
+                  </a>
+                )}
+                <button onClick={() => handleDelete(funnel)} className="hover-lift p-2.5 rounded-xl border border-surface/10 text-surface/40 hover:text-red-500" aria-label="Supprimer">
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
           ))}
         </div>
       )}

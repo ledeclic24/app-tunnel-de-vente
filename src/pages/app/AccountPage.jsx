@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import PageHeader from '../../components/ui/PageHeader';
 import { useNavigate } from 'react-router-dom';
 import { LogOut, Trash2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
@@ -84,9 +83,9 @@ export default function AccountPage() {
 
   return (
     <div className="max-w-lg">
-      <PageHeader title="Mon compte" className="mb-6" />
+      <h1 className="text-2xl font-sans font-bold text-surface mb-6">Mon compte</h1>
 
-      <form onSubmit={handleSave} className="bg-background border border-surface/10 rounded-[2rem] shadow-soft p-6 md:p-8 space-y-4 mb-6">
+      <form onSubmit={handleSave} className="bg-background border border-surface/10 rounded-[2rem] p-6 md:p-8 space-y-4 mb-6">
         <div>
           <label htmlFor="account-email" className="block text-xs font-semibold text-surface/70 uppercase tracking-wider mb-1">Email</label>
           <input id="account-email" value={user?.email || ''} disabled className="w-full bg-surface/5 border border-surface/10 rounded-xl px-4 py-3 text-sm text-surface/50" />
@@ -110,7 +109,7 @@ export default function AccountPage() {
         </button>
       </form>
 
-      <form onSubmit={handlePasswordSave} className="bg-background border border-surface/10 rounded-[2rem] shadow-soft p-6 md:p-8 space-y-4 mb-6">
+      <form onSubmit={handlePasswordSave} className="bg-background border border-surface/10 rounded-[2rem] p-6 md:p-8 space-y-4 mb-6">
         <h2 className="text-sm font-sans font-semibold text-surface mb-1">Mot de passe</h2>
         <div>
           <label htmlFor="account-new-password" className="block text-xs font-semibold text-surface/70 uppercase tracking-wider mb-1">Nouveau mot de passe</label>

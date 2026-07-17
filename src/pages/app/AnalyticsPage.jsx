@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Lock, ArrowRight } from 'lucide-react';
-import PageHeader from '../../components/ui/PageHeader';
+import { Lock, TrendingUp, ArrowRight } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { fetchUserFunnels, fetchFunnelStepsAnalytics } from '../../lib/funnelsApi';
 import { fetchCategoryBenchmark } from '../../lib/growthApi';
@@ -214,11 +213,13 @@ export default function AnalyticsPage() {
 
   return (
     <div>
-      <PageHeader
-        title="Analytique"
-        description="Le parcours de tes visiteurs à travers chaque tunnel, et la performance de tes tunnels publiés comparée à leur secteur."
-        className="mb-10"
-      />
+      <div className="flex items-center gap-2 mb-2">
+        <TrendingUp className="w-5 h-5 text-accent" />
+        <h1 className="text-2xl font-sans font-bold text-surface">Analytique</h1>
+      </div>
+      <p className="text-surface/60 mb-10">
+        Le parcours de tes visiteurs à travers chaque tunnel, et la performance de tes tunnels publiés comparée à leur secteur.
+      </p>
 
       <section className="mb-12">
         <h2 className="text-lg font-sans font-bold text-surface mb-1">Parcours client</h2>

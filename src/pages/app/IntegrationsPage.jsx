@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import PageHeader from '../../components/ui/PageHeader';
 import { Link } from 'react-router-dom';
-import { Lock, Plus, Trash2, Send } from 'lucide-react';
+import { Lock, Webhook, Plus, Trash2, Send } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { fetchUserFunnels } from '../../lib/funnelsApi';
 import { fetchWebhooks, createWebhook, toggleWebhook, deleteWebhook, fetchWebhookLogs } from '../../lib/growthApi';
@@ -183,11 +182,13 @@ export default function IntegrationsPage() {
 
   return (
     <div>
-      <PageHeader
-        title="Intégrations"
-        description="Un webhook envoie automatiquement les informations d'un nouveau lead vers un autre outil (Zapier, Google Sheets, ton CRM...) dès qu'il remplit un formulaire sur l'un de tes tunnels."
-        className="mb-2"
-      />
+      <div className="flex items-center gap-2 mb-2">
+        <Webhook className="w-5 h-5 text-accent" />
+        <h1 className="text-2xl font-sans font-bold text-surface">Intégrations</h1>
+      </div>
+      <p className="text-surface/60 mb-2 max-w-2xl">
+        Un webhook envoie automatiquement les informations d'un nouveau lead vers un autre outil (Zapier, Google Sheets, ton CRM...) dès qu'il remplit un formulaire sur l'un de tes tunnels.
+      </p>
       <p className="text-surface/40 text-sm mb-8 max-w-2xl">
         Compatible avec Zapier (déclencheur « Webhooks by Zapier »), Make, ou toute autre URL capable de recevoir un envoi POST au format JSON.
       </p>

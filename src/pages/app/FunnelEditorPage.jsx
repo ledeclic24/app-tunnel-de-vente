@@ -34,7 +34,6 @@ import FunnelSettingsPanel from '../../components/app/FunnelSettingsPanel';
 import PageSettingsPanel from '../../components/app/PageSettingsPanel';
 import FunnelPreviewModal from '../../components/app/FunnelPreviewModal';
 import HealthScoreCard from '../../components/app/HealthScoreCard';
-import Drawer from '../../components/ui/Drawer';
 
 const HISTORY_LIMIT = 20;
 
@@ -664,7 +663,7 @@ export default function FunnelEditorPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex justify-center py-24">
+      <div className="flex justify-center py-24">
         <div className="w-8 h-8 border-2 border-surface/20 border-t-accent rounded-full animate-spin" />
       </div>
     );
@@ -672,7 +671,7 @@ export default function FunnelEditorPage() {
 
   if (notFound) {
     return (
-      <div className="min-h-screen bg-background text-center py-24">
+      <div className="text-center py-24">
         <h1 className="text-xl font-sans font-bold text-surface mb-2">Tunnel introuvable</h1>
         <p className="text-surface/60 mb-4">Il a peut-être été supprimé.</p>
         <Link to="/app" className="text-accent font-semibold hover:underline">Retour au tableau de bord</Link>
@@ -680,109 +679,96 @@ export default function FunnelEditorPage() {
     );
   }
 
-  const activePanel = showBrandKit ? 'brandkit' : showSettings ? 'settings' : showPageSettings ? 'page' : showAiAssistant ? 'ai' : null;
-  const closeAllPanels = () => { setShowBrandKit(false); setShowSettings(false); setShowPageSettings(false); setShowAiAssistant(false); };
-  const panelMeta = {
-    brandkit: { title: 'Design', icon: Palette },
-    settings: { title: 'Réglages', icon: Settings },
-    page: { title: 'Page', icon: Megaphone },
-    ai: { title: 'Assistant IA', icon: Sparkles },
-  };
-
   return (
-    <div className="min-h-screen bg-background">
-      <div className="sticky top-0 z-30 bg-background border-b border-surface/10 px-4 md:px-8 py-4">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div className="flex items-center gap-3 min-w-0">
-            <Link to="/app" className="p-2 rounded-lg text-surface/50 hover:text-surface shrink-0" aria-label="Retour au tableau de bord"><ArrowLeft className="w-5 h-5" /></Link>
-            {editingName ? (
-              <input
-                autoFocus
-                value={nameDraft}
-                onChange={(e) => setNameDraft(e.target.value)}
-                onBlur={handleSaveName}
-                onKeyDown={(e) => e.key === 'Enter' && handleSaveName()}
-                className="text-xl font-sans font-bold text-surface bg-transparent border-b border-accent focus:outline-none min-w-0"
-              />
-            ) : (
-              <h1 onClick={() => setEditingName(true)} className="text-xl font-sans font-bold text-surface truncate cursor-pointer hover:text-accent transition-colors" title="Cliquer pour renommer">
-                {funnel.name}
-              </h1>
-            )}
-          </div>
+    <div>
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+        <div className="flex items-center gap-3 min-w-0">
+          <Link to="/app" className="p-2 rounded-lg text-surface/50 hover:text-surface shrink-0"><ArrowLeft className="w-5 h-5" /></Link>
+          {editingName ? (
+            <input
+              autoFocus
+              value={nameDraft}
+              onChange={(e) => setNameDraft(e.target.value)}
+              onBlur={handleSaveName}
+              onKeyDown={(e) => e.key === 'Enter' && handleSaveName()}
+              className="text-xl font-sans font-bold text-surface bg-transparent border-b border-accent focus:outline-none min-w-0"
+            />
+          ) : (
+            <h1 onClick={() => setEditingName(true)} className="text-xl font-sans font-bold text-surface truncate cursor-pointer hover:text-accent transition-colors" title="Cliquer pour renommer">
+              {funnel.name}
+            </h1>
+          )}
+        </div>
 
-          <div className="flex items-center gap-2 md:gap-3 shrink-0 flex-wrap">
-            <div className="hidden sm:flex items-center gap-1.5 text-sm text-surface/50">
-              <Users className="w-4 h-4" /> {leadsCount} lead(s)
-            </div>
-            <div className="flex items-center gap-1">
-              <button
-                onClick={undo}
-                disabled={!canUndo}
-                className="p-2.5 rounded-xl border border-surface/10 text-surface/60 hover:text-surface disabled:opacity-30 disabled:hover:text-surface/60"
-                aria-label="Annuler"
-                title="Annuler (Ctrl+Z)"
-              >
-                <Undo2 className="w-4 h-4" />
-              </button>
-              <button
-                onClick={redo}
-                disabled={!canRedo}
-                className="p-2.5 rounded-xl border border-surface/10 text-surface/60 hover:text-surface disabled:opacity-30 disabled:hover:text-surface/60"
-                aria-label="Rétablir"
-                title="Rétablir (Ctrl+Y)"
-              >
-                <Redo2 className="w-4 h-4" />
-              </button>
-            </div>
-            {funnel.is_published && (
-              <a href={`/f/${funnel.slug}`} target="_blank" rel="noreferrer" className="hover-lift p-2.5 rounded-xl border border-surface/10 text-surface/60" aria-label="Voir la page publique">
-                <ExternalLink className="w-4 h-4" />
-              </a>
-            )}
+        <div className="flex items-center gap-2 md:gap-3 shrink-0 flex-wrap">
+          <div className="hidden sm:flex items-center gap-1.5 text-sm text-surface/50">
+            <Users className="w-4 h-4" /> {leadsCount} lead(s)
+          </div>
+          <div className="flex items-center gap-1">
             <button
-              onClick={() => setShowPreview(true)}
-              className="magnetic-btn flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-semibold border border-surface/10 text-surface/70"
+              onClick={undo}
+              disabled={!canUndo}
+              className="p-2.5 rounded-xl border border-surface/10 text-surface/60 hover:text-surface disabled:opacity-30 disabled:hover:text-surface/60"
+              aria-label="Annuler"
+              title="Annuler (Ctrl+Z)"
             >
-              <Eye className="w-4 h-4" /> Aperçu
+              <Undo2 className="w-4 h-4" />
             </button>
             <button
-              onClick={() => { closeAllPanels(); setShowSettings(!showSettings); }}
-              className={`magnetic-btn flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-semibold border ${showSettings ? 'bg-accent/10 border-accent text-accent' : 'border-surface/10 text-surface/70'}`}
+              onClick={redo}
+              disabled={!canRedo}
+              className="p-2.5 rounded-xl border border-surface/10 text-surface/60 hover:text-surface disabled:opacity-30 disabled:hover:text-surface/60"
+              aria-label="Rétablir"
+              title="Rétablir (Ctrl+Y)"
             >
-              <Settings className="w-4 h-4" /> Réglages
-            </button>
-            <button
-              onClick={() => { closeAllPanels(); setShowBrandKit(!showBrandKit); }}
-              className={`magnetic-btn flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-semibold border ${showBrandKit ? 'bg-accent/10 border-accent text-accent' : 'border-surface/10 text-surface/70'}`}
-            >
-              <Palette className="w-4 h-4" /> Design
-            </button>
-            <button
-              onClick={() => { closeAllPanels(); setShowPageSettings(!showPageSettings); }}
-              className={`magnetic-btn flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-semibold border ${showPageSettings ? 'bg-accent/10 border-accent text-accent' : 'border-surface/10 text-surface/70'}`}
-            >
-              <Megaphone className="w-4 h-4" /> Page
-            </button>
-            {plan.aiAccess && (
-              <button
-                onClick={() => { closeAllPanels(); setShowAiAssistant(!showAiAssistant); }}
-                className={`magnetic-btn flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-semibold border ${showAiAssistant ? 'bg-accent/10 border-accent text-accent' : 'border-surface/10 text-surface/70'}`}
-              >
-                <Sparkles className="w-4 h-4" /> Assistant IA
-              </button>
-            )}
-            <button
-              onClick={togglePublish}
-              className={`magnetic-btn flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-semibold ${funnel.is_published ? 'bg-surface/10 text-surface' : 'bg-accent text-background'}`}
-            >
-              {funnel.is_published ? <><Check className="w-4 h-4" /> Publié</> : 'Publier'}
+              <Redo2 className="w-4 h-4" />
             </button>
           </div>
+          {funnel.is_published && (
+            <a href={`/f/${funnel.slug}`} target="_blank" rel="noreferrer" className="hover-lift p-2.5 rounded-xl border border-surface/10 text-surface/60" aria-label="Voir la page publique">
+              <ExternalLink className="w-4 h-4" />
+            </a>
+          )}
+          <button
+            onClick={() => setShowPreview(true)}
+            className="magnetic-btn flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-semibold border border-surface/10 text-surface/70"
+          >
+            <Eye className="w-4 h-4" /> Aperçu
+          </button>
+          <button
+            onClick={() => { setShowSettings((v) => !v); setShowBrandKit(false); setShowAiAssistant(false); }}
+            className={`magnetic-btn flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-semibold border ${showSettings ? 'bg-accent/10 border-accent text-accent' : 'border-surface/10 text-surface/70'}`}
+          >
+            <Settings className="w-4 h-4" /> Réglages
+          </button>
+          <button
+            onClick={() => { setShowBrandKit((v) => !v); setShowSettings(false); setShowAiAssistant(false); setShowPageSettings(false); }}
+            className={`magnetic-btn flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-semibold border ${showBrandKit ? 'bg-accent/10 border-accent text-accent' : 'border-surface/10 text-surface/70'}`}
+          >
+            <Palette className="w-4 h-4" /> Design
+          </button>
+          <button
+            onClick={() => { setShowPageSettings((v) => !v); setShowSettings(false); setShowBrandKit(false); setShowAiAssistant(false); }}
+            className={`magnetic-btn flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-semibold border ${showPageSettings ? 'bg-accent/10 border-accent text-accent' : 'border-surface/10 text-surface/70'}`}
+          >
+            <Megaphone className="w-4 h-4" /> Page
+          </button>
+          {plan.aiAccess && (
+            <button
+              onClick={() => { setShowAiAssistant((v) => !v); setShowSettings(false); setShowBrandKit(false); }}
+              className={`magnetic-btn flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-semibold border ${showAiAssistant ? 'bg-accent/10 border-accent text-accent' : 'border-surface/10 text-surface/70'}`}
+            >
+              <Sparkles className="w-4 h-4" /> Assistant IA
+            </button>
+          )}
+          <button
+            onClick={togglePublish}
+            className={`magnetic-btn flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-semibold ${funnel.is_published ? 'bg-surface/10 text-surface' : 'bg-accent text-background'}`}
+          >
+            {funnel.is_published ? <><Check className="w-4 h-4" /> Publié</> : 'Publier'}
+          </button>
         </div>
       </div>
-
-      <div className="px-4 md:px-8 py-6 max-w-2xl mx-auto">
 
       {actionError && (
         <div className="mb-6 flex items-center justify-between gap-3 bg-red-500/10 border border-red-500/20 text-red-500 text-sm rounded-2xl px-4 py-3">
@@ -791,54 +777,65 @@ export default function FunnelEditorPage() {
         </div>
       )}
 
-      <Drawer open={Boolean(activePanel)} onClose={closeAllPanels} title={activePanel ? panelMeta[activePanel].title : ''} icon={activePanel ? panelMeta[activePanel].icon : undefined}>
-        {activePanel === 'brandkit' && (
+      {showBrandKit && (
+        <div className="mb-6 max-w-2xl">
           <BrandKitPanel brand={funnel.brand} onSave={handleSaveBrand} userId={effectiveOwnerId} canUseBrandKit={plan.brandKit} canUseAdPixels={plan.adPixels} />
-        )}
-        {activePanel === 'settings' && (
+        </div>
+      )}
+
+      {showSettings && (
+        <div className="mb-6 max-w-2xl">
           <FunnelSettingsPanel funnel={funnel} plan={plan} onSave={handleSaveSettings} />
-        )}
-        {activePanel === 'page' && (
+        </div>
+      )}
+
+      {showPageSettings && (
+        <div className="mb-6 max-w-2xl">
           <PageSettingsPanel step={steps.find((s) => s.id === selectedStepId)} steps={steps} plan={plan} onSave={handleSaveChrome} />
-        )}
-        {activePanel === 'ai' && (
-          <div className="flex flex-col h-full">
-            <div className="space-y-3 flex-1 overflow-y-auto mb-4">
-              {aiMessages.map((m, i) => (
-                <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                  <div className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${m.role === 'user' ? 'bg-primary text-background rounded-br-sm' : 'bg-surface/[0.03] border border-surface/10 text-surface rounded-bl-sm'}`}>
-                    {m.text}
-                  </div>
-                </div>
-              ))}
-              {aiGenerating && (
-                <div className="flex justify-start">
-                  <div className="bg-surface/[0.03] border border-surface/10 rounded-2xl rounded-bl-sm px-4 py-2.5 text-sm text-surface/60 inline-flex items-center gap-2">
-                    <span className="w-3.5 h-3.5 border-2 border-surface/20 border-t-accent rounded-full animate-spin" /> Modification en cours…
-                  </div>
-                </div>
-              )}
-            </div>
-            <form onSubmit={handleAiSend} className="flex items-center gap-2">
-              <input
-                value={aiInput}
-                onChange={(e) => setAiInput(e.target.value)}
-                placeholder="Ex : ajoute une section témoignages"
-                disabled={aiGenerating}
-                className="flex-1 bg-primary/5 border border-surface/10 rounded-full px-4 py-2.5 text-sm focus:outline-none focus:border-accent transition-colors text-surface disabled:opacity-50"
-              />
-              <button
-                type="submit"
-                disabled={!aiInput.trim() || aiGenerating}
-                className="magnetic-btn shrink-0 flex items-center justify-center gap-2 gradient-accent text-background w-10 h-10 rounded-full disabled:opacity-50"
-                aria-label="Envoyer"
-              >
-                <Wand2 className="w-4 h-4" />
-              </button>
-            </form>
+        </div>
+      )}
+
+      {showAiAssistant && (
+        <div className="mb-6 max-w-2xl bg-background border border-surface/10 rounded-[2rem] p-4 md:p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <Sparkles className="w-4 h-4 text-accent" />
+            <h3 className="font-sans font-semibold text-surface text-sm">Assistant IA</h3>
           </div>
-        )}
-      </Drawer>
+          <div className="space-y-3 max-h-[320px] overflow-y-auto mb-4">
+            {aiMessages.map((m, i) => (
+              <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                <div className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${m.role === 'user' ? 'bg-primary text-background rounded-br-sm' : 'bg-surface/[0.03] border border-surface/10 text-surface rounded-bl-sm'}`}>
+                  {m.text}
+                </div>
+              </div>
+            ))}
+            {aiGenerating && (
+              <div className="flex justify-start">
+                <div className="bg-surface/[0.03] border border-surface/10 rounded-2xl rounded-bl-sm px-4 py-2.5 text-sm text-surface/60 inline-flex items-center gap-2">
+                  <span className="w-3.5 h-3.5 border-2 border-surface/20 border-t-accent rounded-full animate-spin" /> Modification en cours…
+                </div>
+              </div>
+            )}
+          </div>
+          <form onSubmit={handleAiSend} className="flex items-center gap-2">
+            <input
+              value={aiInput}
+              onChange={(e) => setAiInput(e.target.value)}
+              placeholder="Ex : ajoute une section témoignages"
+              disabled={aiGenerating}
+              className="flex-1 bg-primary/5 border border-surface/10 rounded-full px-4 py-2.5 text-sm focus:outline-none focus:border-accent transition-colors text-surface disabled:opacity-50"
+            />
+            <button
+              type="submit"
+              disabled={!aiInput.trim() || aiGenerating}
+              className="magnetic-btn shrink-0 flex items-center justify-center gap-2 gradient-accent text-background w-10 h-10 rounded-full disabled:opacity-50"
+              aria-label="Envoyer"
+            >
+              <Wand2 className="w-4 h-4" />
+            </button>
+          </form>
+        </div>
+      )}
 
       <DndContext sensors={stepSensors} collisionDetection={closestCenter} onDragEnd={handleStepDragEnd}>
         <SortableContext items={steps.map((s) => s.id)} strategy={horizontalListSortingStrategy}>
@@ -981,8 +978,6 @@ export default function FunnelEditorPage() {
             </div>
           )}
         </div>
-      </div>
-
       </div>
 
       {selection && (

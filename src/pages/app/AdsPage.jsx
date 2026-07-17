@@ -11,8 +11,6 @@ import {
   fetchMetaAdCampaigns, fetchMetaAdsSummary,
 } from '../../lib/metaAdsApi';
 import { useConfirm } from '../../components/app/ConfirmDialog';
-import PageHeader from '../../components/ui/PageHeader';
-import KpiCard from '../../components/ui/KpiCard';
 
 // Le code est prêt (OAuth, tableau de bord, coût par lead) mais attend les
 // identifiants de l'App Facebook côté serveur — passer à false dès qu'ils
@@ -38,6 +36,18 @@ function Spinner() {
   return (
     <div className="flex justify-center py-16">
       <div className="w-6 h-6 border-2 border-surface/20 border-t-accent rounded-full animate-spin" />
+    </div>
+  );
+}
+
+function KpiCard({ icon: Icon, label, value }) {
+  return (
+    <div className="bg-background border border-surface/10 rounded-xl p-4">
+      <div className="flex items-center gap-2 text-surface/40 mb-2">
+        <Icon className="w-4 h-4" />
+        <p className="text-[10px] uppercase tracking-wider font-mono">{label}</p>
+      </div>
+      <p className="text-2xl font-sans font-bold text-surface">{value}</p>
     </div>
   );
 }
@@ -221,11 +231,13 @@ export default function AdsPage() {
 
   return (
     <div>
-      <PageHeader
-        title="Publicité"
-        description="Connecte ton compte Meta Ads pour suivre tes dépenses publicitaires et les croiser avec les leads captés sur tes tunnels Vendeko."
-        className="mb-8"
-      />
+      <div className="flex items-center gap-2 mb-2">
+        <Megaphone className="w-5 h-5 text-accent" />
+        <h1 className="text-2xl font-sans font-bold text-surface">Publicité</h1>
+      </div>
+      <p className="text-surface/60 mb-8 max-w-2xl">
+        Connecte ton compte Meta Ads pour suivre tes dépenses publicitaires et les croiser avec les leads captés sur tes tunnels Vendeko.
+      </p>
 
       {justConnected && <p className="text-sm text-accent mb-6">Compte Meta Ads connecté avec succès.</p>}
       {oauthError && <p className="text-sm text-red-500 mb-6">La connexion à Facebook a échoué, réessaie.</p>}
