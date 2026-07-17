@@ -41,7 +41,7 @@ export default function FaqBlock({ content, editMode, selectedElement, onSelectE
     return (
       <details
         open={isOpen}
-        className={cx('group hover-card bg-background border border-surface/10 hover:border-accent/30 rounded-2xl p-5 [&_summary::-webkit-details-marker]:hidden', itemProps.className)}
+        className={cx('group hover-card bg-block-card border border-accent/20 hover:border-accent/40 rounded-2xl p-5 [&_summary::-webkit-details-marker]:hidden', itemProps.className)}
         style={itemProps.style}
         onClick={itemProps.onClick}
         onToggle={(e) => {
@@ -50,7 +50,7 @@ export default function FaqBlock({ content, editMode, selectedElement, onSelectE
         }}
       >
         <summary
-          className="flex items-center justify-between cursor-pointer font-sans font-medium text-surface list-none"
+          className="flex items-center justify-between cursor-pointer font-sans font-medium text-background list-none"
           onClick={(e) => {
             // <details> bascule "open" tout seul avant qu'on l'intercepte ;
             // on gère nous-mêmes la fermeture des autres pour rester exclusif.
@@ -67,10 +67,10 @@ export default function FaqBlock({ content, editMode, selectedElement, onSelectE
           >
             {item.question}
           </span>
-          <ChevronDown className="w-4 h-4 text-surface/50 group-open:rotate-180 transition-transform shrink-0" />
+          <ChevronDown className="w-4 h-4 text-background/50 group-open:rotate-180 transition-transform shrink-0" />
         </summary>
         <p
-          className="text-sm text-surface/60 mt-3 outline-none"
+          className="text-sm text-background/70 mt-3 outline-none"
           contentEditable={editMode}
           suppressContentEditableWarning
           onClick={(e) => editMode && e.stopPropagation()}

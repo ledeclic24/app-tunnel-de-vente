@@ -44,7 +44,7 @@ export default function CountdownBlock({ content, editMode, selectedElement, onS
         </h3>
       )}
       {remaining.expired ? (
-        <p className="font-mono text-sm uppercase tracking-wider text-surface/50">Offre expirée</p>
+        <p className={cx('font-mono text-sm uppercase tracking-wider', bg.bodyClassName)}>Offre expirée</p>
       ) : (
         <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 md:gap-4">
           {units.map((u) => (

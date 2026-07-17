@@ -57,13 +57,13 @@ export default function ProcessBlock({ content, editMode, selectedElement, onSel
     }
     return (
       <div
-        className={cx('hover-card bg-background border border-accent/20 rounded-xl p-6 shadow-sm', cardProps.className)}
+        className={cx('hover-card bg-block-card border border-accent/20 rounded-xl p-6 shadow-sm', cardProps.className)}
         style={cardProps.style}
         onClick={cardProps.onClick}
       >
         <span className={badgeClass}>{i + 1}</span>
-        <h3 className="font-sans font-semibold text-surface mb-2 outline-none" {...itemField(i, 'title')}>{item.title}</h3>
-        <p className="text-sm text-surface/60 outline-none" {...itemField(i, 'description', { multiline: true })}>{item.description}</p>
+        <h3 className="font-sans font-semibold text-background mb-2 outline-none" {...itemField(i, 'title')}>{item.title}</h3>
+        <p className="text-sm text-background/70 outline-none" {...itemField(i, 'description', { multiline: true })}>{item.description}</p>
       </div>
     );
   };

@@ -41,7 +41,7 @@ export default function BonusStackBlock({ content, editMode, selectedElement, on
     const cardProps = editable(`bonus-${i}`, 'card', `Bonus ${i + 1}`);
     return (
       <div
-        className={cx('group hover-card bg-background border border-accent/20 rounded-xl p-6 flex flex-col md:flex-row gap-6 items-center', cardProps.className)}
+        className={cx('group hover-card bg-block-card border border-accent/20 rounded-xl p-6 flex flex-col md:flex-row gap-6 items-center', cardProps.className)}
         style={cardProps.style}
         onClick={cardProps.onClick}
       >
@@ -58,8 +58,8 @@ export default function BonusStackBlock({ content, editMode, selectedElement, on
         )}
         <div>
           <span className="text-xs font-bold uppercase tracking-wider text-accent">Bonus {i + 1}</span>
-          <h3 className="font-sans font-bold text-lg mt-1 mb-1 outline-none text-surface" {...itemField(i, 'title')}>{item.title}</h3>
-          <p className="text-sm text-surface/60 outline-none" {...itemField(i, 'description', { multiline: true })}>{item.description}</p>
+          <h3 className="font-sans font-bold text-lg mt-1 mb-1 outline-none text-background" {...itemField(i, 'title')}>{item.title}</h3>
+          <p className="text-sm text-background/70 outline-none" {...itemField(i, 'description', { multiline: true })}>{item.description}</p>
         </div>
       </div>
     );

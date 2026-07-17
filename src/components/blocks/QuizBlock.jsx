@@ -41,8 +41,8 @@ export default function QuizBlock({ content, onAdvance, editMode, selectedElemen
           {heading}
         </h2>
       )}
-      <div className="bg-background border border-surface/10 rounded-[2rem] p-8 shadow-sm">
-        <div className="h-1.5 bg-surface/10 rounded-full mb-8 overflow-hidden">
+      <div className="bg-block-card border border-accent/20 rounded-[2rem] p-8 shadow-sm">
+        <div className="h-1.5 bg-background/10 rounded-full mb-8 overflow-hidden">
           <div
             className="h-full bg-accent transition-all duration-500 rounded-full"
             style={{ width: `${isDone ? 100 : progress}%` }}
@@ -55,7 +55,7 @@ export default function QuizBlock({ content, onAdvance, editMode, selectedElemen
               Question {step + 1} / {questions.length}
             </p>
             <h3
-              className={cx('text-xl font-sans font-semibold text-surface mb-6 outline-none', questionProps.className)}
+              className={cx('text-xl font-sans font-semibold text-background mb-6 outline-none', questionProps.className)}
               style={questionProps.style}
               onClick={questionProps.onClick}
               contentEditable={editMode}
@@ -70,7 +70,7 @@ export default function QuizBlock({ content, onAdvance, editMode, selectedElemen
                 <button
                   key={i}
                   onClick={editMode ? (e) => e.stopPropagation() : handleSelect}
-                  className="hover-lift w-full text-left px-5 py-3.5 rounded-xl border border-surface/10 bg-primary/5 hover:border-accent hover:bg-accent/5 transition-colors duration-200 text-surface outline-none"
+                  className="hover-lift w-full text-left px-5 py-3.5 rounded-xl border border-background/20 bg-background/5 hover:border-accent hover:bg-accent/10 transition-colors duration-200 text-background outline-none"
                   contentEditable={editMode}
                   suppressContentEditableWarning
                   onBlur={(e) => editMode && updateOption(i, e.currentTarget.textContent ?? '')}
@@ -83,7 +83,7 @@ export default function QuizBlock({ content, onAdvance, editMode, selectedElemen
           </div>
         ) : (
           <div className="text-center py-4">
-            <p className="text-surface/70 mb-6">Merci d'avoir répondu à toutes les questions !</p>
+            <p className="text-background/70 mb-6">Merci d'avoir répondu à toutes les questions !</p>
             <button
               onClick={editMode ? buttonProps.onClick : onAdvance}
               style={buttonProps.style}

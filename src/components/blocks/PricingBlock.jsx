@@ -18,11 +18,11 @@ function ComparisonRows({ rows, planIndex, highlight }) {
         return (
           <div key={j} className="flex items-center gap-2 text-sm">
             {included ? (
-              <Check className={`w-4 h-4 shrink-0 ${highlight ? 'text-accent' : 'text-surface/40'}`} />
+              <Check className={`w-4 h-4 shrink-0 ${highlight ? 'text-accent' : 'text-accent/70'}`} />
             ) : (
-              <X className="w-4 h-4 shrink-0 text-surface/30" />
+              <X className="w-4 h-4 shrink-0 text-background/30" />
             )}
-            <span className={cx(!included && 'line-through opacity-50', highlight ? 'text-background/90' : 'text-surface/80')}>
+            <span className={cx(!included && 'line-through opacity-50', highlight ? 'text-background/90' : 'text-background/70')}>
               {row.label}
             </span>
           </div>
@@ -78,7 +78,7 @@ export default function PricingBlock({ content, onAdvance, editMode, selectedEle
     return (
       <div
         className={cx(
-          `hover-card relative rounded-xl p-8 ${plan.highlight ? 'neon-border bg-primary text-background shadow-2xl' : 'bg-background text-surface border border-accent/20 shadow-sm'}`,
+          `hover-card relative rounded-xl p-8 ${plan.highlight ? 'neon-border bg-primary text-background shadow-2xl' : 'bg-block-card text-background border border-accent/20 shadow-sm'}`,
           cardProps.className
         )}
         style={cardProps.style}
@@ -100,13 +100,13 @@ export default function PricingBlock({ content, onAdvance, editMode, selectedEle
         )}
         <h3 className="font-sans text-xl mb-2 outline-none" {...singleLine((v) => updatePlan(i, { name: v }))}>{plan.name}</h3>
         {plan.originalPrice && (
-          <span className={cx('block text-sm line-through mb-0.5', plan.highlight ? 'text-background/50' : 'text-surface/40')} {...singleLine((v) => updatePlan(i, { originalPrice: v }))}>
+          <span className="block text-sm line-through mb-0.5 text-background/50" {...singleLine((v) => updatePlan(i, { originalPrice: v }))}>
             {plan.originalPrice}
           </span>
         )}
         <div className="flex items-baseline gap-1 mb-6">
           <span className="text-4xl font-bold outline-none" {...singleLine((v) => updatePlan(i, { price: v }))}>{plan.price}</span>
-          <span className={cx(plan.highlight ? 'text-background/60 text-sm' : 'text-surface/60 text-sm', 'outline-none')} {...singleLine((v) => updatePlan(i, { period: v }))}>{plan.period}</span>
+          <span className="text-background/60 text-sm outline-none" {...singleLine((v) => updatePlan(i, { period: v }))}>{plan.period}</span>
         </div>
         {(plan.paymentLinks || []).length > 0 ? (
           <div className="space-y-2 mb-6">
@@ -119,7 +119,7 @@ export default function PricingBlock({ content, onAdvance, editMode, selectedEle
                 onClick={editMode ? (e) => { e.preventDefault(); buttonProps.onClick?.(e); } : undefined}
                 style={j === 0 ? buttonProps.style : undefined}
                 className={cx(
-                  `magnetic-btn block w-full text-center py-3 rounded-full font-semibold ${j === 0 ? (plan.highlight ? 'bg-accent text-background' : 'bg-primary text-background') : `border ${plan.highlight ? 'border-background/30 text-background' : 'border-surface/20 text-surface'}`}`,
+                  `magnetic-btn block w-full text-center py-3 rounded-full font-semibold ${j === 0 ? (plan.highlight ? 'bg-accent text-background' : 'bg-primary text-background') : 'border border-background/30 text-background'}`,
                   j === 0 ? buttonProps.className : undefined,
                 )}
               >
@@ -145,8 +145,8 @@ export default function PricingBlock({ content, onAdvance, editMode, selectedEle
           <div className="space-y-2">
             {(plan.features || []).map((feat, j) => (
               <div key={j} className="flex items-center gap-2 text-sm">
-                <Check className={`w-4 h-4 shrink-0 ${plan.highlight ? 'text-accent' : 'text-surface/40'}`} />
-                <span className={cx(plan.highlight ? 'text-background/90' : 'text-surface/80', 'outline-none')} {...singleLine((v) => updateFeature(i, j, v))}>{feat}</span>
+                <Check className={`w-4 h-4 shrink-0 ${plan.highlight ? 'text-accent' : 'text-accent/70'}`} />
+                <span className={cx(plan.highlight ? 'text-background/90' : 'text-background/70', 'outline-none')} {...singleLine((v) => updateFeature(i, j, v))}>{feat}</span>
               </div>
             ))}
           </div>

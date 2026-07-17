@@ -61,7 +61,7 @@ export default function VideoBlock({ content, editMode, selectedElement, onSelec
           // eslint-disable-next-line jsx-a11y/media-has-caption
           <video src={videoUrl} controls className="w-full h-full" />
         ) : (
-          <div className="flex flex-col items-center gap-2 text-surface/30 py-16">
+          <div className={cx('flex flex-col items-center gap-2 py-16', bg.bodyClassName)}>
             <Video className="w-8 h-8" />
             {editMode && <span className="text-sm">Ajoute un lien de vidéo dans les réglages</span>}
           </div>

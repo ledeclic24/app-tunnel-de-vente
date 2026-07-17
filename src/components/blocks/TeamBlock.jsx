@@ -41,7 +41,7 @@ export default function TeamBlock({ content, editMode, selectedElement, onSelect
     const cardProps = editable(`team-${i}`, 'card', `Membre ${i + 1}`);
     return (
       <div
-        className={cx('group hover-card bg-background border border-accent/20 rounded-xl p-6 text-center', cardProps.className)}
+        className={cx('group hover-card bg-block-card border border-accent/20 rounded-xl p-6 text-center', cardProps.className)}
         style={cardProps.style}
         onClick={cardProps.onClick}
       >
@@ -53,9 +53,9 @@ export default function TeamBlock({ content, editMode, selectedElement, onSelect
           className="w-20 h-20 rounded-full object-cover mx-auto mb-4 bg-primary/10 transition-transform duration-500 group-hover:scale-110"
           placeholder={<div className="w-20 h-20 rounded-full bg-primary/10 mx-auto mb-4" />}
         />
-        <h3 className="font-sans font-semibold text-surface outline-none" {...itemField(i, 'name')}>{item.name}</h3>
+        <h3 className="font-sans font-semibold text-background outline-none" {...itemField(i, 'name')}>{item.name}</h3>
         {item.role && <p className="text-xs text-accent font-medium mt-0.5 outline-none" {...itemField(i, 'role')}>{item.role}</p>}
-        {item.bio && <p className="text-sm text-surface/60 mt-2 outline-none" {...itemField(i, 'bio', { multiline: true })}>{item.bio}</p>}
+        {item.bio && <p className="text-sm text-background/70 mt-2 outline-none" {...itemField(i, 'bio', { multiline: true })}>{item.bio}</p>}
       </div>
     );
   };

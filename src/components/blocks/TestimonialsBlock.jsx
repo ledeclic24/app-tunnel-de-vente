@@ -44,7 +44,7 @@ export default function TestimonialsBlock({ content, editMode, selectedElement, 
     return (
       <div
         className={cx(
-          'group hover-card bg-background border border-accent/20 rounded-xl p-6 shadow-sm overflow-hidden',
+          'group hover-card bg-block-card border border-accent/20 rounded-xl p-6 shadow-sm overflow-hidden',
           isCarousel && 'shrink-0 w-[85%] sm:w-[45%] snap-center',
           cardProps.className,
         )}
@@ -62,9 +62,9 @@ export default function TestimonialsBlock({ content, editMode, selectedElement, 
         ) : (
           <>
             <Quote className="w-6 h-6 text-accent mb-3" />
-            <p className="text-surface/80 mb-4 outline-none" {...itemField(i, 'quote', item.quote)}>{item.quote}</p>
-            <p className="text-sm font-semibold text-surface outline-none" {...itemField(i, 'name', item.name)}>{item.name}</p>
-            {item.role && <p className="text-xs text-surface/50 outline-none" {...itemField(i, 'role', item.role)}>{item.role}</p>}
+            <p className="text-background/80 mb-4 outline-none" {...itemField(i, 'quote', item.quote)}>{item.quote}</p>
+            <p className="text-sm font-semibold text-background outline-none" {...itemField(i, 'name', item.name)}>{item.name}</p>
+            {item.role && <p className="text-xs text-background/50 outline-none" {...itemField(i, 'role', item.role)}>{item.role}</p>}
           </>
         )}
       </div>

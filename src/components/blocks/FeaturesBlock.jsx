@@ -114,7 +114,7 @@ export default function FeaturesBlock({ content, editMode, selectedElement, onSe
 
     return (
       <div
-        className={cx('hover-card bg-background border border-accent/20 rounded-xl p-6 shadow-sm', cardProps.className)}
+        className={cx('hover-card bg-block-card border border-accent/20 rounded-xl p-6 shadow-sm', cardProps.className)}
         style={cardProps.style}
         onClick={cardProps.onClick}
       >
@@ -122,7 +122,7 @@ export default function FeaturesBlock({ content, editMode, selectedElement, onSe
           <Check className="w-4 h-4" />
         </div>
         <h3
-          className="font-sans font-semibold text-surface mb-2 outline-none"
+          className="font-sans font-semibold text-background mb-2 outline-none"
           contentEditable={editMode}
           suppressContentEditableWarning
           onClick={(e) => editMode && e.stopPropagation()}
@@ -132,7 +132,7 @@ export default function FeaturesBlock({ content, editMode, selectedElement, onSe
           {item.title}
         </h3>
         <p
-          className="text-sm text-surface/60 outline-none"
+          className="text-sm text-background/70 outline-none"
           contentEditable={editMode}
           suppressContentEditableWarning
           onClick={(e) => editMode && e.stopPropagation()}

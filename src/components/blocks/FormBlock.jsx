@@ -42,17 +42,17 @@ export default function FormBlock({ content, onSubmitLead, onAdvance, editMode, 
 
   return (
     <section className={cx('px-6 py-16 md:px-16 md:py-24 max-w-lg mx-auto', bg.sectionClassName)}>
-      <div className="bg-background border border-accent/20 rounded-xl p-8 shadow-sm text-center">
+      <div className="bg-block-card border border-accent/20 rounded-xl p-8 shadow-sm text-center">
         {submitted ? (
           <div className="flex flex-col items-center gap-3 py-4">
             <CheckCircle2 className="w-10 h-10 text-accent" />
-            <p className="text-surface font-medium">{successMessage || 'Merci !'}</p>
+            <p className="text-background font-medium">{successMessage || 'Merci !'}</p>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
             {headline && (
               <h3
-                className={cx('font-sans font-bold text-xl text-surface mb-2 outline-none', headlineProps.className)}
+                className={cx('font-sans font-bold text-xl text-background mb-2 outline-none', headlineProps.className)}
                 style={headlineProps.style}
                 onClick={headlineProps.onClick}
                 {...editableText('headline')}
@@ -65,7 +65,7 @@ export default function FormBlock({ content, onSubmitLead, onAdvance, editMode, 
               placeholder="Prénom"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full bg-primary/5 border border-surface/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-accent transition-colors text-surface"
+              className="w-full bg-background/10 border border-background/20 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-accent transition-colors text-background placeholder:text-background/40"
             />
             <input
               type="email"
@@ -73,7 +73,7 @@ export default function FormBlock({ content, onSubmitLead, onAdvance, editMode, 
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full bg-primary/5 border border-surface/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-accent transition-colors text-surface"
+              className="w-full bg-background/10 border border-background/20 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-accent transition-colors text-background placeholder:text-background/40"
             />
             {error && <p className="text-sm text-red-500">{error}</p>}
             <button
