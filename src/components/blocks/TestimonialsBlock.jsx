@@ -81,6 +81,7 @@ export default function TestimonialsBlock({ content, editMode, selectedElement, 
 
   return (
     <section className={cx('px-6 py-16 md:px-16 md:py-24 max-w-5xl mx-auto', bg.sectionClassName)}>
+      <div className="gradient-divider w-32 mx-auto mb-10" />
       {heading && (
         <h2
           className={cx('font-sans font-bold text-2xl md:text-3xl text-center mb-10 outline-none', bg.headingClassName, headingProps.className)}

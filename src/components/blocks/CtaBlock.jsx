@@ -1,6 +1,6 @@
 import React from 'react';
 import { ArrowRight } from 'lucide-react';
-import { getButtonStyle, getEditableProps, getContentEditableProps, getSectionBackground, cx } from '../../lib/blockStyle';
+import { getButtonStyle, getEditableProps, getContentEditableProps, getSectionBackground, renderRichText, cx } from '../../lib/blockStyle';
 import SlotList from './SlotList';
 
 function buildDefaultSlots() {
@@ -33,7 +33,7 @@ export default function CtaBlock({ content, onAdvance, editMode, selectedElement
         onClick={headingProps.onClick}
         {...editableText('heading')}
       >
-        {heading}
+        {editMode ? heading : renderRichText(heading)}
       </h2>
     ) : null;
     if (field === 'button') return buttonText ? (

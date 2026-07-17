@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { ArrowRight, ImagePlus, Upload, Image as LibraryIcon, Wand2, Sparkles } from 'lucide-react';
-import { getButtonStyle, getEditableProps, getContentEditableProps, cx } from '../../lib/blockStyle';
+import { getButtonStyle, getEditableProps, getContentEditableProps, renderRichText, cx } from '../../lib/blockStyle';
 import { uploadImage } from '../../lib/storage';
 import SlotList from './SlotList';
 import ImagePickerModal from '../app/ImagePickerModal';
@@ -24,7 +24,7 @@ function HeroVisualPlaceholder({ variant }) {
     <div className="absolute inset-0 flex items-center justify-center overflow-hidden pointer-events-none">
       <div className="ambient-pulse absolute w-56 h-56 rounded-full bg-accent/20 blur-3xl" />
       <div className="ambient-pulse absolute w-36 h-36 rounded-full bg-accent/30 blur-2xl" style={{ animationDelay: '1.5s' }} />
-      <div className="relative w-28 h-28 rounded-3xl border border-accent/30 bg-background/5 backdrop-blur-sm flex items-center justify-center">
+      <div className="neon-border relative w-28 h-28 rounded-3xl bg-background/5 backdrop-blur-sm flex items-center justify-center">
         <Sparkles className="w-9 h-9 text-accent" />
       </div>
     </div>
@@ -201,7 +201,7 @@ export default function HeroBlock({ content, onAdvance, editMode, selectedElemen
         onClick={headingProps.onClick}
         {...editableText('heading')}
       >
-        {heading}
+        {editMode ? heading : renderRichText(heading)}
       </h1>
     );
     if (field === 'subheading') return subheading ? (
@@ -211,7 +211,7 @@ export default function HeroBlock({ content, onAdvance, editMode, selectedElemen
         onClick={subheadingProps.onClick}
         {...editableText('subheading', true)}
       >
-        {subheading}
+        {editMode ? subheading : renderRichText(subheading)}
       </p>
     ) : null;
     if (field === 'cta') return cta;
@@ -241,7 +241,7 @@ export default function HeroBlock({ content, onAdvance, editMode, selectedElemen
 
   if (isSplit) {
     return (
-      <section className="rounded-[2rem] bg-primary text-background overflow-hidden">
+      <section className="ambient-glow relative rounded-[2rem] bg-primary text-background overflow-hidden">
         <div className="grid md:grid-cols-2 items-center">
           <div className="relative group/img aspect-[4/3] md:aspect-auto md:h-full min-h-[280px] bg-primary/60">
             {imageUrl ? (
@@ -282,7 +282,7 @@ export default function HeroBlock({ content, onAdvance, editMode, selectedElemen
   }
 
   return (
-    <section className="relative overflow-hidden rounded-[2rem] bg-primary text-background">
+    <section className="ambient-glow relative overflow-hidden rounded-[2rem] bg-primary text-background">
       {imageUrl ? (
         <div className="absolute inset-0 group/img">
           <img

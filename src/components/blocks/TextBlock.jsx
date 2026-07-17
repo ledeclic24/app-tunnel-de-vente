@@ -1,5 +1,5 @@
 import React from 'react';
-import { getEditableProps, getContentEditableProps, getSectionBackground, cx } from '../../lib/blockStyle';
+import { getEditableProps, getContentEditableProps, getSectionBackground, renderRichText, cx } from '../../lib/blockStyle';
 import SlotList from './SlotList';
 
 const DEFAULT_SLOTS = [
@@ -38,7 +38,7 @@ export default function TextBlock({ content, editMode, selectedElement, onSelect
           onClick={bodyProps.onClick}
           {...editableText('body', true)}
         >
-          {body}
+          {editMode ? body : renderRichText(body)}
         </p>
       ) : null;
     }

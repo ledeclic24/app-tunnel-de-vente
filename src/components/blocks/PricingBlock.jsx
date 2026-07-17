@@ -78,7 +78,7 @@ export default function PricingBlock({ content, onAdvance, editMode, selectedEle
     return (
       <div
         className={cx(
-          `hover-card relative rounded-xl p-8 ${plan.highlight ? 'bg-primary text-background border-2 border-accent shadow-2xl' : 'bg-background text-surface border border-accent/20 shadow-sm'}`,
+          `hover-card relative rounded-xl p-8 ${plan.highlight ? 'neon-border bg-primary text-background shadow-2xl' : 'bg-background text-surface border border-accent/20 shadow-sm'}`,
           cardProps.className
         )}
         style={cardProps.style}
@@ -164,6 +164,7 @@ export default function PricingBlock({ content, onAdvance, editMode, selectedEle
 
   return (
     <section className={cx('px-6 py-16 md:px-16 md:py-24 max-w-5xl mx-auto', bg.sectionClassName)}>
+      <div className="gradient-divider w-32 mx-auto mb-10" />
       {heading && (
         <h2
           className={cx('font-sans font-bold text-2xl md:text-3xl text-center mb-10 outline-none', bg.headingClassName, headingProps.className)}

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Check } from 'lucide-react';
+import { Check, X } from 'lucide-react';
 import { getEditableProps, getContentEditableProps, getSectionBackground, cx } from '../../lib/blockStyle';
 import SlotList, { SlotReadOnly } from './SlotList';
 import EditableItemImage from './EditableItemImage';
@@ -26,6 +26,7 @@ function isSlotsValid(slots, itemCount) {
 export default function FeaturesBlock({ content, editMode, selectedElement, onSelectElement, onContentChange, userId, defaultBg }) {
   const { heading, items = [], layout, slots } = content;
   const isRows = layout === 'rows';
+  const isCompare = layout === 'compare';
   const editable = (elementKey, kind, label) =>
     getEditableProps({ elementKey, kind, styles: content.styles, editMode, selectedElement, onSelectElement, label });
   const bg = getSectionBackground(content.styles, defaultBg || 'white');
@@ -85,6 +86,32 @@ export default function FeaturesBlock({ content, editMode, selectedElement, onSe
       );
     }
 
+    if (isCompare) {
+      const included = item.included !== false;
+      return (
+        <div
+          className={cx('flex items-start gap-3', cardProps.className)}
+          style={cardProps.style}
+          onClick={cardProps.onClick}
+        >
+          {included ? (
+            <Check className="w-5 h-5 shrink-0 mt-0.5 text-accent" />
+          ) : (
+            <X className="w-5 h-5 shrink-0 mt-0.5 text-surface/40" />
+          )}
+          <p
+            className={cx('outline-none', bg.bodyClassName, !included && 'opacity-70')}
+            contentEditable={editMode}
+            suppressContentEditableWarning
+            onClick={(e) => editMode && e.stopPropagation()}
+            onBlur={(e) => editMode && updateItem(i, { description: e.currentTarget.textContent ?? '' })}
+          >
+            {item.description}
+          </p>
+        </div>
+      );
+    }
+
     return (
       <div
         className={cx('hover-card bg-background border border-accent/20 rounded-xl p-6 shadow-sm', cardProps.className)}
@@ -124,6 +151,16 @@ export default function FeaturesBlock({ content, editMode, selectedElement, onSe
 
   const effectiveSlots = slots && isSlotsValid(slots, items.length) ? slots : buildDefaultSlots(items.length);
 
+  // Layout "compare" ("qui c'est pour / qui ce n'est pas pour") : un seul
+  // bloc à deux colonnes plutôt que deux blocs "features" séquentiels — les
+  // extras libres (kind !== 'field', sans propriété "included") restent
+  // par défaut dans la colonne "c'est pour toi".
+  const isExcludedSlot = (slot) => {
+    if (slot.kind !== 'field') return false;
+    const idx = Number(/^item-(\d+)$/.exec(slot.field)?.[1]);
+    return items[idx]?.included === false;
+  };
+
   return (
     <section className={cx('px-6 py-16 md:px-16 md:py-24 max-w-5xl mx-auto', bg.sectionClassName)}>
       {heading && (
@@ -148,6 +185,17 @@ export default function FeaturesBlock({ content, editMode, selectedElement, onSe
           selectedElement={selectedElement}
           onSelectElement={onSelectElement}
         />
+      ) : isCompare ? (
+        <div className="grid md:grid-cols-2 gap-x-10 gap-y-8">
+          <div className="stagger-children space-y-4">
+            <h3 className={cx('font-sans font-semibold text-accent mb-1', bg.headingClassName)}>C&apos;est pour toi si...</h3>
+            {effectiveSlots.filter((slot) => !isExcludedSlot(slot)).map((slot) => <SlotReadOnly key={slot.id} slot={slot} renderField={renderField} bg={bg} />)}
+          </div>
+          <div className="stagger-children space-y-4">
+            <h3 className={cx('font-sans font-semibold opacity-70 mb-1', bg.headingClassName)}>Ce n&apos;est PAS pour toi si...</h3>
+            {effectiveSlots.filter(isExcludedSlot).map((slot) => <SlotReadOnly key={slot.id} slot={slot} renderField={renderField} bg={bg} />)}
+          </div>
+        </div>
       ) : (
         <div className={cx('stagger-children', isRows ? 'space-y-10 md:space-y-14' : 'grid grid-cols-1 md:grid-cols-3 gap-6')}>
           {effectiveSlots.map((slot) => <SlotReadOnly key={slot.id} slot={slot} renderField={renderField} bg={bg} />)}

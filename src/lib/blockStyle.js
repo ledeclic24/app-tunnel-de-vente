@@ -1,5 +1,21 @@
+import React from 'react';
+
 export function cx(...classes) {
   return classes.filter(Boolean).join(' ');
+}
+
+// Emphase inline {{mot}} → accent + semi-gras, pour varier le traitement
+// typographique au sein d'une même phrase (cahier des charges "dark
+// premium" — pas seulement 1-3 mots systématiquement dans la même couleur
+// plate). Uniquement à l'affichage publié : en édition, le champ
+// contentEditable garde le texte brut, marqueurs {{...}} visibles, pour
+// rester éditable comme n'importe quel autre champ texte.
+export function renderRichText(text) {
+  if (!text || typeof text !== 'string' || !text.includes('{{')) return text;
+  const parts = text.split(/\{\{(.+?)\}\}/g);
+  return parts.map((part, i) =>
+    i % 2 === 1 ? React.createElement('span', { key: i, className: 'text-accent font-semibold' }, part) : part,
+  );
 }
 
 export const SHADOW_OPTIONS = [
@@ -150,8 +166,13 @@ export const SECTION_BACKGROUND_OPTIONS = [
 // Le 3e ton "accent" (teinte de la couleur d'accent, jamais calculé par
 // défaut — uniquement une surcharge manuelle ou pilotée par l'IA) sert aux
 // encadrés de mise en avant (garantie, mentorat...) repérés dans l'étude
-// des tunnels de référence, sans casser l'alternance stricte primary/white
-// déjà testée sur les tunnels publiés existants.
+// des tunnels de référence.
+//
+// "primary-alt" (cahier des charges "dark premium" — jamais de fond blanc,
+// aucune section ne doit revenir à un fond clair) : une variante du fond
+// principal légèrement plus claire, calculée via color-mix() plutôt qu'une
+// couleur de marque distincte, pour créer du rythme entre sections tout en
+// restant toujours sombre. Remplace l'ancienne alternance primary/white.
 export function getSectionBackground(styles, defaultBg) {
   const sectionStyle = styles?.section || {};
   if (sectionStyle.bgColor) {
@@ -164,6 +185,14 @@ export function getSectionBackground(styles, defaultBg) {
       headingClassName: 'text-surface',
       bodyClassName: 'text-surface/70',
       isDark: false,
+    };
+  }
+  if (token === 'primary-alt') {
+    return {
+      sectionClassName: 'bg-[color-mix(in_srgb,rgb(var(--color-primary))_82%,white)] text-background',
+      headingClassName: 'text-background',
+      bodyClassName: 'text-background/70',
+      isDark: true,
     };
   }
   const isDark = token === 'primary';

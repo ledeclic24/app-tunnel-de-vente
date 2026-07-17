@@ -881,7 +881,7 @@ export default function FunnelEditorPage() {
                 <SortableBlockCard
                   key={block.id}
                   block={block}
-                  defaultBg={blockIndex % 2 === 0 ? 'primary' : 'white'}
+                  defaultBg={blockIndex % 2 === 0 ? 'primary' : 'primary-alt'}
                   siblingSteps={steps}
                   onDelete={() => handleDeleteBlock(block)}
                   onDuplicate={() => handleDuplicateBlock(block)}
