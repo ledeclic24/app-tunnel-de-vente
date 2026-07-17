@@ -428,8 +428,10 @@ export default function EbooksPage() {
       )}
 
       <div className="space-y-3">
-        {ebooks?.map((ebook) => (
-          <div key={ebook.id} className={`flex items-center justify-between gap-2 bg-background border rounded-2xl px-5 py-4 transition-colors ${selectedIds.has(ebook.id) ? 'border-accent' : 'border-surface/10'}`}>
+        {ebooks?.map((ebook, i) => (
+          // Alternance légère (teinte primary) entre les lignes, même
+          // principe que le tableau des leads, pour rythmer la liste.
+          <div key={ebook.id} className={`flex items-center justify-between gap-2 border rounded-2xl px-5 py-4 transition-colors ${i % 2 === 1 ? 'bg-primary/[0.03]' : 'bg-background'} ${selectedIds.has(ebook.id) ? 'border-accent' : 'border-surface/10'}`}>
             <input
               type="checkbox"
               checked={selectedIds.has(ebook.id)}

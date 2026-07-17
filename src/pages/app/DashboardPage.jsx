@@ -6,10 +6,20 @@ import { fetchUserFunnels, deleteFunnel, fetchLeadsForUser, fetchFunnelStepsAnal
 import { getPlan } from '../../lib/plans';
 import { useConfirm } from '../../components/app/ConfirmDialog';
 
-function KpiCard({ icon: Icon, label, value }) {
+// Chaque KPI a sa propre teinte (toujours les couleurs de marque existantes,
+// juste à faible opacité) plutôt qu'un fond blanc uniforme pour les trois —
+// permet de les distinguer d'un coup d'œil et de rythmer la rangée.
+const KPI_TINTS = {
+  accent: { bg: 'bg-accent/5', border: 'border-accent/15', icon: 'text-accent' },
+  primary: { bg: 'bg-primary/5', border: 'border-primary/15', icon: 'text-primary' },
+  surface: { bg: 'bg-surface/5', border: 'border-surface/10', icon: 'text-surface/50' },
+};
+
+function KpiCard({ icon: Icon, label, value, tint = 'surface' }) {
+  const t = KPI_TINTS[tint];
   return (
-    <div className="bg-background border border-surface/10 rounded-xl p-4">
-      <div className="flex items-center gap-2 text-surface/40 mb-2">
+    <div className={`${t.bg} border ${t.border} rounded-xl p-4`}>
+      <div className={`flex items-center gap-2 ${t.icon} mb-2`}>
         <Icon className="w-4 h-4" />
         <p className="text-[10px] uppercase tracking-wider font-mono">{label}</p>
       </div>
@@ -142,9 +152,9 @@ export default function DashboardPage() {
 
       {funnels && (
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-          <KpiCard icon={Mail} label="Leads (7 derniers jours)" value={leads7d} />
-          <KpiCard icon={Eye} label="Vues totales" value={totalViews} />
-          <KpiCard icon={Layers} label="Tunnels actifs" value={`${publishedCount} / ${funnels.length}`} />
+          <KpiCard icon={Mail} label="Leads (7 derniers jours)" value={leads7d} tint="accent" />
+          <KpiCard icon={Eye} label="Vues totales" value={totalViews} tint="primary" />
+          <KpiCard icon={Layers} label="Tunnels actifs" value={`${publishedCount} / ${funnels.length}`} tint="surface" />
         </div>
       )}
 
@@ -167,8 +177,13 @@ export default function DashboardPage() {
 
       {funnels && funnels.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {funnels.map((funnel) => (
-            <div key={funnel.id} className="bg-background border border-surface/10 rounded-[2rem] p-6 shadow-sm flex flex-col">
+          {funnels.map((funnel, i) => (
+            // Une fine barre de couleur en tête de carte, alternée entre
+            // accent/primary/surface selon l'index — repère visuel rapide
+            // dans une grille de plusieurs tunnels, mêmes couleurs de marque.
+            <div key={funnel.id} className="bg-background border border-surface/10 rounded-[2rem] overflow-hidden shadow-sm flex flex-col">
+              <div className={`h-1.5 ${['bg-accent', 'bg-primary', 'bg-surface/30'][i % 3]}`} />
+              <div className="p-6 flex flex-col flex-1">
               <div className="flex items-start justify-between mb-3">
                 <h3 className="font-sans font-semibold text-surface pr-2">{funnel.name}</h3>
                 <span className={`shrink-0 text-[10px] font-mono uppercase tracking-wider px-2 py-1 rounded-full ${funnel.is_published ? 'bg-green-500/10 text-green-600' : 'bg-surface/10 text-surface/50'}`}>
@@ -189,6 +204,7 @@ export default function DashboardPage() {
                 <button onClick={() => handleDelete(funnel)} className="hover-lift p-2.5 rounded-xl border border-surface/10 text-surface/40 hover:text-red-500" aria-label="Supprimer">
                   <Trash2 className="w-4 h-4" />
                 </button>
+              </div>
               </div>
             </div>
           ))}

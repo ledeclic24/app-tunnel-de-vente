@@ -46,9 +46,14 @@ function BlockCard({
   const Icon = def?.icon;
   const locked = Boolean(block.locked);
 
+  // Reprend la même alternance que l'aperçu du bloc (defaultBg, calculé par
+  // le parent selon l'index) sur le bandeau d'en-tête de l'éditeur — rythme
+  // visuel cohérent entre les cartes plutôt qu'un bandeau gris uniforme.
+  const headerTint = defaultBg === 'primary' ? 'bg-primary/5' : 'bg-accent/5';
+
   return (
     <div className={`bg-background border rounded-[2rem] overflow-hidden ${locked ? 'border-accent/30' : 'border-surface/10'}`}>
-      <div className="flex items-center justify-between px-5 py-3 border-b border-surface/10 bg-surface/[0.02]">
+      <div className={`flex items-center justify-between px-5 py-3 border-b border-surface/10 ${headerTint}`}>
         <div className="flex items-center gap-2 text-sm font-medium text-surface/70 min-w-0">
           <button
             type="button"
@@ -735,28 +740,31 @@ export default function FunnelEditorPage() {
           >
             <Eye className="w-4 h-4" /> Aperçu
           </button>
+          {/* Chaque bouton de panneau a sa propre teinte de repos (pas
+              seulement à l'état actif) — toujours les couleurs de marque
+              existantes, pour que la barre d'outils ne soit plus uniforme. */}
           <button
             onClick={() => { setShowSettings((v) => !v); setShowBrandKit(false); setShowAiAssistant(false); }}
-            className={`magnetic-btn flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-semibold border ${showSettings ? 'bg-accent/10 border-accent text-accent' : 'border-surface/10 text-surface/70'}`}
+            className={`magnetic-btn flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-semibold border ${showSettings ? 'bg-surface/15 border-surface/30 text-surface' : 'bg-surface/5 border-surface/10 text-surface/70'}`}
           >
             <Settings className="w-4 h-4" /> Réglages
           </button>
           <button
             onClick={() => { setShowBrandKit((v) => !v); setShowSettings(false); setShowAiAssistant(false); setShowPageSettings(false); }}
-            className={`magnetic-btn flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-semibold border ${showBrandKit ? 'bg-accent/10 border-accent text-accent' : 'border-surface/10 text-surface/70'}`}
+            className={`magnetic-btn flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-semibold border ${showBrandKit ? 'bg-accent/15 border-accent text-accent' : 'bg-accent/5 border-accent/15 text-accent/80'}`}
           >
             <Palette className="w-4 h-4" /> Design
           </button>
           <button
             onClick={() => { setShowPageSettings((v) => !v); setShowSettings(false); setShowBrandKit(false); setShowAiAssistant(false); }}
-            className={`magnetic-btn flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-semibold border ${showPageSettings ? 'bg-accent/10 border-accent text-accent' : 'border-surface/10 text-surface/70'}`}
+            className={`magnetic-btn flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-semibold border ${showPageSettings ? 'bg-primary/15 border-primary/40 text-primary' : 'bg-primary/5 border-primary/15 text-primary/70'}`}
           >
             <Megaphone className="w-4 h-4" /> Page
           </button>
           {plan.aiAccess && (
             <button
               onClick={() => { setShowAiAssistant((v) => !v); setShowSettings(false); setShowBrandKit(false); }}
-              className={`magnetic-btn flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-semibold border ${showAiAssistant ? 'bg-accent/10 border-accent text-accent' : 'border-surface/10 text-surface/70'}`}
+              className={`magnetic-btn flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-semibold border ${showAiAssistant ? 'gradient-accent border-transparent text-background' : 'bg-accent/5 border-accent/15 text-accent/80'}`}
             >
               <Sparkles className="w-4 h-4" /> Assistant IA
             </button>

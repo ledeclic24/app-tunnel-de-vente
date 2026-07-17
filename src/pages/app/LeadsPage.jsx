@@ -74,7 +74,7 @@ export default function LeadsPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-surface/10 text-left text-surface/50 text-xs uppercase tracking-wider">
+                <tr className="border-b border-surface/10 bg-primary/5 text-left text-surface/50 text-xs uppercase tracking-wider">
                   <th className="px-6 py-4 font-medium">Nom</th>
                   <th className="px-6 py-4 font-medium">Email</th>
                   <th className="px-6 py-4 font-medium">Tunnel</th>
@@ -82,8 +82,10 @@ export default function LeadsPage() {
                 </tr>
               </thead>
               <tbody>
-                {visibleLeads.map((lead) => (
-                  <tr key={lead.id} className="border-b border-surface/5 last:border-0">
+                {visibleLeads.map((lead, i) => (
+                  // Lignes alternées (zébrure légère, teinte accent) pour
+                  // faciliter la lecture d'un tableau dense.
+                  <tr key={lead.id} className={`border-b border-surface/5 last:border-0 ${i % 2 === 1 ? 'bg-accent/[0.03]' : ''}`}>
                     <td className="px-6 py-4 text-surface">{lead.name || '—'}</td>
                     <td className="px-6 py-4 text-surface/80">{lead.email}</td>
                     <td className="px-6 py-4 text-surface/60">{lead.funnelName}</td>
