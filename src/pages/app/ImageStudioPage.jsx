@@ -6,6 +6,9 @@ import { getPlan } from '../../lib/plans';
 import { generateImages, fetchImageUsageThisMonth, fetchImages, deleteImage, downloadImage, fetchImageBlob } from '../../lib/imagesApi';
 import { useConfirm } from '../../components/app/ConfirmDialog';
 import { useToast } from '../../components/app/Toast';
+import PageHeader from '../../components/ui/PageHeader';
+import Badge from '../../components/ui/Badge';
+import EmptyState from '../../components/ui/EmptyState';
 
 const COMING_SOON = false;
 
@@ -276,14 +279,11 @@ export default function ImageStudioPage() {
 
   return (
     <div className="max-w-3xl mx-auto">
-      <div className="inline-flex items-center gap-2 bg-accent/10 text-accent px-3 py-1.5 rounded-full text-xs font-semibold mb-4">
-        <ImageIcon className="w-3.5 h-3.5" /> Studio visuel IA
-      </div>
-      <h1 className="text-2xl font-sans font-bold text-surface mb-2">Génère des images pour tes tunnels</h1>
-      {remaining !== null && (
-        <p className="text-xs text-surface/40 mb-6 font-mono">{remaining} génération{remaining > 1 ? 's' : ''} restante{remaining > 1 ? 's' : ''} ce mois-ci</p>
-      )}
-      {remaining === null && <div className="mb-6" />}
+      <PageHeader
+        eyebrow={<Badge variant="accent"><ImageIcon className="w-3 h-3" /> Studio visuel IA</Badge>}
+        title="Génère des images pour tes tunnels"
+        description={remaining !== null ? `${remaining} génération${remaining > 1 ? 's' : ''} restante${remaining > 1 ? 's' : ''} ce mois-ci` : undefined}
+      />
 
       <form onSubmit={handleGenerate} className="bg-background border border-surface/10 rounded-[2rem] p-4 md:p-6 space-y-4 mb-6">
         <div>
@@ -387,6 +387,10 @@ export default function ImageStudioPage() {
             Tout désélectionner
           </button>
         </div>
+      )}
+
+      {images.length === 0 && (
+        <EmptyState icon={ImageIcon} title="Aucun visuel généré pour l'instant" description="Décris l'image que tu veux ci-dessus pour générer ton premier visuel." />
       )}
 
       {images.length > 0 && (

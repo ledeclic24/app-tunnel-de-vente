@@ -9,6 +9,11 @@ import ImageUploadField from '../../components/blocks/ImageUploadField';
 import DownloadMenu from '../../components/app/DownloadMenu';
 import { useConfirm } from '../../components/app/ConfirmDialog';
 import { useToast } from '../../components/app/Toast';
+import PageHeader from '../../components/ui/PageHeader';
+import Button from '../../components/ui/Button';
+import Card from '../../components/ui/Card';
+import Badge from '../../components/ui/Badge';
+import EmptyState from '../../components/ui/EmptyState';
 
 const ERROR_MESSAGES = {
   plan_required: "Le générateur d'ebook nécessite le plan Pro ou Entreprise.",
@@ -182,20 +187,15 @@ export default function EbooksPage() {
 
   return (
     <div className="max-w-3xl mx-auto">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <div className="inline-flex items-center gap-2 bg-accent/10 text-accent px-3 py-1.5 rounded-full text-xs font-semibold mb-3">
-            <BookOpen className="w-3.5 h-3.5" /> Ebooks
-          </div>
-          <h1 className="text-2xl font-sans font-bold text-surface">Tes ebooks</h1>
-        </div>
-        <button
-          onClick={() => setShowForm((v) => !v)}
-          className="magnetic-btn inline-flex items-center gap-2 bg-accent text-background px-4 py-2.5 rounded-full text-sm font-semibold"
-        >
-          <Plus className="w-4 h-4" /> Nouvel ebook
-        </button>
-      </div>
+      <PageHeader
+        eyebrow={<Badge variant="accent"><BookOpen className="w-3 h-3" /> Ebooks</Badge>}
+        title="Tes ebooks"
+        actions={
+          <Button variant="primary" onClick={() => setShowForm((v) => !v)}>
+            <Plus className="w-4 h-4" /> Nouvel ebook
+          </Button>
+        }
+      />
 
       {showForm && (
         <form onSubmit={handleGenerate} className="bg-background border border-surface/10 rounded-[2rem] p-4 md:p-6 space-y-4 mb-6">
@@ -410,9 +410,18 @@ export default function EbooksPage() {
         </form>
       )}
 
-      {ebooks === null && <p className="text-sm text-surface/40">Chargement...</p>}
+      {ebooks === null && (
+        <div className="flex justify-center py-16">
+          <div className="w-6 h-6 border-2 border-surface/20 border-t-accent rounded-full animate-spin" />
+        </div>
+      )}
       {ebooks?.length === 0 && !showForm && (
-        <p className="text-sm text-surface/40 text-center py-12">Aucun ebook pour l'instant. Crée le premier avec le bouton ci-dessus.</p>
+        <EmptyState
+          icon={BookOpen}
+          title="Aucun ebook pour l'instant"
+          description="Crée ton premier ebook pour l'utiliser comme aimant à leads dans un tunnel."
+          action={<Button variant="primary" onClick={() => setShowForm(true)}>Créer mon premier ebook</Button>}
+        />
       )}
 
       {selectedIds.size > 0 && (
@@ -429,7 +438,7 @@ export default function EbooksPage() {
 
       <div className="space-y-3">
         {ebooks?.map((ebook) => (
-          <div key={ebook.id} className={`flex items-center justify-between gap-2 bg-background border rounded-2xl px-5 py-4 transition-colors ${selectedIds.has(ebook.id) ? 'border-accent' : 'border-surface/10'}`}>
+          <Card key={ebook.id} className={`flex items-center justify-between gap-2 px-5 py-4 transition-colors ${selectedIds.has(ebook.id) ? 'border-accent' : ''}`}>
             <input
               type="checkbox"
               checked={selectedIds.has(ebook.id)}
@@ -450,7 +459,7 @@ export default function EbooksPage() {
                 <Trash2 className="w-4 h-4" />
               </button>
             </div>
-          </div>
+          </Card>
         ))}
       </div>
     </div>

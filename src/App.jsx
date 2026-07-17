@@ -127,11 +127,14 @@ function App() {
             <Route path="/f/:funnelSlug/:stepSlug" element={<PublishedFunnelPage />} />
 
             <Route path="/app" element={<ProtectedRoute />}>
+              {/* Hors AppShell : l'éditeur a besoin de tout l'écran, comme
+                  n'importe quel éditeur de page pro (pas de sidebar de nav
+                  pendant qu'on construit un tunnel). */}
+              <Route path="funnels/:funnelId/edit" element={<FunnelEditorPage />} />
               <Route element={<AppShell />}>
                 <Route index element={<DashboardPage />} />
                 <Route path="funnels/new" element={<NewFunnelPage />} />
                 <Route path="funnels/ai" element={<AIGeneratorPage />} />
-                <Route path="funnels/:funnelId/edit" element={<FunnelEditorPage />} />
                 <Route path="leads" element={<LeadsPage />} />
                 <Route path="analytics" element={<AnalyticsPage />} />
                 <Route path="integrations" element={<IntegrationsPage />} />

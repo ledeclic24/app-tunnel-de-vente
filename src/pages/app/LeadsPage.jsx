@@ -4,6 +4,10 @@ import { Download, Lock, Mail } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { fetchLeadsForUser } from '../../lib/funnelsApi';
 import { getPlan } from '../../lib/plans';
+import PageHeader from '../../components/ui/PageHeader';
+import Button from '../../components/ui/Button';
+import Card from '../../components/ui/Card';
+import EmptyState from '../../components/ui/EmptyState';
 
 function exportToCsv(leads) {
   const header = ['Nom', 'Email', 'Tunnel', 'Date'];
@@ -42,35 +46,26 @@ export default function LeadsPage() {
 
   return (
     <div>
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
-        <div>
-          <h1 className="text-2xl font-sans font-bold text-surface">Tes leads</h1>
-          <p className="text-surface/60 text-sm mt-1">{leads.length} prospect(s) capturé(s) au total.</p>
-        </div>
-        {plan.leadsExport ? (
-          <button
-            onClick={() => exportToCsv(leads)}
-            disabled={leads.length === 0}
-            className="magnetic-btn inline-flex items-center gap-2 bg-surface text-background px-5 py-3 rounded-full text-sm font-semibold disabled:opacity-40"
-          >
+      <PageHeader
+        title="Tes leads"
+        description={`${leads.length} prospect(s) capturé(s) au total.`}
+        actions={plan.leadsExport ? (
+          <Button variant="dark" onClick={() => exportToCsv(leads)} disabled={leads.length === 0}>
             <Download className="w-4 h-4" /> Exporter en CSV
-          </button>
+          </Button>
         ) : (
-          <Link to="/app/billing" className="inline-flex items-center gap-2 bg-surface/10 text-surface/60 px-5 py-3 rounded-full text-sm font-semibold">
+          <Button as={Link} to="/app/billing" variant="ghost" className="bg-surface/10 text-surface/60">
             <Lock className="w-4 h-4" /> Export CSV — plan Pro
-          </Link>
+          </Button>
         )}
-      </div>
+      />
 
       {leads.length === 0 && (
-        <div className="text-center py-16 border border-dashed border-surface/20 rounded-[2rem]">
-          <Mail className="w-8 h-8 text-surface/20 mx-auto mb-3" />
-          <p className="text-surface/60">Aucun lead capturé pour l'instant.</p>
-        </div>
+        <EmptyState icon={Mail} title="Aucun lead pour l'instant" description="Les prospects capturés par tes tunnels apparaîtront ici." />
       )}
 
       {leads.length > 0 && (
-        <div className="bg-background border border-surface/10 rounded-[2rem] overflow-hidden">
+        <Card className="overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
@@ -106,7 +101,7 @@ export default function LeadsPage() {
               </div>
             </div>
           )}
-        </div>
+        </Card>
       )}
     </div>
   );

@@ -205,7 +205,7 @@ export default function FunnelSettingsPanel({ funnel, plan, onSave }) {
   };
 
   return (
-    <div className="bg-background border border-surface/10 rounded-[2rem] p-6 md:p-8 space-y-8">
+    <div className="space-y-8">
       <div className="space-y-5">
         <div>
           <h3 className="font-sans font-semibold text-surface">SEO & partage</h3>

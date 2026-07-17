@@ -22,7 +22,7 @@ export default function BrandKitPanel({ brand, onSave, userId, canUseBrandKit, c
 
   if (!canUseBrandKit) {
     return (
-      <div className="bg-background border border-surface/10 rounded-[2rem] p-6 md:p-8 text-center">
+      <div className="text-center py-6">
         <Lock className="w-8 h-8 text-surface/30 mx-auto mb-3" />
         <h3 className="font-sans font-semibold text-surface mb-1">Brand Kit réservé aux plans payants</h3>
         <p className="text-sm text-surface/60 mb-4">Personnalise les couleurs, la typographie et le logo de tes tunnels avec le plan Pro ou Entreprise.</p>
@@ -42,9 +42,7 @@ export default function BrandKitPanel({ brand, onSave, userId, canUseBrandKit, c
   };
 
   return (
-    <div className="bg-background border border-surface/10 rounded-[2rem] p-6 md:p-8 space-y-5">
-      <h3 className="font-sans font-semibold text-surface">Brand Kit — garde ton identité</h3>
-
+    <div className="space-y-5">
       <div className="grid grid-cols-2 gap-4">
         <div>
           <label className={labelClass}>Couleur principale</label>

@@ -32,7 +32,7 @@ export default function PageSettingsPanel({ step, steps, plan, onSave }) {
 
   if (!plan.pageChrome) {
     return (
-      <div className="bg-background border border-surface/10 rounded-[2rem] p-6 text-center">
+      <div className="text-center py-6">
         <Lock className="w-6 h-6 text-surface/30 mx-auto mb-3" />
         <p className="text-sm text-surface/60">
           La barre de compte à rebours, la notification d'achat et le pied de page collant nécessitent le plan Pro ou Entreprise.
@@ -48,7 +48,7 @@ export default function PageSettingsPanel({ step, steps, plan, onSave }) {
   const stickyFooterCta = chrome.stickyFooterCta || {};
 
   return (
-    <div className="bg-background border border-surface/10 rounded-[2rem] p-4 md:p-6 space-y-4">
+    <div className="space-y-4">
       <p className="text-xs text-surface/40">
         Réglages propres à cette page ({step.name}) — chaque page du tunnel a les siens.
       </p>

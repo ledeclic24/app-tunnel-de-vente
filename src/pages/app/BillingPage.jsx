@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Check, Info, CreditCard, Loader2 } from 'lucide-react';
+import PageHeader from '../../components/ui/PageHeader';
 import { useAuth } from '../../context/AuthContext';
 import { supabase } from '../../lib/supabaseClient';
 import { PLANS, PLAN_ORDER, getPlan, formatPrice } from '../../lib/plans';
@@ -67,8 +68,7 @@ export default function BillingPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-sans font-bold text-surface mb-2">Facturation</h1>
-      <p className="text-surface/60 mb-6">Choisis le plan adapté à ton usage.</p>
+      <PageHeader title="Facturation" description="Choisis le plan adapté à ton usage." className="mb-6" />
 
       {returnStatus && (
         <div className={`flex items-start gap-3 rounded-2xl p-4 mb-6 text-sm ${returnStatus.tone === 'ok' ? 'bg-accent/5 border border-accent/20 text-surface/70' : 'bg-red-500/5 border border-red-500/20 text-red-600'}`}>
@@ -94,7 +94,7 @@ export default function BillingPage() {
           const plan = livePlans[key];
           const isCurrent = key === currentPlan;
           return (
-            <div key={key} className={`rounded-[2rem] p-8 border relative ${isCurrent ? 'bg-primary text-background border-accent/30 shadow-xl' : 'bg-background text-surface border-surface/10'}`}>
+            <div key={key} className={`rounded-[2rem] p-8 border relative ${isCurrent ? 'bg-primary text-background border-accent/30 shadow-xl' : 'bg-background text-surface border-surface/10 shadow-soft'}`}>
               {isCurrent && (
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-accent text-background font-mono text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
                   Plan actuel

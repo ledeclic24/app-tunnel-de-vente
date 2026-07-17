@@ -17,6 +17,10 @@ export default {
         serif: ['Fraunces', 'serif'],
         mono: ['"JetBrains Mono"', 'monospace'],
       },
+      boxShadow: {
+        soft: '0 1px 2px rgba(11, 40, 24, 0.04), 0 4px 12px rgba(11, 40, 24, 0.04)',
+        medium: '0 4px 10px rgba(11, 40, 24, 0.06), 0 12px 32px rgba(11, 40, 24, 0.10)',
+      },
     },
   },
   plugins: [],
