@@ -120,6 +120,18 @@
   animation: ambientPulse 6s ease-in-out infinite;
 }
 
+@keyframes signatureIconFloat {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-6px) rotate(3deg); }
+}
+
+/* Élément signature du hero (icône propre au sujet de l'offre, voir
+   HERO_SIGNATURE_ICONS) : oscillation lente et continue pour rester
+   "vivant" sans distraire, jamais un pictogramme statique. */
+.signature-icon-float {
+  animation: signatureIconFloat 5s ease-in-out infinite;
+}
+
 /* Effets "dark premium" (cahier des charges tunnel de vente) : bordure
    lumineuse type néon réservée à 1-2 éléments clés (jamais toutes les
    cartes, sinon l'effet perd son impact), halo ambiant discret en fond de
@@ -194,6 +206,7 @@
   .scroll-reveal,
   .stagger-children > *,
   .ambient-pulse,
+  .signature-icon-float,
   .testimonial-marquee-track {
     transition: none !important;
     animation: none !important;

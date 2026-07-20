@@ -1,6 +1,7 @@
 import React from 'react';
 import { getEditableProps, getContentEditableProps, getSectionBackground, cx } from '../../lib/blockStyle';
 import SlotList, { SlotReadOnly } from './SlotList';
+import useSequentialReveal from '../../lib/useSequentialReveal';
 
 function buildDefaultSlots(itemCount) {
   const slots = [];
@@ -35,19 +36,23 @@ export default function ProcessBlock({ content, editMode, selectedElement, onSel
     onKeyDown: opts.multiline ? undefined : (e) => { if (e.key === 'Enter') { e.preventDefault(); e.currentTarget.blur(); } },
   });
 
-  const badgeClass = cx(
-    'shrink-0 flex items-center justify-center rounded-full bg-accent text-background font-sans font-bold',
+  const { setItemRef, isActive } = useSequentialReveal(items.length, editMode);
+
+  const badgeClass = (active) => cx(
+    'shrink-0 flex items-center justify-center rounded-full font-sans font-bold transition-colors duration-500',
     isCircular ? 'w-12 h-12 text-lg' : 'w-9 h-9 text-sm mb-4',
+    active ? 'bg-accent text-background' : 'bg-transparent text-accent/50 border-2 border-accent/25',
   );
 
   const renderItem = (i) => {
     const item = items[i];
     if (!item) return null;
     const cardProps = editable(`process-${i}`, 'card', `Étape ${i + 1}`);
+    const active = isActive(i);
     if (isCircular) {
       return (
-        <div className={cx('flex items-start gap-5', cardProps.className)} style={cardProps.style} onClick={cardProps.onClick}>
-          <span className={badgeClass}>{i + 1}</span>
+        <div ref={setItemRef(i)} className={cx('flex items-start gap-5', cardProps.className)} style={cardProps.style} onClick={cardProps.onClick}>
+          <span className={badgeClass(active)}>{i + 1}</span>
           <div>
             <h3 className={cx('font-sans font-bold text-lg mb-1 outline-none', bg.headingClassName)} {...itemField(i, 'title')}>{item.title}</h3>
             <p className={cx('outline-none', bg.bodyClassName)} {...itemField(i, 'description', { multiline: true })}>{item.description}</p>
@@ -57,11 +62,12 @@ export default function ProcessBlock({ content, editMode, selectedElement, onSel
     }
     return (
       <div
-        className={cx('hover-card bg-block-card border border-accent/20 rounded-xl p-6 shadow-sm', cardProps.className)}
+        ref={setItemRef(i)}
+        className={cx('hover-card bg-block-card border rounded-xl p-6 shadow-sm transition-colors duration-500', active ? 'border-accent/20' : 'border-accent/5', cardProps.className)}
         style={cardProps.style}
         onClick={cardProps.onClick}
       >
-        <span className={badgeClass}>{i + 1}</span>
+        <span className={badgeClass(active)}>{i + 1}</span>
         <h3 className="font-sans font-semibold text-background mb-2 outline-none" {...itemField(i, 'title')}>{item.title}</h3>
         <p className="text-sm text-background/70 outline-none" {...itemField(i, 'description', { multiline: true })}>{item.description}</p>
       </div>

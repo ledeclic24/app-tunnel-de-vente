@@ -1,5 +1,12 @@
 import React, { useRef, useState } from 'react';
-import { ArrowRight, ImagePlus, Upload, Image as LibraryIcon, Wand2, Sparkles } from 'lucide-react';
+import {
+  ArrowRight, ImagePlus, Upload, Image as LibraryIcon, Wand2, Sparkles,
+  TrendingUp, PiggyBank, GraduationCap, BookOpen, Dumbbell, HeartPulse,
+  Brain, Rocket, Palette, Code, Camera, UtensilsCrossed, Briefcase, Home,
+  Leaf, Target, Zap, Trophy, ShoppingBag, Users, Clock, Shield, Star,
+  Smartphone, Mic, Baby, Plane, Music, Wallet, Gamepad2, Scissors, Car,
+  Globe, PenTool, Languages, Flower2,
+} from 'lucide-react';
 import { getButtonStyle, getEditableProps, getContentEditableProps, renderRichText, cx } from '../../lib/blockStyle';
 import { uploadImage } from '../../lib/storage';
 import SlotList from './SlotList';
@@ -7,16 +14,38 @@ import ImagePickerModal from '../app/ImagePickerModal';
 import { TUNNEL_IMAGE_TYPES } from './BlockEditorPanel';
 import { useToast } from '../app/Toast';
 
+// Icônes "élément signature" : l'IA choisit celle la plus proche du sujet
+// précis de l'offre (voir heroIcon dans le schéma) plutôt que d'imposer un
+// pictogramme générique identique sur tous les tunnels. Liste fermée pour
+// rester cohérente avec le reste de l'app (pas de nom d'icône arbitraire).
+export const HERO_SIGNATURE_ICONS = {
+  'trending-up': TrendingUp, 'piggy-bank': PiggyBank, 'graduation-cap': GraduationCap,
+  'book-open': BookOpen, dumbbell: Dumbbell, 'heart-pulse': HeartPulse, brain: Brain,
+  rocket: Rocket, palette: Palette, code: Code, camera: Camera,
+  'utensils-crossed': UtensilsCrossed, briefcase: Briefcase, home: Home, leaf: Leaf,
+  target: Target, zap: Zap, trophy: Trophy, 'shopping-bag': ShoppingBag, users: Users,
+  clock: Clock, shield: Shield, star: Star, smartphone: Smartphone, mic: Mic,
+  baby: Baby, plane: Plane, music: Music, wallet: Wallet, gamepad: Gamepad2,
+  scissors: Scissors, car: Car, globe: Globe, 'pen-tool': PenTool,
+  languages: Languages, flower: Flower2,
+};
+
 // Visuel de repli quand aucune image n'est fournie (auto-génération IA
 // indisponible, ou tunnel encore sans photo) : une composition en couches
 // (halos animés + cadre accent) plutôt qu'un espace vide ou un simple
 // pictogramme centré, pour garder autant de présence visuelle qu'une photo.
-function HeroVisualPlaceholder({ variant }) {
+// L'icône elle-même varie selon heroIcon (élément signature propre à
+// l'offre) au lieu d'un Sparkles identique partout.
+function HeroVisualPlaceholder({ variant, icon }) {
+  const Icon = HERO_SIGNATURE_ICONS[icon] || Sparkles;
   if (variant === 'overlay') {
     return (
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="ambient-pulse absolute -top-20 -right-20 w-72 h-72 rounded-full bg-accent/10 blur-3xl" />
         <div className="ambient-pulse absolute -bottom-24 -left-24 w-64 h-64 rounded-full bg-accent/10 blur-3xl" style={{ animationDelay: '2s' }} />
+        <div className="signature-icon-float absolute bottom-10 right-10 neon-border w-20 h-20 rounded-2xl bg-background/5 backdrop-blur-sm flex items-center justify-center">
+          <Icon className="w-8 h-8 text-accent" />
+        </div>
       </div>
     );
   }
@@ -24,8 +53,8 @@ function HeroVisualPlaceholder({ variant }) {
     <div className="absolute inset-0 flex items-center justify-center overflow-hidden pointer-events-none">
       <div className="ambient-pulse absolute w-56 h-56 rounded-full bg-accent/20 blur-3xl" />
       <div className="ambient-pulse absolute w-36 h-36 rounded-full bg-accent/30 blur-2xl" style={{ animationDelay: '1.5s' }} />
-      <div className="neon-border relative w-28 h-28 rounded-3xl bg-background/5 backdrop-blur-sm flex items-center justify-center">
-        <Sparkles className="w-9 h-9 text-accent" />
+      <div className="signature-icon-float neon-border relative w-28 h-28 rounded-3xl bg-background/5 backdrop-blur-sm flex items-center justify-center">
+        <Icon className="w-9 h-9 text-accent" />
       </div>
     </div>
   );
@@ -56,7 +85,7 @@ function isSlotsValid(slots, hasTrustBadges) {
 }
 
 export default function HeroBlock({ content, onAdvance, editMode, selectedElement, onSelectElement, onContentChange, userId, onGenerateImage, imageGenerating }) {
-  const { eyebrow, heading, subheading, imageUrl, ctaText, externalUrl, layout, trustBadges = [], slots } = content;
+  const { eyebrow, heading, subheading, imageUrl, ctaText, externalUrl, layout, trustBadges = [], slots, heroIcon } = content;
   const isSplit = layout === 'split';
   // Hero est toujours sombre (bg-primary), quelle que soit sa position —
   // pas de calcul via getSectionBackground ici, donc un objet "bg" de
@@ -254,7 +283,7 @@ export default function HeroBlock({ content, onAdvance, editMode, selectedElemen
               />
             ) : (
               <>
-                <HeroVisualPlaceholder variant="split" />
+                <HeroVisualPlaceholder variant="split" icon={heroIcon} />
                 {editMode && (
                   <button type="button" onClick={handleImageClick} className="absolute inset-0 z-10 flex items-center justify-center text-background/50 text-sm bg-primary/40">
                     <ImagePlus className="w-5 h-5 mr-2" /> {uploading ? 'Import...' : 'Ajouter une image'}
@@ -306,7 +335,7 @@ export default function HeroBlock({ content, onAdvance, editMode, selectedElemen
         </div>
       ) : (
         <div className="absolute inset-0 group/img">
-          <HeroVisualPlaceholder variant="overlay" />
+          <HeroVisualPlaceholder variant="overlay" icon={heroIcon} />
           {editMode && (
             <button
               type="button"
