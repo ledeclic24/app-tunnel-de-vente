@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Lock, Check, Globe, RefreshCw, Trash2 } from 'lucide-react';
+import { Lock, Check, Globe, RefreshCw, Trash2, Mail } from 'lucide-react';
 import { fetchDomains, addDomain, checkDomainStatus, removeDomain } from '../../lib/domainsApi';
+import { fetchEbooks } from '../../lib/ebooksApi';
 import { useConfirm } from './ConfirmDialog';
 
 const inputClass = "w-full bg-primary/5 border border-surface/10 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-accent transition-colors text-surface";
@@ -178,10 +179,16 @@ export default function FunnelSettingsPanel({ funnel, plan, onSave }) {
     seo_image_url: funnel.seo_image_url || '',
     publish_at: toDatetimeLocalValue(funnel.publish_at),
     unpublish_at: toDatetimeLocalValue(funnel.unpublish_at),
+    deliverable_ebook_id: funnel.deliverable_ebook_id || '',
   });
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState('');
+  const [ebooks, setEbooks] = useState(null);
+
+  useEffect(() => {
+    fetchEbooks().then(setEbooks).catch(() => setEbooks([]));
+  }, []);
 
   const set = (patch) => { setSaved(false); setDraft((d) => ({ ...d, ...patch })); };
 
@@ -195,6 +202,7 @@ export default function FunnelSettingsPanel({ funnel, plan, onSave }) {
         seo_image_url: draft.seo_image_url.trim(),
         publish_at: fromDatetimeLocalValue(draft.publish_at),
         unpublish_at: fromDatetimeLocalValue(draft.unpublish_at),
+        deliverable_ebook_id: draft.deliverable_ebook_id || null,
       });
       setSaved(true);
     } catch {
@@ -269,6 +277,37 @@ export default function FunnelSettingsPanel({ funnel, plan, onSave }) {
               </div>
             </div>
           </>
+        )}
+      </div>
+
+      <div className="space-y-5 pt-6 border-t border-surface/10">
+        <div className="flex items-center gap-2">
+          <Mail className="w-4 h-4 text-surface/40" />
+          <h3 className="font-sans font-semibold text-surface">Livraison automatique</h3>
+        </div>
+        <p className="text-sm text-surface/60">
+          Quand quelqu'un remplit un formulaire sur ce tunnel (ex. l'étape de commande), envoie-lui automatiquement un ebook par email. Laisse sur "Aucune" si ce tunnel ne vend pas d'ebook ou si tu préfères livrer toi-même.
+        </p>
+        {ebooks === null ? (
+          <p className="text-sm text-surface/40">Chargement de tes ebooks...</p>
+        ) : ebooks.length === 0 ? (
+          <p className="text-sm text-surface/50">
+            Tu n'as pas encore d'ebook. <Link to="/app/ebooks" className="text-accent hover:underline">Crée-en un</Link> pour pouvoir le livrer automatiquement ici.
+          </p>
+        ) : (
+          <div>
+            <label className={labelClass}>Ebook à envoyer par email</label>
+            <select
+              className={inputClass}
+              value={draft.deliverable_ebook_id}
+              onChange={(e) => set({ deliverable_ebook_id: e.target.value })}
+            >
+              <option value="">Aucune — livraison manuelle</option>
+              {ebooks.map((eb) => (
+                <option key={eb.id} value={eb.id}>{eb.title}</option>
+              ))}
+            </select>
+          </div>
         )}
       </div>
 

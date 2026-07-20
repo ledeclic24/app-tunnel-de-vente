@@ -23,6 +23,7 @@ function normalizeFunnel(f) {
     seo_image_url: f.seoImageUrl,
     publish_at: f.publishAt,
     unpublish_at: f.unpublishAt,
+    deliverable_ebook_id: f.deliverableEbookId,
     created_at: f.createdAt,
     updated_at: f.updatedAt,
   };
@@ -52,6 +53,7 @@ const FUNNEL_PATCH_KEY_MAP = {
   seo_image_url: 'seoImageUrl',
   publish_at: 'publishAt',
   unpublish_at: 'unpublishAt',
+  deliverable_ebook_id: 'deliverableEbookId',
 };
 
 function buildStepsPayload(steps) {
