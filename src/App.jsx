@@ -18,6 +18,7 @@ import SignupPage from './pages/auth/SignupPage';
 import ForgotPasswordPage from './pages/auth/ForgotPasswordPage';
 import ResetPasswordPage from './pages/auth/ResetPasswordPage';
 import PublishedFunnelPage from './pages/public/PublishedFunnelPage';
+import LegalPage from './pages/marketing/LegalPage';
 
 const DashboardPage = lazy(() => import('./pages/app/DashboardPage'));
 const NewFunnelPage = lazy(() => import('./pages/app/NewFunnelPage'));
@@ -122,6 +123,11 @@ function App() {
             <Route path="/inscription" element={<SignupPage />} />
             <Route path="/mot-de-passe-oublie" element={<ForgotPasswordPage />} />
             <Route path="/reinitialiser-mot-de-passe" element={<ResetPasswordPage />} />
+
+            <Route path="/mentions-legales" element={<LegalPage doc="mentions-legales" />} />
+            <Route path="/cgu" element={<LegalPage doc="cgu" />} />
+            <Route path="/cgv" element={<LegalPage doc="cgv" />} />
+            <Route path="/confidentialite" element={<LegalPage doc="confidentialite" />} />
 
             <Route path="/f/:funnelSlug" element={<PublishedFunnelPage />} />
             <Route path="/f/:funnelSlug/:stepSlug" element={<PublishedFunnelPage />} />

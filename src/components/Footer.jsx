@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import ReactiveDotGrid from './ReactiveDotGrid';
 
 export default function Footer() {
@@ -34,10 +35,10 @@ export default function Footer() {
         <div>
           <h4 className="font-sans font-semibold mb-6 text-accent">Légal</h4>
           <ul className="space-y-3">
-            <li><a href="#" className="text-background/60 hover:text-background transition-colors text-sm">Mentions légales</a></li>
-            <li><a href="#" className="text-background/60 hover:text-background transition-colors text-sm">Politique de confidentialité</a></li>
-            <li><a href="#" className="text-background/60 hover:text-background transition-colors text-sm">CGV</a></li>
-            <li><a href="#" className="text-background/60 hover:text-background transition-colors text-sm">Contact</a></li>
+            <li><Link to="/mentions-legales" className="text-background/60 hover:text-background transition-colors text-sm">Mentions légales</Link></li>
+            <li><Link to="/cgu" className="text-background/60 hover:text-background transition-colors text-sm">CGU</Link></li>
+            <li><Link to="/cgv" className="text-background/60 hover:text-background transition-colors text-sm">CGV</Link></li>
+            <li><Link to="/confidentialite" className="text-background/60 hover:text-background transition-colors text-sm">Politique de confidentialité</Link></li>
           </ul>
         </div>
       </div>
