@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { fetchFunnelBySlug, fetchSteps, fetchBlocks, insertLead, incrementStepView } from '../../lib/funnelsApi';
+import { createMonerooCheckout } from '../../lib/checkoutApi';
 import { brandStyleVars } from '../../lib/colorUtils';
 import BlockRenderer from '../../components/blocks/BlockRenderer';
 import CountdownBar from '../../components/public/CountdownBar';
@@ -104,6 +105,19 @@ export default function PublishedFunnelPage({ funnelSlugOverride } = {}) {
     await insertLead({ funnelId: funnel.id, stepId: currentStep.id, name, email });
   };
 
+  const handleMonerooCheckout = async ({ paymentMethodId, planName, amount, customerEmail, customerName }) => {
+    const { checkoutUrl } = await createMonerooCheckout({
+      funnelId: funnel.id,
+      stepId: currentStep.id,
+      paymentMethodId,
+      planName,
+      amount,
+      customerEmail,
+      customerName,
+    });
+    window.location.href = checkoutUrl;
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -137,6 +151,7 @@ export default function PublishedFunnelPage({ funnelSlugOverride } = {}) {
             block={block}
             onAdvance={handleAdvance}
             onSubmitLead={handleSubmitLead}
+            onMonerooCheckout={handleMonerooCheckout}
             defaultBg={i % 2 === 0 ? 'primary' : 'primary-alt'}
             siblingSteps={steps}
             onNavigateToStep={handleNavigateToStep}

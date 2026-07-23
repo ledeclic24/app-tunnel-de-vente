@@ -1,10 +1,11 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Users, ShieldCheck, CreditCard, Trash2, Lock, Info, UserPlus, Wallet, ExternalLink } from 'lucide-react';
+import { Users, ShieldCheck, CreditCard, Trash2, Lock, Info, UserPlus, Wallet, ExternalLink, Zap, Copy, Check as CheckIcon } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { getPlan } from '../../lib/plans';
 import { fetchOrgMembers, inviteOrgMember, removeOrgMember } from '../../lib/growthApi';
 import { fetchPaymentMethods, createPaymentMethod, deletePaymentMethod } from '../../lib/paymentMethodsApi';
+import { API_URL } from '../../lib/apiClient';
 import { useConfirm } from '../../components/app/ConfirmDialog';
 import BillingPage from './BillingPage';
 
@@ -15,10 +16,30 @@ const TABS = [
   { key: 'facturation', label: 'Facturation', icon: CreditCard },
 ];
 
+const fieldClass = "flex-1 bg-primary/5 border border-surface/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-accent transition-colors text-surface";
+
+function CopyableWebhookUrl({ url }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <button
+      type="button"
+      onClick={() => { navigator.clipboard.writeText(url); setCopied(true); setTimeout(() => setCopied(false), 1500); }}
+      className="w-full flex items-center justify-between gap-2 bg-primary/5 border border-surface/10 rounded-lg px-3 py-2 text-left"
+    >
+      <span className="font-mono text-xs text-surface/70 truncate">{url}</span>
+      {copied ? <CheckIcon className="w-3.5 h-3.5 text-accent shrink-0" /> : <Copy className="w-3.5 h-3.5 text-surface/40 shrink-0" />}
+    </button>
+  );
+}
+
 function PaymentMethodsTab() {
   const [methods, setMethods] = useState(null);
+  const [provider, setProvider] = useState('external_link');
   const [label, setLabel] = useState('');
   const [url, setUrl] = useState('');
+  const [secretKey, setSecretKey] = useState('');
+  const [webhookSecret, setWebhookSecret] = useState('');
+  const [currency, setCurrency] = useState('XOF');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [removingId, setRemovingId] = useState(null);
@@ -30,18 +51,29 @@ function PaymentMethodsTab() {
 
   useEffect(() => { load(); }, [load]);
 
+  const resetForm = () => {
+    setLabel(''); setUrl(''); setSecretKey(''); setWebhookSecret('');
+  };
+
   const handleAdd = async (e) => {
     e.preventDefault();
-    if (!label.trim() || !url.trim()) return;
+    if (!label.trim()) return;
+    if (provider === 'external_link' && !url.trim()) return;
+    if (provider === 'moneroo' && (!secretKey.trim() || !webhookSecret.trim())) return;
     setSaving(true);
     setError('');
     try {
-      await createPaymentMethod({ label: label.trim(), url: url.trim() });
-      setLabel('');
-      setUrl('');
+      await createPaymentMethod(
+        provider === 'moneroo'
+          ? { label: label.trim(), provider, secretKey: secretKey.trim(), webhookSecret: webhookSecret.trim(), currency }
+          : { label: label.trim(), provider, url: url.trim() },
+      );
+      resetForm();
       load();
     } catch {
-      setError("Impossible d'ajouter ce moyen de paiement. Vérifie que le lien est une URL valide (https://...).");
+      setError(provider === 'moneroo'
+        ? 'Impossible de connecter ce compte Moneroo. Vérifie ta clé secrète et ton secret de webhook.'
+        : "Impossible d'ajouter ce moyen de paiement. Vérifie que le lien est une URL valide (https://...).");
     } finally {
       setSaving(false);
     }
@@ -63,7 +95,7 @@ function PaymentMethodsTab() {
       <div className="bg-background border border-surface/10 rounded-[2rem] p-6 md:p-8">
         <h2 className="text-sm font-sans font-semibold text-surface mb-1">Tes moyens de paiement</h2>
         <p className="text-sm text-surface/60 mb-4">
-          Enregistre ici tes liens de paiement (Wave, Orange Money, Moneroo, carte bancaire, ou n'importe quel autre moyen) — tu pourras ensuite les ajouter en un clic sur les offres de tes tunnels, au lieu de recopier le lien à chaque fois.
+          Un simple lien externe (Wave, Orange Money, ou autre), ou un vrai flux de paiement intégré via Moneroo — le client paie sans jamais quitter ton tunnel, et l'argent va directement sur ton compte.
         </p>
 
         {methods === null ? (
@@ -73,21 +105,42 @@ function PaymentMethodsTab() {
         ) : (
           <ul className="space-y-3 mb-2">
             {methods.map((m) => (
-              <li key={m.id} className="flex items-center justify-between gap-3 bg-surface/5 rounded-xl px-4 py-3">
-                <div className="min-w-0">
-                  <p className="text-sm text-surface font-medium truncate">{m.label}</p>
-                  <a href={m.url} target="_blank" rel="noreferrer" className="text-xs text-surface/50 hover:text-accent inline-flex items-center gap-1 truncate">
-                    {m.url} <ExternalLink className="w-3 h-3 shrink-0" />
-                  </a>
+              <li key={m.id} className="bg-surface/5 rounded-xl px-4 py-3 space-y-2">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm text-surface font-medium truncate">{m.label}</p>
+                      {m.provider === 'moneroo' && (
+                        <span className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded-full bg-accent/10 text-accent shrink-0">
+                          <Zap className="w-3 h-3" /> Moneroo · {m.currency}
+                        </span>
+                      )}
+                    </div>
+                    {m.provider === 'external_link' ? (
+                      <a href={m.url} target="_blank" rel="noreferrer" className="text-xs text-surface/50 hover:text-accent inline-flex items-center gap-1 truncate">
+                        {m.url} <ExternalLink className="w-3 h-3 shrink-0" />
+                      </a>
+                    ) : (
+                      <p className="text-xs text-surface/50">Paiement intégré au tunnel, redirection vers Moneroo à la validation.</p>
+                    )}
+                  </div>
+                  <button
+                    onClick={() => handleRemove(m)}
+                    disabled={removingId === m.id}
+                    aria-label={`Supprimer ${m.label}`}
+                    className="hover-lift text-surface/40 hover:text-red-500 transition-colors disabled:opacity-50 shrink-0"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
                 </div>
-                <button
-                  onClick={() => handleRemove(m)}
-                  disabled={removingId === m.id}
-                  aria-label={`Supprimer ${m.label}`}
-                  className="hover-lift text-surface/40 hover:text-red-500 transition-colors disabled:opacity-50 shrink-0"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
+                {m.provider === 'moneroo' && (
+                  <div>
+                    <label className="block text-[11px] text-surface/50 mb-1">
+                      URL de webhook à coller dans ton dashboard Moneroo (Paramètres → Webhooks) :
+                    </label>
+                    <CopyableWebhookUrl url={`${API_URL}/payments/moneroo/webhook/${m.id}`} />
+                  </div>
+                )}
               </li>
             ))}
           </ul>
@@ -96,28 +149,78 @@ function PaymentMethodsTab() {
 
       <div className="bg-background border border-surface/10 rounded-[2rem] p-6 md:p-8">
         <h2 className="text-sm font-sans font-semibold text-surface mb-4">Ajouter un moyen de paiement</h2>
-        <form onSubmit={handleAdd} className="flex flex-col sm:flex-row gap-3">
+
+        <div className="inline-flex bg-surface/5 rounded-xl p-1 mb-4">
+          {[
+            { key: 'external_link', label: 'Lien externe' },
+            { key: 'moneroo', label: 'Moneroo (intégré)' },
+          ].map(({ key, label: tabLabel }) => (
+            <button
+              key={key}
+              type="button"
+              onClick={() => setProvider(key)}
+              className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${provider === key ? 'bg-background text-surface shadow-sm' : 'text-surface/50 hover:text-surface/80'}`}
+            >
+              {tabLabel}
+            </button>
+          ))}
+        </div>
+
+        <form onSubmit={handleAdd} className="space-y-3">
           <input
             value={label}
             onChange={(e) => setLabel(e.target.value)}
-            placeholder="Ex : Wave, Orange Money, Moneroo..."
+            placeholder={provider === 'moneroo' ? 'Ex : Moneroo — compte principal' : 'Ex : Wave, Orange Money...'}
             required
-            className="flex-1 bg-primary/5 border border-surface/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-accent transition-colors text-surface"
+            className={fieldClass}
           />
-          <input
-            value={url}
-            onChange={(e) => setUrl(e.target.value)}
-            placeholder="https://..."
-            type="url"
-            required
-            className="flex-1 bg-primary/5 border border-surface/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-accent transition-colors text-surface"
-          />
+          {provider === 'external_link' ? (
+            <input
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              placeholder="https://..."
+              type="url"
+              required
+              className={fieldClass}
+            />
+          ) : (
+            <>
+              <p className="text-xs text-surface/50">
+                Récupère ces informations dans ton dashboard Moneroo (Paramètres → API). L'argent des paiements va directement sur ton compte Moneroo, Vendeko ne le touche jamais.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <input
+                  value={secretKey}
+                  onChange={(e) => setSecretKey(e.target.value)}
+                  placeholder="Clé secrète Moneroo"
+                  type="password"
+                  required
+                  className={fieldClass}
+                />
+                <input
+                  value={webhookSecret}
+                  onChange={(e) => setWebhookSecret(e.target.value)}
+                  placeholder="Secret de webhook Moneroo"
+                  type="password"
+                  required
+                  className={fieldClass}
+                />
+                <select value={currency} onChange={(e) => setCurrency(e.target.value)} className={`${fieldClass} flex-none sm:w-28`}>
+                  <option value="XOF">XOF</option>
+                  <option value="USD">USD</option>
+                  <option value="EUR">EUR</option>
+                  <option value="GHS">GHS</option>
+                  <option value="NGN">NGN</option>
+                </select>
+              </div>
+            </>
+          )}
           <button
             type="submit"
             disabled={saving}
-            className="magnetic-btn bg-accent text-background px-6 py-3 rounded-xl text-sm font-semibold disabled:opacity-60 shrink-0"
+            className="magnetic-btn bg-accent text-background px-6 py-3 rounded-xl text-sm font-semibold disabled:opacity-60"
           >
-            {saving ? 'Ajout...' : 'Ajouter'}
+            {saving ? 'Ajout...' : provider === 'moneroo' ? 'Connecter ce compte Moneroo' : 'Ajouter'}
           </button>
         </form>
         {error && <p className="text-sm text-red-500 mt-3">{error}</p>}

@@ -4,8 +4,8 @@ export async function fetchPaymentMethods() {
   return apiGet('/payment-methods');
 }
 
-export async function createPaymentMethod({ label, url }) {
-  return apiPost('/payment-methods', { label, url });
+export async function createPaymentMethod(payload) {
+  return apiPost('/payment-methods', payload);
 }
 
 export async function updatePaymentMethod(id, patch) {

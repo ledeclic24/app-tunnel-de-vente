@@ -313,16 +313,19 @@ function BlockFields({ type, content, set, userId, blockId, onGenerateImage, ima
                     {savedPaymentMethods?.length > 0 && (
                       <div className="flex flex-wrap gap-1.5 mb-2">
                         {savedPaymentMethods.map((m) => {
-                          const already = (plan.paymentLinks || []).some((l) => l.url === m.url);
+                          const already = (plan.paymentLinks || []).some((l) => (m.provider === 'moneroo' ? l.paymentMethodId === m.id : l.url === m.url));
+                          const entry = m.provider === 'moneroo'
+                            ? { method: m.label, provider: 'moneroo', paymentMethodId: m.id }
+                            : { method: m.label, url: m.url };
                           return (
                             <button
                               key={m.id}
                               type="button"
                               disabled={already}
-                              onClick={() => update({ paymentLinks: [...(plan.paymentLinks || []), { method: m.label, url: m.url }] })}
+                              onClick={() => update({ paymentLinks: [...(plan.paymentLinks || []), entry] })}
                               className="text-xs px-2.5 py-1 rounded-full border border-accent/30 text-accent hover:bg-accent/10 transition-colors disabled:opacity-40 disabled:cursor-default"
                             >
-                              {already ? '✓ ' : '+ '}{m.label}
+                              {already ? '✓ ' : '+ '}{m.label}{m.provider === 'moneroo' ? ' ⚡' : ''}
                             </button>
                           );
                         })}
@@ -334,10 +337,14 @@ function BlockFields({ type, content, set, userId, blockId, onGenerateImage, ima
                       emptyItem={{ method: '', url: '' }}
                       addLabel="Ajouter un lien manuellement"
                       renderRow={(link, updateLink) => (
-                        <>
-                          <input className={inputClass} placeholder="Ex : Mobile Money, Carte bancaire..." value={link.method || ''} onChange={(e) => updateLink({ method: e.target.value })} />
-                          <input className={inputClass} placeholder="https://..." value={link.url || ''} onChange={(e) => updateLink({ url: e.target.value })} />
-                        </>
+                        link.provider === 'moneroo' ? (
+                          <input className={inputClass} placeholder="Nom affiché" value={link.method || ''} onChange={(e) => updateLink({ method: e.target.value })} />
+                        ) : (
+                          <>
+                            <input className={inputClass} placeholder="Ex : Mobile Money, Carte bancaire..." value={link.method || ''} onChange={(e) => updateLink({ method: e.target.value })} />
+                            <input className={inputClass} placeholder="https://..." value={link.url || ''} onChange={(e) => updateLink({ url: e.target.value })} />
+                          </>
+                        )
                       )}
                     />
                   </div>

@@ -1,8 +1,66 @@
 import React from 'react';
-import { Check, X } from 'lucide-react';
+import { Check, X, Loader2 } from 'lucide-react';
 import { getEditableProps, getContentEditableProps, getSectionBackground, cx } from '../../lib/blockStyle';
+import { parsePriceAmount } from '../../lib/checkoutApi';
 import SlotList, { SlotReadOnly } from './SlotList';
 import EditableItemImage from './EditableItemImage';
+
+// Mini-formulaire nom + email affiché avant la redirection vers Moneroo —
+// requis par leur API pour initialiser une transaction (voir
+// PaymentsService côté backend), impossible de rediriger sans ces infos.
+function MonerooCheckoutModal({ planName, onClose, onSubmit }) {
+  const [name, setName] = React.useState('');
+  const [email, setEmail] = React.useState('');
+  const [submitting, setSubmitting] = React.useState(false);
+  const [error, setError] = React.useState('');
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setSubmitting(true);
+    setError('');
+    try {
+      await onSubmit({ name, email });
+    } catch {
+      setError('Impossible de lancer le paiement pour le moment. Réessaie dans un instant.');
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60" onClick={onClose}>
+      <div className="bg-background text-surface rounded-2xl p-6 w-full max-w-sm" onClick={(e) => e.stopPropagation()}>
+        <h3 className="font-sans font-bold text-lg mb-1">{planName}</h3>
+        <p className="text-sm text-surface/60 mb-4">Renseigne tes informations pour continuer vers le paiement sécurisé.</p>
+        <form onSubmit={handleSubmit} className="space-y-3">
+          <input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Prénom"
+            required
+            className="w-full bg-primary/5 border border-surface/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-accent transition-colors"
+          />
+          <input
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="Email"
+            type="email"
+            required
+            className="w-full bg-primary/5 border border-surface/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-accent transition-colors"
+          />
+          {error && <p className="text-sm text-red-500">{error}</p>}
+          <button
+            type="submit"
+            disabled={submitting}
+            className="magnetic-btn w-full flex items-center justify-center gap-2 bg-accent text-background py-3 rounded-xl text-sm font-semibold disabled:opacity-60"
+          >
+            {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
+            {submitting ? 'Redirection...' : 'Continuer vers le paiement'}
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}
 
 const GRID_COLS_CLASS = { 1: '', 2: 'md:grid-cols-2', 3: 'md:grid-cols-3' };
 
@@ -43,13 +101,14 @@ function isSlotsValid(slots, itemCount) {
   return fieldSlots.length === itemCount;
 }
 
-export default function PricingBlock({ content, onAdvance, editMode, selectedElement, onSelectElement, onContentChange, userId, defaultBg }) {
+export default function PricingBlock({ content, onAdvance, onMonerooCheckout, editMode, selectedElement, onSelectElement, onContentChange, userId, defaultBg }) {
   const { heading, plans = [], layout, comparisonRows, slots } = content;
   const isComparison = layout === 'comparison' && (comparisonRows || []).length > 0;
   const gridClass = GRID_COLS_CLASS[Math.min(plans.length, 3)] || '';
   const editable = (elementKey, kind, label) =>
     getEditableProps({ elementKey, kind, styles: content.styles, editMode, selectedElement, onSelectElement, label });
   const bg = getSectionBackground(content.styles, defaultBg || 'white');
+  const [checkoutTarget, setCheckoutTarget] = React.useState(null);
 
   const headingProps = editable('heading', 'text', 'Titre');
   const headingEditable = getContentEditableProps({ editMode, onContentChange, content, field: 'heading' });
@@ -110,22 +169,38 @@ export default function PricingBlock({ content, onAdvance, editMode, selectedEle
         </div>
         {(plan.paymentLinks || []).length > 0 ? (
           <div className="space-y-2 mb-6">
-            {plan.paymentLinks.map((link, j) => (
-              <a
-                key={j}
-                href={link.url}
-                target="_blank"
-                rel="noreferrer"
-                onClick={editMode ? (e) => { e.preventDefault(); buttonProps.onClick?.(e); } : undefined}
-                style={j === 0 ? buttonProps.style : undefined}
-                className={cx(
-                  `magnetic-btn block w-full text-center py-3 rounded-full font-semibold ${j === 0 ? (plan.highlight ? 'bg-accent text-background' : 'bg-primary text-background') : 'border border-background/30 text-background'}`,
-                  j === 0 ? buttonProps.className : undefined,
-                )}
-              >
-                {link.method || 'Payer'}
-              </a>
-            ))}
+            {plan.paymentLinks.map((link, j) => {
+              const sharedClassName = cx(
+                `magnetic-btn block w-full text-center py-3 rounded-full font-semibold ${j === 0 ? (plan.highlight ? 'bg-accent text-background' : 'bg-primary text-background') : 'border border-background/30 text-background'}`,
+                j === 0 ? buttonProps.className : undefined,
+              );
+              if (link.provider === 'moneroo') {
+                return (
+                  <button
+                    key={j}
+                    type="button"
+                    onClick={editMode ? buttonProps.onClick : () => setCheckoutTarget({ plan, link })}
+                    style={j === 0 ? buttonProps.style : undefined}
+                    className={sharedClassName}
+                  >
+                    {link.method || 'Payer'}
+                  </button>
+                );
+              }
+              return (
+                <a
+                  key={j}
+                  href={link.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  onClick={editMode ? (e) => { e.preventDefault(); buttonProps.onClick?.(e); } : undefined}
+                  style={j === 0 ? buttonProps.style : undefined}
+                  className={sharedClassName}
+                >
+                  {link.method || 'Payer'}
+                </a>
+              );
+            })}
           </div>
         ) : (
           <button
@@ -191,6 +266,21 @@ export default function PricingBlock({ content, onAdvance, editMode, selectedEle
         <div className={`stagger-children grid grid-cols-1 gap-6 ${gridClass}`}>
           {effectiveSlots.map((slot) => <SlotReadOnly key={slot.id} slot={slot} renderField={renderField} bg={bg} />)}
         </div>
+      )}
+      {checkoutTarget && (
+        <MonerooCheckoutModal
+          planName={checkoutTarget.plan.name}
+          onClose={() => setCheckoutTarget(null)}
+          onSubmit={async ({ name, email }) => {
+            await onMonerooCheckout?.({
+              paymentMethodId: checkoutTarget.link.paymentMethodId,
+              planName: checkoutTarget.plan.name,
+              amount: parsePriceAmount(checkoutTarget.plan.price),
+              customerEmail: email,
+              customerName: name,
+            });
+          }}
+        />
       )}
     </section>
   );

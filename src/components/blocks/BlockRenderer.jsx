@@ -42,7 +42,7 @@ const COMPONENTS = {
 };
 
 export default function BlockRenderer({
-  block, onAdvance, onSubmitLead, editMode, selectedElement, onSelectElement, onContentChange, userId, defaultBg,
+  block, onAdvance, onSubmitLead, onMonerooCheckout, editMode, selectedElement, onSelectElement, onContentChange, userId, defaultBg,
   siblingSteps, onNavigateToStep, currentStepSlug, onGenerateImage, isGeneratingImage,
 }) {
   const Component = COMPONENTS[block.type];
@@ -78,6 +78,7 @@ export default function BlockRenderer({
           content={block.content}
           onAdvance={onAdvance}
           onSubmitLead={onSubmitLead}
+          onMonerooCheckout={onMonerooCheckout}
           editMode={editMode}
           selectedElement={selectedElement}
           onSelectElement={onSelectElement}
