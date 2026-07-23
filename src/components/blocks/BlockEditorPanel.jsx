@@ -1,6 +1,7 @@
 import React from 'react';
 import { Plus, Trash2 } from 'lucide-react';
 import ImageUploadField from './ImageUploadField';
+import { fetchPaymentMethods } from '../../lib/paymentMethodsApi';
 
 const inputClass = "w-full bg-primary/5 border border-surface/10 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-accent transition-colors text-surface";
 const labelClass = "block text-xs font-semibold text-surface/70 uppercase tracking-wider mb-1";
@@ -60,6 +61,14 @@ function ListEditor({ items, onChange, renderRow, emptyItem, addLabel }) {
 }
 
 function BlockFields({ type, content, set, userId, blockId, onGenerateImage, imageGenerating, steps }) {
+  // Chargé une seule fois ici (pas dans le case 'pricing') pour respecter les
+  // règles des hooks : ce composant fait un `return` direct par type de bloc.
+  const [savedPaymentMethods, setSavedPaymentMethods] = React.useState(null);
+  React.useEffect(() => {
+    if (type !== 'pricing') return;
+    fetchPaymentMethods().then(setSavedPaymentMethods).catch(() => setSavedPaymentMethods([]));
+  }, [type]);
+
   switch (type) {
     case 'hero':
       return (
@@ -299,13 +308,31 @@ function BlockFields({ type, content, set, userId, blockId, onGenerateImage, ima
                   </label>
                   <div>
                     <label className="block text-xs text-surface/50 mb-1.5">
-                      Moyens de paiement (optionnel — colle tes propres liens de paiement déjà configurés ; sans lien, le bouton avance simplement à l'étape suivante)
+                      Moyens de paiement (optionnel — sans lien, le bouton avance simplement à l'étape suivante)
                     </label>
+                    {savedPaymentMethods?.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5 mb-2">
+                        {savedPaymentMethods.map((m) => {
+                          const already = (plan.paymentLinks || []).some((l) => l.url === m.url);
+                          return (
+                            <button
+                              key={m.id}
+                              type="button"
+                              disabled={already}
+                              onClick={() => update({ paymentLinks: [...(plan.paymentLinks || []), { method: m.label, url: m.url }] })}
+                              className="text-xs px-2.5 py-1 rounded-full border border-accent/30 text-accent hover:bg-accent/10 transition-colors disabled:opacity-40 disabled:cursor-default"
+                            >
+                              {already ? '✓ ' : '+ '}{m.label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
                     <ListEditor
                       items={plan.paymentLinks || []}
                       onChange={(paymentLinks) => update({ paymentLinks })}
                       emptyItem={{ method: '', url: '' }}
-                      addLabel="Ajouter un moyen de paiement"
+                      addLabel="Ajouter un lien manuellement"
                       renderRow={(link, updateLink) => (
                         <>
                           <input className={inputClass} placeholder="Ex : Mobile Money, Carte bancaire..." value={link.method || ''} onChange={(e) => updateLink({ method: e.target.value })} />

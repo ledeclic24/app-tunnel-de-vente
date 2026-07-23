@@ -1,17 +1,130 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Users, ShieldCheck, CreditCard, Trash2, Lock, Info, UserPlus } from 'lucide-react';
+import { Users, ShieldCheck, CreditCard, Trash2, Lock, Info, UserPlus, Wallet, ExternalLink } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { getPlan } from '../../lib/plans';
 import { fetchOrgMembers, inviteOrgMember, removeOrgMember } from '../../lib/growthApi';
+import { fetchPaymentMethods, createPaymentMethod, deletePaymentMethod } from '../../lib/paymentMethodsApi';
 import { useConfirm } from '../../components/app/ConfirmDialog';
 import BillingPage from './BillingPage';
 
 const TABS = [
   { key: 'equipe', label: 'Équipe', icon: Users },
+  { key: 'paiements', label: 'Paiements', icon: Wallet },
   { key: 'securite', label: 'Sécurité', icon: ShieldCheck },
   { key: 'facturation', label: 'Facturation', icon: CreditCard },
 ];
+
+function PaymentMethodsTab() {
+  const [methods, setMethods] = useState(null);
+  const [label, setLabel] = useState('');
+  const [url, setUrl] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+  const [removingId, setRemovingId] = useState(null);
+  const confirm = useConfirm();
+
+  const load = useCallback(() => {
+    fetchPaymentMethods().then(setMethods).catch(() => setMethods([]));
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  const handleAdd = async (e) => {
+    e.preventDefault();
+    if (!label.trim() || !url.trim()) return;
+    setSaving(true);
+    setError('');
+    try {
+      await createPaymentMethod({ label: label.trim(), url: url.trim() });
+      setLabel('');
+      setUrl('');
+      load();
+    } catch {
+      setError("Impossible d'ajouter ce moyen de paiement. Vérifie que le lien est une URL valide (https://...).");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleRemove = async (method) => {
+    if (!(await confirm(`Supprimer "${method.label}" ? Il ne sera plus disponible pour de nouveaux tunnels, mais restera inchangé sur les tunnels déjà publiés.`))) return;
+    setRemovingId(method.id);
+    try {
+      await deletePaymentMethod(method.id);
+      load();
+    } finally {
+      setRemovingId(null);
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="bg-background border border-surface/10 rounded-[2rem] p-6 md:p-8">
+        <h2 className="text-sm font-sans font-semibold text-surface mb-1">Tes moyens de paiement</h2>
+        <p className="text-sm text-surface/60 mb-4">
+          Enregistre ici tes liens de paiement (Wave, Orange Money, Moneroo, carte bancaire, ou n'importe quel autre moyen) — tu pourras ensuite les ajouter en un clic sur les offres de tes tunnels, au lieu de recopier le lien à chaque fois.
+        </p>
+
+        {methods === null ? (
+          <p className="text-sm text-surface/40">Chargement...</p>
+        ) : methods.length === 0 ? (
+          <p className="text-sm text-surface/50">Aucun moyen de paiement enregistré pour l'instant.</p>
+        ) : (
+          <ul className="space-y-3 mb-2">
+            {methods.map((m) => (
+              <li key={m.id} className="flex items-center justify-between gap-3 bg-surface/5 rounded-xl px-4 py-3">
+                <div className="min-w-0">
+                  <p className="text-sm text-surface font-medium truncate">{m.label}</p>
+                  <a href={m.url} target="_blank" rel="noreferrer" className="text-xs text-surface/50 hover:text-accent inline-flex items-center gap-1 truncate">
+                    {m.url} <ExternalLink className="w-3 h-3 shrink-0" />
+                  </a>
+                </div>
+                <button
+                  onClick={() => handleRemove(m)}
+                  disabled={removingId === m.id}
+                  aria-label={`Supprimer ${m.label}`}
+                  className="hover-lift text-surface/40 hover:text-red-500 transition-colors disabled:opacity-50 shrink-0"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      <div className="bg-background border border-surface/10 rounded-[2rem] p-6 md:p-8">
+        <h2 className="text-sm font-sans font-semibold text-surface mb-4">Ajouter un moyen de paiement</h2>
+        <form onSubmit={handleAdd} className="flex flex-col sm:flex-row gap-3">
+          <input
+            value={label}
+            onChange={(e) => setLabel(e.target.value)}
+            placeholder="Ex : Wave, Orange Money, Moneroo..."
+            required
+            className="flex-1 bg-primary/5 border border-surface/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-accent transition-colors text-surface"
+          />
+          <input
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+            placeholder="https://..."
+            type="url"
+            required
+            className="flex-1 bg-primary/5 border border-surface/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-accent transition-colors text-surface"
+          />
+          <button
+            type="submit"
+            disabled={saving}
+            className="magnetic-btn bg-accent text-background px-6 py-3 rounded-xl text-sm font-semibold disabled:opacity-60 shrink-0"
+          >
+            {saving ? 'Ajout...' : 'Ajouter'}
+          </button>
+        </form>
+        {error && <p className="text-sm text-red-500 mt-3">{error}</p>}
+      </div>
+    </div>
+  );
+}
 
 function TeamTab() {
   const { user, profile, effectiveOwnerId, effectiveProfile } = useAuth();
@@ -255,6 +368,7 @@ export default function OrganisationPage() {
       </div>
 
       {activeTab === 'equipe' && <TeamTab />}
+      {activeTab === 'paiements' && <PaymentMethodsTab />}
       {activeTab === 'securite' && <SecurityTab />}
       {activeTab === 'facturation' && <BillingPage />}
     </div>
