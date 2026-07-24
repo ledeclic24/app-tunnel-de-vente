@@ -66,7 +66,7 @@ function RouteFallback() {
 function isVendekoHost(hostname) {
   return hostname === 'localhost' || hostname === '127.0.0.1'
     || hostname.endsWith('.vercel.app')
-    || hostname.endsWith('.vendeko.app');
+    || hostname === 'tontunnel.com' || hostname === 'www.tontunnel.com';
 }
 
 function DomainNotConfiguredPage() {
