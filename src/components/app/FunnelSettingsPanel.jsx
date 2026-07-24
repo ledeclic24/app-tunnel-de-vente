@@ -180,6 +180,7 @@ export default function FunnelSettingsPanel({ funnel, plan, onSave }) {
     publish_at: toDatetimeLocalValue(funnel.publish_at),
     unpublish_at: toDatetimeLocalValue(funnel.unpublish_at),
     deliverable_ebook_id: funnel.deliverable_ebook_id || '',
+    post_purchase_instructions: funnel.post_purchase_instructions || '',
   });
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -203,6 +204,7 @@ export default function FunnelSettingsPanel({ funnel, plan, onSave }) {
         publish_at: fromDatetimeLocalValue(draft.publish_at),
         unpublish_at: fromDatetimeLocalValue(draft.unpublish_at),
         deliverable_ebook_id: draft.deliverable_ebook_id || null,
+        post_purchase_instructions: draft.post_purchase_instructions.trim() || null,
       });
       setSaved(true);
     } catch {
@@ -286,7 +288,7 @@ export default function FunnelSettingsPanel({ funnel, plan, onSave }) {
           <h3 className="font-sans font-semibold text-surface">Livraison automatique</h3>
         </div>
         <p className="text-sm text-surface/60">
-          Quand quelqu'un remplit un formulaire sur ce tunnel (ex. l'étape de commande), envoie-lui automatiquement un ebook par email. Laisse sur "Aucune" si ce tunnel ne vend pas d'ebook ou si tu préfères livrer toi-même.
+          Quand quelqu'un remplit un formulaire ou termine un paiement intégré sur ce tunnel, il reçoit automatiquement un email — l'ebook choisi ci-dessous, tes instructions écrites plus bas, ou les deux à la fois.
         </p>
         {ebooks === null ? (
           <p className="text-sm text-surface/40">Chargement de tes ebooks...</p>
@@ -302,13 +304,26 @@ export default function FunnelSettingsPanel({ funnel, plan, onSave }) {
               value={draft.deliverable_ebook_id}
               onChange={(e) => set({ deliverable_ebook_id: e.target.value })}
             >
-              <option value="">Aucune — livraison manuelle</option>
+              <option value="">Aucun</option>
               {ebooks.map((eb) => (
                 <option key={eb.id} value={eb.id}>{eb.title}</option>
               ))}
             </select>
           </div>
         )}
+        <div>
+          <label className={labelClass}>Instructions après achat (optionnel)</label>
+          <textarea
+            className={inputClass}
+            rows={4}
+            placeholder={"Ex : Rejoins notre groupe WhatsApp ici : ...\nTon accès sera activé sous 24h.\nUne question ? Réponds directement à cet email."}
+            value={draft.post_purchase_instructions}
+            onChange={(e) => set({ post_purchase_instructions: e.target.value })}
+          />
+          <p className="text-xs text-surface/40 mt-1">
+            Envoyées par email juste après l'achat — en plus de l'ebook si les deux sont renseignés, ou seules sinon. Si ni ebook ni instructions ne sont renseignés, le client ne reçoit aucun email après son achat.
+          </p>
+        </div>
       </div>
 
       <DomainSection funnelId={funnel.id} />

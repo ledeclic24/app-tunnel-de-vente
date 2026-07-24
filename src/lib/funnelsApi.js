@@ -24,6 +24,7 @@ function normalizeFunnel(f) {
     publish_at: f.publishAt,
     unpublish_at: f.unpublishAt,
     deliverable_ebook_id: f.deliverableEbookId,
+    post_purchase_instructions: f.postPurchaseInstructions,
     created_at: f.createdAt,
     updated_at: f.updatedAt,
   };
@@ -54,6 +55,7 @@ const FUNNEL_PATCH_KEY_MAP = {
   publish_at: 'publishAt',
   unpublish_at: 'unpublishAt',
   deliverable_ebook_id: 'deliverableEbookId',
+  post_purchase_instructions: 'postPurchaseInstructions',
 };
 
 function buildStepsPayload(steps) {
