@@ -1,22 +1,22 @@
-import { supabase } from './supabaseClient';
+import { apiGet } from './apiClient';
 
 export async function fetchAnalyticsData() {
-  const [profilesRes, funnelsRes, leadsRes, eventsRes] = await Promise.all([
-    supabase.from('profiles').select('id,email,plan,created_at'),
-    supabase.from('funnels').select('id,created_at'),
-    supabase.from('leads').select('id,created_at'),
-    supabase.from('plan_change_events').select('*').order('changed_at', { ascending: false }),
-  ]);
-  if (profilesRes.error) throw profilesRes.error;
-  if (funnelsRes.error) throw funnelsRes.error;
-  if (leadsRes.error) throw leadsRes.error;
-  if (eventsRes.error) throw eventsRes.error;
-
+  const data = await apiGet('/analytics/admin-overview');
   return {
-    profiles: profilesRes.data || [],
-    funnels: funnelsRes.data || [],
-    leads: leadsRes.data || [],
-    planEvents: eventsRes.data || [],
+    profiles: (data.users || []).map((u) => ({
+      id: u.id,
+      email: u.email,
+      plan: u.plan,
+      created_at: u.createdAt,
+    })),
+    funnels: (data.funnels || []).map((f) => ({ id: f.id, created_at: f.createdAt })),
+    leads: (data.leads || []).map((l) => ({ id: l.id, created_at: l.createdAt })),
+    planEvents: (data.planEvents || []).map((e) => ({
+      id: e.id,
+      old_plan: e.fromPlan,
+      new_plan: e.toPlan,
+      changed_at: e.changedAt,
+    })),
   };
 }
 

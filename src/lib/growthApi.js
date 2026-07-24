@@ -1,111 +1,142 @@
-import { supabase } from './supabaseClient';
+import { apiGet, apiPost, apiPatch, apiDelete } from './apiClient';
+
+// Le backend NestJS renvoie du camelCase (userId, funnelId, createdAt...)
+// là où Supabase renvoyait du snake_case — on traduit ici pour que les
+// pages déjà écrites contre l'ancien format n'aient rien à changer (même
+// principe que normalizeFunnel dans funnelsApi.js).
 
 // ============ Webhooks ============
-export async function fetchWebhooks(userId) {
-  const { data, error } = await supabase.from('webhooks').select('*').eq('user_id', userId).order('created_at', { ascending: false });
-  if (error) throw error;
-  return data;
+function normalizeWebhook(w) {
+  if (!w) return null;
+  return {
+    id: w.id,
+    user_id: w.userId,
+    label: w.label,
+    url: w.url,
+    funnel_id: w.funnelId,
+    active: w.active,
+    created_at: w.createdAt,
+  };
 }
 
-export async function createWebhook({ userId, label, url, funnelId = null }) {
-  const { data, error } = await supabase.from('webhooks').insert({ user_id: userId, label, url, funnel_id: funnelId }).select().single();
-  if (error) throw error;
-  return data;
+function normalizeWebhookLog(l) {
+  if (!l) return null;
+  return {
+    id: l.id,
+    webhook_id: l.webhookId,
+    status_code: l.statusCode,
+    success: l.success,
+    dispatched_at: l.dispatchedAt,
+  };
+}
+
+export async function fetchWebhooks() {
+  const rows = await apiGet('/webhooks');
+  return rows.map(normalizeWebhook);
+}
+
+export async function createWebhook({ label, url, funnelId = null }) {
+  const row = await apiPost('/webhooks', { label, url, funnelId: funnelId || undefined });
+  return normalizeWebhook(row);
 }
 
 export async function toggleWebhook(id, active) {
-  const { error } = await supabase.from('webhooks').update({ active }).eq('id', id);
-  if (error) throw error;
+  await apiPatch(`/webhooks/${id}`, { active });
 }
 
 export async function deleteWebhook(id) {
-  const { error } = await supabase.from('webhooks').delete().eq('id', id);
-  if (error) throw error;
+  await apiDelete(`/webhooks/${id}`);
 }
 
 export async function fetchWebhookLogs(webhookIds) {
   if (!webhookIds.length) return [];
-  const { data, error } = await supabase
-    .from('webhook_logs')
-    .select('*')
-    .in('webhook_id', webhookIds)
-    .order('dispatched_at', { ascending: false })
-    .limit(20);
-  if (error) throw error;
-  return data;
+  const rows = await apiGet(`/webhook-logs?webhookIds=${webhookIds.join(',')}`);
+  return rows.map(normalizeWebhookLog);
 }
 
 // ============ Bibliothèque de blocs réutilisables ============
-export async function fetchReusableBlocks(userId) {
-  const { data, error } = await supabase.from('reusable_blocks').select('*').eq('user_id', userId).order('created_at', { ascending: false });
-  if (error) throw error;
-  return data;
+function normalizeReusableBlock(b) {
+  if (!b) return null;
+  return {
+    id: b.id,
+    user_id: b.userId,
+    name: b.name,
+    type: b.type,
+    content: b.content,
+    usage_count: b.usageCount,
+    created_at: b.createdAt,
+  };
 }
 
-export async function saveReusableBlock({ userId, name, type, content }) {
-  const { data, error } = await supabase.from('reusable_blocks').insert({ user_id: userId, name, type, content }).select().single();
-  if (error) throw error;
-  return data;
+export async function fetchReusableBlocks() {
+  const rows = await apiGet('/reusable-blocks');
+  return rows.map(normalizeReusableBlock);
+}
+
+export async function saveReusableBlock({ name, type, content }) {
+  const row = await apiPost('/reusable-blocks', { name, type, content });
+  return normalizeReusableBlock(row);
 }
 
 export async function deleteReusableBlock(id) {
-  const { error } = await supabase.from('reusable_blocks').delete().eq('id', id);
-  if (error) throw error;
+  await apiDelete(`/reusable-blocks/${id}`);
 }
 
-export async function incrementReusableBlockUsage(id, currentCount) {
-  const { error } = await supabase.from('reusable_blocks').update({ usage_count: currentCount + 1 }).eq('id', id);
-  if (error) throw error;
+// Le compteur d'usage est incrémenté côté serveur (jamais recalculé côté
+// client) — currentCount n'est plus utilisé, gardé en paramètre pour ne
+// pas devoir retoucher les appelants existants.
+export async function incrementReusableBlockUsage(id) {
+  await apiPost(`/reusable-blocks/${id}/increment-usage`, {});
 }
 
 // ============ Équipe ============
-export async function fetchOrgMembers(ownerId) {
-  const { data, error } = await supabase.from('org_members').select('*').eq('owner_id', ownerId).order('created_at', { ascending: false });
-  if (error) throw error;
-  return data;
+function normalizeOrgMember(m) {
+  if (!m) return null;
+  return {
+    id: m.id,
+    owner_id: m.ownerId,
+    member_id: m.memberId,
+    invited_email: m.invitedEmail,
+    status: m.status,
+    created_at: m.createdAt,
+  };
 }
 
-export async function inviteOrgMember({ ownerId, email }) {
-  const { data, error } = await supabase.from('org_members').insert({ owner_id: ownerId, invited_email: email.trim().toLowerCase() }).select().single();
-  if (error) throw error;
+export async function fetchOrgMembers() {
+  const rows = await apiGet('/org-members');
+  return rows.map(normalizeOrgMember);
+}
 
-  // Envoie l'invitation via le système d'e-mail intégré de Supabase (même
-  // mécanisme que la réinitialisation de mot de passe — aucun compte externe requis).
-  await supabase.auth.resetPasswordForEmail(email.trim().toLowerCase(), {
-    redirectTo: `${window.location.origin}/inscription`,
-  });
-  return data;
+export async function inviteOrgMember({ email }) {
+  const row = await apiPost('/org-members', { email: email.trim().toLowerCase() });
+  return normalizeOrgMember(row);
 }
 
 export async function removeOrgMember(id) {
-  const { error } = await supabase.from('org_members').delete().eq('id', id);
-  if (error) throw error;
+  await apiDelete(`/org-members/${id}`);
 }
 
-// Active la place d'un invité dès qu'il se connecte avec l'e-mail invité.
-export async function activatePendingMembership(userId, email) {
-  const { error } = await supabase
-    .from('org_members')
-    .update({ member_id: userId, status: 'active' })
-    .eq('invited_email', email.trim().toLowerCase())
-    .eq('status', 'pending');
-  if (error) throw error;
-}
+// L'activation d'une invitation en attente se fait désormais automatiquement
+// côté serveur à la connexion/inscription (voir AuthService) — cette
+// fonction n'a plus besoin d'être appelée depuis le frontend.
 
 // ============ Benchmark sectoriel ============
 export async function fetchCategoryBenchmark(category) {
-  const { data, error } = await supabase.rpc('category_benchmark', { p_category: category });
-  if (error) throw error;
-  return data?.[0] || { avg_conversion: 0, sample_size: 0 };
+  return apiGet(`/analytics/category-benchmark?category=${encodeURIComponent(category)}`);
 }
 
 // ============ Journal d'audit ============
-export async function logAuditEvent({ actorId, action, target, meta = {} }) {
-  await supabase.from('audit_log').insert({ actor_id: actorId, action, target, meta });
-}
-
+// La création d'événements d'audit se fait désormais automatiquement côté
+// serveur, au moment de l'action elle-même (voir AdminService) — plus
+// besoin de logAuditEvent depuis le frontend.
 export async function fetchAuditLog(limit = 50) {
-  const { data, error } = await supabase.from('audit_log').select('*').order('created_at', { ascending: false }).limit(limit);
-  if (error) throw error;
-  return data;
+  const rows = await apiGet(`/audit-log?limit=${limit}`);
+  return rows.map((e) => ({
+    id: e.id,
+    actor_id: e.actorId,
+    action: e.action,
+    target: e.target,
+    meta: e.meta,
+    created_at: e.createdAt,
+  }));
 }

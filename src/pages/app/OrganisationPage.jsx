@@ -298,13 +298,15 @@ function TeamTab() {
     setInviteError('');
     setInviteSuccess('');
     try {
-      await inviteOrgMember({ ownerId: effectiveOwnerId, email: inviteEmail });
+      await inviteOrgMember({ email: inviteEmail });
       setInviteEmail('');
       setInviteSuccess('Invitation envoyée par e-mail.');
       await loadMembers();
     } catch (err) {
-      if (err?.code === '23505' || /duplicate|unique/i.test(err?.message || '')) {
+      if (err?.status === 409) {
         setInviteError('Cette adresse a déjà été invitée.');
+      } else if (err?.status === 403) {
+        setInviteError(err.message || "Limite de places d'équipe atteinte.");
       } else {
         setInviteError("Impossible d'envoyer l'invitation. Réessaie.");
       }

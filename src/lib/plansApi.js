@@ -1,11 +1,10 @@
-import { supabase } from './supabaseClient';
+import { apiGet, apiPatch } from './apiClient';
 import { PLANS, PLAN_ORDER } from './plans';
 
 export async function fetchPlanPrices() {
-  const { data, error } = await supabase.from('plan_settings').select('*');
-  if (error) throw error;
+  const rows = await apiGet('/plan-settings');
   const map = {};
-  (data || []).forEach((row) => { map[row.key] = row; });
+  (rows || []).forEach((row) => { map[row.key] = row; });
   return map;
 }
 
@@ -19,12 +18,9 @@ export async function getLivePlans() {
 }
 
 export async function updatePlanPrice(key, price) {
-  const { error } = await supabase.from('plan_settings').update({ price, updated_at: new Date().toISOString() }).eq('key', key);
-  if (error) throw error;
+  await apiPatch(`/plan-settings/${key}`, { price });
 }
 
-export async function logPlanChange(userId, oldPlan, newPlan) {
-  if (oldPlan === newPlan) return;
-  const { error } = await supabase.from('plan_change_events').insert({ user_id: userId, old_plan: oldPlan, new_plan: newPlan });
-  if (error) throw error;
-}
+// Le journal des changements de plan est désormais tenu automatiquement
+// côté serveur (voir AdminService.updateUserPlan / SubscriptionsService) —
+// logPlanChange n'a plus besoin d'être appelé depuis le frontend.

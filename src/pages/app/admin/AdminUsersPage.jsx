@@ -1,8 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Search, Shield, ShieldOff } from 'lucide-react';
 import { fetchAllProfiles, updateUserPlanAsAdmin, setAdminStatus } from '../../../lib/adminApi';
-import { logPlanChange } from '../../../lib/plansApi';
-import { logAuditEvent } from '../../../lib/growthApi';
 import { useAuth } from '../../../context/AuthContext';
 import { PLAN_ORDER, getPlan } from '../../../lib/plans';
 
@@ -27,16 +25,9 @@ export default function AdminUsersPage() {
 
   const handlePlanChange = async (profileId, plan) => {
     setBusyId(profileId);
-    const target = profiles.find((p) => p.id === profileId);
-    const previous = target?.plan || 'starter';
+    // Le changement de plan et son journal d'audit sont désormais gérés
+    // automatiquement côté serveur (voir AdminService.updateUserPlan).
     await updateUserPlanAsAdmin(profileId, plan);
-    await logPlanChange(profileId, previous, plan).catch(() => {});
-    await logAuditEvent({
-      actorId: user?.id,
-      action: 'plan.change',
-      target: target?.email,
-      meta: { previous, next: plan },
-    }).catch(() => {});
     await load();
     setBusyId(null);
   };
@@ -45,12 +36,6 @@ export default function AdminUsersPage() {
     setBusyId(p.id);
     try {
       await setAdminStatus(p.id, !p.is_admin);
-      await logAuditEvent({
-        actorId: user?.id,
-        action: p.is_admin ? 'admin.revoke' : 'admin.grant',
-        target: p.email,
-        meta: {},
-      }).catch(() => {});
       await load();
       if (p.id === user?.id) await refreshProfile();
     } finally {

@@ -1,25 +1,9 @@
-import { supabase } from './supabaseClient';
+import { apiPost } from './apiClient';
 
+// Facturation de l'abonnement Vendeko lui-même (Pro/Entreprise), via le
+// backend NestJS — distinct de checkoutApi.js, qui gère le paiement des
+// tunnels (chaque vendeur avec son propre compte Moneroo).
 export async function createPayment(planKey) {
-  const { data: sessionData } = await supabase.auth.getSession();
-  const token = sessionData?.session?.access_token;
-  if (!token) throw new Error('Non connecté.');
-
-  const { data, error } = await supabase.functions.invoke('create-payment', {
-    body: { planKey },
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  if (error) throw error;
-  if (data?.error) throw new Error(data.error);
-  return data.checkoutUrl;
-}
-
-export async function fetchMyPayments(userId) {
-  const { data, error } = await supabase
-    .from('payments')
-    .select('*')
-    .eq('user_id', userId)
-    .order('created_at', { ascending: false });
-  if (error) throw error;
-  return data || [];
+  const { checkoutUrl } = await apiPost('/subscriptions/moneroo/checkout', { planKey });
+  return checkoutUrl;
 }

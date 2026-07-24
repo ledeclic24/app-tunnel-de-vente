@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { Check, Info, CreditCard, Loader2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { supabase } from '../../lib/supabaseClient';
+import { updateUserPlanAsAdmin } from '../../lib/adminApi';
 import { PLANS, PLAN_ORDER, getPlan, formatPrice } from '../../lib/plans';
 import { updateBrandingForUser } from '../../lib/funnelsApi';
-import { getLivePlans, logPlanChange } from '../../lib/plansApi';
+import { getLivePlans } from '../../lib/plansApi';
 import { createPayment } from '../../lib/paymentsApi';
 
 const PAYMENT_STATUS_MESSAGES = {
@@ -41,15 +41,13 @@ export default function BillingPage() {
     if (planKey === currentPlan) return;
     setChanging(planKey);
     setError('');
-    const { error: updateError } = await supabase.from('profiles').update({ plan: planKey }).eq('id', profile.id);
-    if (updateError) {
+    try {
+      await updateUserPlanAsAdmin(profile.id, planKey);
+      await updateBrandingForUser(profile.id, getPlan(planKey).showBranding);
+      await refreshProfile();
+    } catch {
       setError("Impossible de changer de plan pour le moment. Réessaie.");
-      setChanging(null);
-      return;
     }
-    await updateBrandingForUser(profile.id, getPlan(planKey).showBranding);
-    await logPlanChange(profile.id, currentPlan, planKey).catch(() => {});
-    await refreshProfile();
     setChanging(null);
   };
 
