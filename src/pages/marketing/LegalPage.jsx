@@ -26,10 +26,7 @@ Directeur de la publication : [nom du responsable]`,
       },
       {
         heading: 'Hébergement',
-        body: `L'interface (frontend) est hébergée par Vercel Inc. (vercel.com), États-Unis.
-Le serveur applicatif (API) est hébergé par Render Services, Inc. (render.com), États-Unis.
-La base de données est hébergée par Railway Corporation (railway.com), États-Unis.
-[Adresses postales exactes de ces hébergeurs à vérifier sur leurs pages légales respectives avant publication, certaines juridictions l'exigeant explicitement dans les mentions légales.]`,
+        body: `L'application (interface, serveur applicatif et base de données) est hébergée par des prestataires cloud spécialisés, susceptibles d'évoluer dans le temps. [Coordonnées de l'hébergeur en vigueur à faire compléter avant publication, certaines juridictions l'exigeant explicitement dans les mentions légales — nous contacter à cet effet : [email de contact].]`,
       },
       {
         heading: 'Propriété intellectuelle',
@@ -83,7 +80,7 @@ La base de données est hébergée par Railway Corporation (railway.com), États
       },
       {
         heading: 'Prix et paiement',
-        body: `Les prix des abonnements sont indiqués en FCFA, facturés mensuellement, et affichés sur la page Facturation de l'application avant toute souscription. Le paiement s'effectue via les moyens proposés sur cette page (dont Moneroo). L'abonnement est renouvelé automatiquement chaque mois à la même date, sauf résiliation par l'utilisateur avant l'échéance.`,
+        body: `Les prix des abonnements, facturés mensuellement, sont ceux affichés sur la page Facturation de l'application au moment de la souscription et peuvent évoluer dans le temps. Le paiement s'effectue via les moyens proposés sur cette page. L'abonnement est renouvelé automatiquement chaque mois à la même date, sauf résiliation par l'utilisateur avant l'échéance.`,
       },
       {
         heading: 'Droit de rétractation',
@@ -95,7 +92,7 @@ La base de données est hébergée par Railway Corporation (railway.com), États
       },
       {
         heading: "Vente entre l'utilisateur et ses propres clients",
-        body: `Vendeko fournit un outil permettant à ses utilisateurs de vendre leurs propres produits ou services à des tiers via des tunnels de vente. Pour ces ventes, l'utilisateur connecte son propre moyen de paiement (lien externe ou compte Moneroo personnel) : les fonds sont versés directement à l'utilisateur, jamais par l'intermédiaire d'un compte Vendeko. Vendeko n'est pas partie à la transaction entre l'utilisateur et ses acheteurs, et n'intervient ni dans la fixation des prix, ni dans le traitement du paiement, ni dans la livraison du produit ou service vendu. La responsabilité de ces ventes (description du produit, livraison, service après-vente, remboursements éventuels) incombe entièrement à l'utilisateur.`,
+        body: `Vendeko fournit un outil permettant à ses utilisateurs de vendre leurs propres produits ou services à des tiers via des tunnels de vente. Pour ces ventes, l'utilisateur connecte son propre moyen de paiement (lien externe ou compte personnel chez un prestataire de paiement) : les fonds sont versés directement à l'utilisateur, jamais par l'intermédiaire d'un compte Vendeko. Vendeko n'est pas partie à la transaction entre l'utilisateur et ses acheteurs, et n'intervient ni dans la fixation des prix, ni dans le traitement du paiement, ni dans la livraison du produit ou service vendu. La responsabilité de ces ventes (description du produit, livraison, service après-vente, remboursements éventuels) incombe entièrement à l'utilisateur.`,
       },
       {
         heading: 'Facturation',
@@ -108,7 +105,7 @@ La base de données est hébergée par Railway Corporation (railway.com), États
     sections: [
       {
         heading: 'Données collectées',
-        body: `Vendeko collecte : les données de compte (email, nom) ; le contenu des tunnels créés par l'utilisateur ; les données des prospects/clients capturés via les formulaires des tunnels (nom, email, et le cas échéant statut de paiement) ; et, si l'utilisateur connecte un moyen de paiement intégré (Moneroo), ses identifiants d'API, stockés chiffrés et jamais affichés en clair après leur saisie initiale.`,
+        body: `Vendeko collecte : les données de compte (email, nom) ; le contenu des tunnels créés par l'utilisateur ; les données des prospects/clients capturés via les formulaires des tunnels (nom, email, et le cas échéant statut de paiement) ; et, si l'utilisateur connecte un moyen de paiement intégré, ses identifiants d'API, stockés chiffrés et jamais affichés en clair après leur saisie initiale.`,
       },
       {
         heading: 'Finalité du traitement',
@@ -116,18 +113,19 @@ La base de données est hébergée par Railway Corporation (railway.com), États
       },
       {
         heading: 'Sous-traitants et services tiers',
-        body: `Vendeko fait appel aux prestataires suivants pour fonctionner, chacun traitant uniquement les données strictement nécessaires à sa fonction :
-— Vercel (hébergement de l'interface)
-— Render (hébergement du serveur applicatif)
-— Railway (hébergement de la base de données)
-— Brevo (envoi des emails transactionnels : bienvenue, notifications, réinitialisation de mot de passe, contenus post-achat)
-— Moneroo (traitement des paiements, pour les comptes qui activent cette option)
-— OpenAI et Anthropic (génération de texte et d'images par intelligence artificielle, à la demande de l'utilisateur)
-— Sentry (supervision technique des erreurs, si activé)`,
+        body: `Vendeko fait appel à des prestataires tiers spécialisés pour fonctionner, chacun ne traitant que les données strictement nécessaires à sa fonction et susceptible d'être remplacé au fil du temps :
+— Hébergement de l'interface et du serveur applicatif
+— Hébergement de la base de données
+— Envoi des emails transactionnels (bienvenue, notifications, réinitialisation de mot de passe, contenus post-achat)
+— Traitement des paiements, pour les comptes qui activent cette option
+— Génération de texte et d'images par intelligence artificielle, à la demande de l'utilisateur
+— Supervision technique des erreurs, si activé
+
+La liste précise et à jour des sous-traitants est disponible sur demande auprès de [email de contact].`,
       },
       {
         heading: 'Sécurité des moyens de paiement',
-        body: `Les identifiants d'API que l'utilisateur connecte pour son moyen de paiement Moneroo sont chiffrés en base de données (AES-256) et ne transitent ni ne sont stockés en clair après leur saisie. Vendeko ne voit ni ne stocke jamais les numéros de carte bancaire ou de mobile money des clients finaux : ces paiements sont traités directement par Moneroo.`,
+        body: `Les identifiants d'API que l'utilisateur connecte pour son moyen de paiement intégré sont chiffrés en base de données (AES-256) et ne transitent ni ne sont stockés en clair après leur saisie. Vendeko ne voit ni ne stocke jamais les numéros de carte bancaire ou de mobile money des clients finaux : ces paiements sont traités directement par le prestataire de paiement connecté par l'utilisateur.`,
       },
       {
         heading: 'Durée de conservation',
