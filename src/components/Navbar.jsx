@@ -19,9 +19,8 @@ export default function Navbar() {
       ${scrolled ? 'bg-background/90 backdrop-blur-lg border-b border-surface/10' : 'bg-transparent border-b border-transparent'}
     `}>
       <div className="max-w-7xl mx-auto px-6 md:px-10 h-16 flex items-center justify-between">
-        <Link to="/" className="flex items-center gap-2 font-sans font-bold text-lg text-surface">
-          <span className="w-7 h-7 rounded-lg gradient-accent flex items-center justify-center text-background text-sm">V</span>
-          TonTunnel
+        <Link to="/" className="flex items-center">
+          <img src="/logo.png" alt="TonTunnel" className="h-8 w-auto" />
         </Link>
         <div className="hidden md:flex items-center gap-8 text-sm font-medium text-surface/70">
           <a href="#produit" className="hover:text-surface transition-colors">Produit</a>

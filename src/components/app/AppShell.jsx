@@ -218,7 +218,7 @@ export default function AppShell() {
       {/* Desktop sidebar */}
       <aside className="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0 bg-background border-r border-surface/10 p-6 overflow-y-auto">
         <div className="flex items-center justify-between mb-6">
-          <div className="font-sans font-bold text-xl text-surface">TonTunnel</div>
+          <img src="/logo.png" alt="TonTunnel" className="h-7 w-auto" />
           <NotificationBell leads={notifLeads} />
         </div>
         <SearchButton onClick={() => setPaletteOpen(true)} />
@@ -241,7 +241,7 @@ export default function AppShell() {
 
       {/* Mobile topbar */}
       <div className="md:hidden fixed top-0 inset-x-0 z-40 flex items-center justify-between px-4 py-3 bg-background border-b border-surface/10">
-        <div className="font-sans font-bold text-lg text-surface">TonTunnel</div>
+        <img src="/logo.png" alt="TonTunnel" className="h-6 w-auto" />
         <div className="flex items-center gap-1">
           <button onClick={() => setPaletteOpen(true)} className="p-2 text-surface/60" aria-label="Rechercher">
             <Search className="w-5 h-5" />
@@ -259,7 +259,7 @@ export default function AppShell() {
           <div className="absolute inset-0 bg-primary/60 backdrop-blur-sm" onClick={() => setDrawerOpen(false)}></div>
           <div className="relative w-72 bg-background h-full p-6 flex flex-col shadow-2xl overflow-y-auto">
             <div className="flex items-center justify-between mb-6">
-              <div className="font-sans font-bold text-xl text-surface">TonTunnel</div>
+              <img src="/logo.png" alt="TonTunnel" className="h-7 w-auto" />
               <button onClick={() => setDrawerOpen(false)} className="p-1 text-surface" aria-label="Fermer le menu">
                 <X className="w-5 h-5" />
               </button>
