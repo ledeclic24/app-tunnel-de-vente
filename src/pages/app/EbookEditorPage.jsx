@@ -25,6 +25,7 @@ import { stripMarkdown } from '../../lib/markdownLite';
 const ERROR_MESSAGES = {
   plan_required: "Le générateur d'ebook nécessite le plan Pro ou Entreprise.",
   limit_reached: 'Tu as atteint ta limite de générations ce mois-ci.',
+  insufficient_credits: 'Crédits IA insuffisants. Achète un pack ou passe au plan supérieur depuis la page Facturation.',
   invalid_input: 'Précise un peu plus ce chapitre.',
   ai_error: "L'IA n'a pas pu répondre pour le moment. Réessaie dans quelques instants.",
   parse_error: 'La génération a échoué. Réessaie.',
@@ -39,6 +40,7 @@ const ERROR_MESSAGES = {
 const IMAGE_ERROR_MESSAGES = {
   plan_required: "La génération d'images nécessite le plan Pro ou Entreprise.",
   limit_reached: "Tu as atteint ta limite de générations d'images ce mois-ci.",
+  insufficient_credits: 'Crédits IA insuffisants. Achète un pack ou passe au plan supérieur depuis la page Facturation.',
   invalid_input: 'Précise un peu plus le visuel souhaité.',
   ai_error: "Le générateur d'images n'a pas pu répondre. Réessaie dans quelques instants.",
   parse_error: 'La génération a échoué. Réessaie.',

@@ -1,11 +1,18 @@
 import React, { useEffect, useState } from 'react';
-import { Check, Info, CreditCard, Loader2 } from 'lucide-react';
+import { Check, Info, CreditCard, Loader2, Zap } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { updateUserPlanAsAdmin } from '../../lib/adminApi';
 import { PLANS, PLAN_ORDER, getPlan, formatPrice } from '../../lib/plans';
 import { updateBrandingForUser } from '../../lib/funnelsApi';
 import { getLivePlans } from '../../lib/plansApi';
 import { createPayment } from '../../lib/paymentsApi';
+import { fetchCreditsBalance, fetchCreditPacks, purchaseCreditPack } from '../../lib/creditsApi';
+
+const PACK_LABELS = {
+  boost: 'Boost',
+  'pro-plus': 'Pro+',
+  studio: 'Studio',
+};
 
 const PAYMENT_STATUS_MESSAGES = {
   success: { tone: 'ok', text: 'Paiement reçu ! Ton nouveau plan sera actif dans quelques instants (rafraîchis si besoin).' },
@@ -20,12 +27,33 @@ export default function BillingPage() {
   const [error, setError] = useState('');
   const [livePlans, setLivePlans] = useState(PLANS);
   const [returnStatus, setReturnStatus] = useState(null);
+  const [balance, setBalance] = useState(null);
+  const [packs, setPacks] = useState(null);
+  const [buyingPack, setBuyingPack] = useState(null);
+  const [packError, setPackError] = useState('');
   const currentPlan = profile?.plan || 'starter';
   const isAdmin = Boolean(profile?.is_admin);
 
   useEffect(() => {
     getLivePlans().then(setLivePlans).catch(() => setLivePlans(PLANS));
   }, []);
+
+  useEffect(() => {
+    fetchCreditsBalance().then(setBalance).catch(() => setBalance(null));
+    fetchCreditPacks().then(setPacks).catch(() => setPacks([]));
+  }, []);
+
+  const handleBuyPack = async (packKey) => {
+    setBuyingPack(packKey);
+    setPackError('');
+    try {
+      const checkoutUrl = await purchaseCreditPack(packKey);
+      window.location.href = checkoutUrl;
+    } catch (err) {
+      setPackError(err.message || "Impossible de démarrer l'achat pour le moment. Réessaie.");
+      setBuyingPack(null);
+    }
+  };
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -148,6 +176,45 @@ export default function BillingPage() {
           );
         })}
       </div>
+
+      {profile?.plan && profile.plan !== 'starter' && (
+        <div className="mt-12">
+          <div className="flex items-center gap-2 mb-2">
+            <Zap className="w-5 h-5 text-accent" />
+            <h2 className="text-xl font-sans font-bold text-surface">Crédits IA</h2>
+          </div>
+          <p className="text-surface/60 mb-6 text-sm">
+            {balance
+              ? `Solde actuel : ${balance.balance} crédit${balance.balance > 1 ? 's' : ''} — ${balance.includedCredits} inclus chaque mois avec ton plan.`
+              : 'Chargement du solde...'}
+          </p>
+
+          {packError && <p className="text-sm text-red-500 mb-4">{packError}</p>}
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {(packs || []).map((pack) => (
+              <div key={pack.key} className="bg-background border border-surface/10 rounded-[2rem] p-6">
+                <h3 className="font-sans font-semibold text-surface mb-1">{PACK_LABELS[pack.key] || pack.key}</h3>
+                <p className="text-surface/60 text-sm mb-4">{pack.credits} crédits</p>
+                <p className="text-2xl font-bold text-surface mb-4">{formatPrice(pack.price)}</p>
+                <button
+                  onClick={() => handleBuyPack(pack.key)}
+                  disabled={buyingPack === pack.key}
+                  className="magnetic-btn w-full py-3 rounded-full font-semibold bg-accent text-background flex items-center justify-center gap-2 disabled:opacity-60"
+                >
+                  {buyingPack === pack.key ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" /> Redirection...
+                    </>
+                  ) : (
+                    'Acheter ce pack'
+                  )}
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

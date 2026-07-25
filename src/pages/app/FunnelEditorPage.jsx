@@ -261,6 +261,7 @@ export default function FunnelEditorPage() {
   const AI_ERROR_MESSAGES = {
     plan_required: "L'édition par IA nécessite le plan Pro ou Entreprise.",
     limit_reached: 'Tu as atteint ta limite de générations IA ce mois-ci.',
+    insufficient_credits: 'Crédits IA insuffisants. Achète un pack ou passe au plan supérieur depuis la page Facturation.',
     invalid_input: 'Précise un peu plus ta demande.',
     ai_error: "L'IA n'a pas pu répondre pour le moment. Réessaie dans quelques instants.",
     parse_error: 'La modification a échoué. Réessaie avec une formulation différente.',
@@ -274,6 +275,7 @@ export default function FunnelEditorPage() {
   const IMAGE_ERROR_MESSAGES = {
     plan_required: "La génération d'images nécessite le plan Pro ou Entreprise.",
     limit_reached: "Tu as atteint ta limite de générations d'images ce mois-ci.",
+    insufficient_credits: 'Crédits IA insuffisants. Achète un pack ou passe au plan supérieur depuis la page Facturation.',
     invalid_input: "Ce type de bloc ne supporte pas la génération d'image.",
     ai_error: "Le générateur d'images n'a pas pu répondre. Réessaie dans quelques instants.",
     parse_error: 'La génération a échoué. Réessaie.',

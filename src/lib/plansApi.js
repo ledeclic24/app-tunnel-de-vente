@@ -21,6 +21,10 @@ export async function updatePlanPrice(key, price) {
   await apiPatch(`/plan-settings/${key}`, { price });
 }
 
+export async function updatePlanIncludedCredits(key, includedCredits) {
+  await apiPatch(`/plan-settings/${key}`, { includedCredits });
+}
+
 // Le journal des changements de plan est désormais tenu automatiquement
 // côté serveur (voir AdminService.updateUserPlan / SubscriptionsService) —
 // logPlanChange n'a plus besoin d'être appelé depuis le frontend.

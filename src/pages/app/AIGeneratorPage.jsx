@@ -4,13 +4,14 @@ import { ArrowLeft, Sparkles, Lock, Wand2, SlidersHorizontal, ArrowRight } from 
 import { useAuth } from '../../context/AuthContext';
 import { getPlan } from '../../lib/plans';
 import { CATEGORIES } from '../../lib/funnelTemplates';
-import { generateTunnelWithAI, fetchAIUsageThisMonth } from '../../lib/aiApi';
+import { generateTunnelWithAI } from '../../lib/aiApi';
+import { fetchCreditsBalance } from '../../lib/creditsApi';
 import { createFunnelFromAI } from '../../lib/funnelsApi';
 import MultiImageUpload from '../../components/app/MultiImageUpload';
 
 const ERROR_MESSAGES = {
   plan_required: "La génération par IA nécessite le plan Pro ou Entreprise.",
-  limit_reached: "Tu as atteint ta limite de générations IA ce mois-ci. Passe au plan Entreprise pour un accès illimité.",
+  insufficient_credits: "Crédits IA insuffisants pour cette action. Achète un pack ou passe au plan supérieur depuis la page Facturation.",
   invalid_input: "Décris ton offre avec un peu plus de détails.",
   ai_error: "L'IA n'a pas pu répondre pour le moment. Réessaie dans quelques instants.",
   parse_error: "La génération a échoué. Réessaie avec une description un peu différente.",
@@ -51,7 +52,7 @@ export default function AIGeneratorPage() {
   const [accentColor, setAccentColor] = useState('#D4AF37');
   const [showOptions, setShowOptions] = useState(false);
 
-  const [usage, setUsage] = useState(null);
+  const [credits, setCredits] = useState(null);
   const [messages, setMessages] = useState([
     { role: 'assistant', text: 'Décrivez votre offre (ce que vous vendez, le public visé, ce qui la rend unique) et je construis un tunnel complet — textes, pages et couleurs inclus.' },
   ]);
@@ -64,7 +65,7 @@ export default function AIGeneratorPage() {
   const scrollRef = useRef(null);
 
   useEffect(() => {
-    if (effectiveOwnerId && plan.aiAccess) fetchAIUsageThisMonth(effectiveOwnerId).then(setUsage).catch(() => {});
+    if (effectiveOwnerId && plan.aiAccess) fetchCreditsBalance().then(setCredits).catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [effectiveOwnerId]);
 
@@ -106,8 +107,7 @@ export default function AIGeneratorPage() {
     );
   }
 
-  const remaining = plan.aiMonthlyLimit === Infinity || usage === null ? null : Math.max(plan.aiMonthlyLimit - usage, 0);
-  const atLimit = remaining !== null && remaining <= 0;
+  const atLimit = credits !== null && credits.balance <= 0;
   const selectedCategory = categoryKey ? CATEGORIES.find((c) => c.key === categoryKey) : null;
   const categoryLabel = selectedCategory?.label || '';
   const priceRequired = Boolean(selectedCategory?.pricingRequired);
@@ -195,10 +195,14 @@ export default function AIGeneratorPage() {
         <Sparkles className="w-3.5 h-3.5" /> Copilote IA
       </div>
       <h1 className="text-2xl font-sans font-bold text-surface mb-2">Discutez avec le copilote pour construire votre tunnel</h1>
-      {remaining !== null && (
-        <p className="text-xs text-surface/40 mb-6 font-mono">{remaining} génération{remaining > 1 ? 's' : ''} restante{remaining > 1 ? 's' : ''} ce mois-ci</p>
+      {credits !== null ? (
+        <p className="text-xs text-surface/40 mb-6 font-mono">
+          {credits.balance} crédit{credits.balance > 1 ? 's' : ''} IA disponible{credits.balance > 1 ? 's' : ''}
+          {' · '}<Link to="/app/billing" className="underline hover:text-surface/70">en acheter plus</Link>
+        </p>
+      ) : (
+        <div className="mb-6" />
       )}
-      {remaining === null && <div className="mb-6" />}
 
       <div className="bg-background border border-surface/10 rounded-[2rem] p-4 md:p-6 mb-4">
         <label className="block text-xs font-semibold text-surface/70 uppercase tracking-wider mb-2">Nom du tunnel</label>
@@ -371,7 +375,7 @@ export default function AIGeneratorPage() {
       )}
 
       {error && <p className="text-sm text-red-500 mb-3">{error}</p>}
-      {atLimit && <p className="text-sm text-red-500 mb-3">{ERROR_MESSAGES.limit_reached}</p>}
+      {atLimit && <p className="text-sm text-red-500 mb-3">{ERROR_MESSAGES.insufficient_credits}</p>}
       {!name.trim() && <p className="text-xs text-surface/40 mb-3">Ajoutez un nom au tunnel ci-dessus avant de discuter avec le copilote.</p>}
       {name.trim() && priceMissing && (
         <p className="text-xs text-red-500 mb-3">

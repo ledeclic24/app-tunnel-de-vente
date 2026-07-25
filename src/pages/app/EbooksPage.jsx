@@ -13,6 +13,7 @@ import { useToast } from '../../components/app/Toast';
 const ERROR_MESSAGES = {
   plan_required: "Le générateur d'ebook nécessite le plan Pro ou Entreprise.",
   limit_reached: 'Tu as atteint ta limite de générations ce mois-ci.',
+  insufficient_credits: 'Crédits IA insuffisants. Achète un pack ou passe au plan supérieur depuis la page Facturation.',
   invalid_input: 'Précise un peu plus le titre et le sujet de ton ebook.',
   ai_error: "L'IA n'a pas pu répondre pour le moment. Réessaie dans quelques instants.",
   parse_error: 'La génération a échoué. Réessaie avec une description différente.',

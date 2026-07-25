@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import JSZip from 'jszip';
 import { ImageIcon, Lock, Sparkles, Copy, Check, Wand2, Download, Trash2, RefreshCw } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { getPlan } from '../../lib/plans';
-import { generateImages, fetchImageUsageThisMonth, fetchImages, deleteImage, downloadImage, fetchImageBlob } from '../../lib/imagesApi';
+import { generateImages, fetchImages, deleteImage, downloadImage, fetchImageBlob } from '../../lib/imagesApi';
+import { fetchCreditsBalance } from '../../lib/creditsApi';
 import { useConfirm } from '../../components/app/ConfirmDialog';
 import { useToast } from '../../components/app/Toast';
 
@@ -12,6 +14,7 @@ const COMING_SOON = false;
 const ERROR_MESSAGES = {
   plan_required: "La génération d'images nécessite le plan Pro ou Entreprise.",
   limit_reached: "Tu as atteint ta limite de générations d'images ce mois-ci.",
+  insufficient_credits: 'Crédits IA insuffisants. Achète un pack ou passe au plan supérieur depuis la page Facturation.',
   invalid_input: 'Décris un peu plus ce que tu veux obtenir.',
   ai_error: "Le générateur d'images n'a pas pu répondre. Réessaie dans quelques instants.",
   parse_error: "La génération a échoué. Réessaie avec une description différente.",
@@ -114,7 +117,7 @@ export default function ImageStudioPage() {
   const [imageType, setImageType] = useState('');
   const [transparent, setTransparent] = useState(false);
   const [images, setImages] = useState([]);
-  const [usage, setUsage] = useState(null);
+  const [credits, setCredits] = useState(null);
   const [generating, setGenerating] = useState(false);
   const [regeneratingId, setRegeneratingId] = useState(null);
   const [downloadingId, setDownloadingId] = useState(null);
@@ -126,7 +129,7 @@ export default function ImageStudioPage() {
 
   useEffect(() => {
     if (COMING_SOON || !plan.imageGeneration) return;
-    fetchImageUsageThisMonth().then(setUsage).catch(() => {});
+    fetchCreditsBalance().then(setCredits).catch(() => {});
     // Bibliothèque persistée : sans ça, la galerie repartait vide à chaque
     // visite alors que les images survivent bien côté serveur.
     fetchImages().then(setImages).catch(() => {});
@@ -160,9 +163,7 @@ export default function ImageStudioPage() {
     );
   }
 
-  const remaining = plan.imageGenerationMonthlyLimit === Infinity || usage === null
-    ? null : Math.max(plan.imageGenerationMonthlyLimit - usage, 0);
-  const atLimit = remaining !== null && remaining <= 0;
+  const atLimit = credits !== null && credits.balance <= 0;
 
   const runGeneration = async ({ prompt: p, size: s, n, style: st, imageType: it, background: bg }) => {
     const results = await generateImages({ prompt: p, size: s, n, style: st || undefined, imageType: it || undefined, background: bg || undefined });
@@ -280,10 +281,14 @@ export default function ImageStudioPage() {
         <ImageIcon className="w-3.5 h-3.5" /> Studio visuel IA
       </div>
       <h1 className="text-2xl font-sans font-bold text-surface mb-2">Génère des images pour tes tunnels</h1>
-      {remaining !== null && (
-        <p className="text-xs text-surface/40 mb-6 font-mono">{remaining} génération{remaining > 1 ? 's' : ''} restante{remaining > 1 ? 's' : ''} ce mois-ci</p>
+      {credits !== null ? (
+        <p className="text-xs text-surface/40 mb-6 font-mono">
+          {credits.balance} crédit{credits.balance > 1 ? 's' : ''} IA disponible{credits.balance > 1 ? 's' : ''}
+          {' · '}<Link to="/app/billing" className="underline hover:text-surface/70">en acheter plus</Link>
+        </p>
+      ) : (
+        <div className="mb-6" />
       )}
-      {remaining === null && <div className="mb-6" />}
 
       <form onSubmit={handleGenerate} className="bg-background border border-surface/10 rounded-[2rem] p-4 md:p-6 space-y-4 mb-6">
         <div>
