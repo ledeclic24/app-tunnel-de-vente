@@ -42,7 +42,7 @@ export const PLANS = {
       '5 derniers leads visibles',
       'Assistant pas-à-pas',
       'Score de santé du tunnel',
-      'Mention "Propulsé par Vendeko"',
+      'Mention "Propulsé par TonTunnel"',
     ],
   },
   createur: {
@@ -75,7 +75,7 @@ export const PLANS = {
     features: [
       'Tunnels illimités',
       `Les ${ALL_TEMPLATES.length} modèles et tous les blocs`,
-      "Sans mention \"Propulsé par Vendeko\"",
+      "Sans mention \"Propulsé par TonTunnel\"",
       'Copilote IA pour générer et modifier vos tunnels (20 / mois)',
       'Génération d\'images IA pour vos visuels (15 / mois)',
       'Générateur d\'ebook IA avec export PDF',
@@ -119,7 +119,7 @@ export const PLANS = {
       'Génération d\'images IA illimitée',
       'Statistiques et taux de conversion par tunnel',
       'Pixels publicitaires (Meta, Google Ads/Analytics)',
-      'Gestion des campagnes Meta Ads depuis Vendeko',
+      'Gestion des campagnes Meta Ads depuis TonTunnel',
       "Jusqu'à 5 membres d'équipe",
       'Support prioritaire 24/7',
       'Onboarding personnalisé',

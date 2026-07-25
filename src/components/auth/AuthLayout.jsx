@@ -9,7 +9,7 @@ export default function AuthLayout({ title, subtitle, children, footer }) {
 
       <div className="relative z-10 w-full max-w-md">
         <Link to="/" className="flex justify-center mb-8 font-sans font-bold text-2xl text-background">
-          Vendeko
+          TonTunnel
         </Link>
 
         <div className="bg-background rounded-[2rem] shadow-2xl border border-surface/10 p-8 md:p-10">

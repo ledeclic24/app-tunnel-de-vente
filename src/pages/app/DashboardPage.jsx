@@ -66,7 +66,7 @@ function OnboardingChecklist({ funnels, profileId }) {
 
   return (
     <div className="bg-primary text-background rounded-[2rem] p-6 mb-8">
-      <h2 className="font-sans font-semibold text-lg mb-1">Bien démarrer avec Vendeko</h2>
+      <h2 className="font-sans font-semibold text-lg mb-1">Bien démarrer avec TonTunnel</h2>
       <p className="text-sm text-background/60 mb-5">Trois étapes pour lancer ton premier tunnel de vente.</p>
       <div className="flex flex-col gap-3">
         {steps.map((step) => (

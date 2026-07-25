@@ -21,7 +21,7 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-6 md:px-10 h-16 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-2 font-sans font-bold text-lg text-surface">
           <span className="w-7 h-7 rounded-lg gradient-accent flex items-center justify-center text-background text-sm">V</span>
-          Vendeko
+          TonTunnel
         </Link>
         <div className="hidden md:flex items-center gap-8 text-sm font-medium text-surface/70">
           <a href="#produit" className="hover:text-surface transition-colors">Produit</a>

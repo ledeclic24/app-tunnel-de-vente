@@ -8,7 +8,7 @@ gsap.registerPlugin(ScrollTrigger);
 
 const FAQS = [
   {
-    q: 'Faut-il savoir coder pour utiliser Vendeko ?',
+    q: 'Faut-il savoir coder pour utiliser TonTunnel ?',
     a: "Non. Tout se construit par blocs, à la souris : Hero, texte, image, formulaire, tarification... Aucune ligne de code n'est nécessaire, du premier au dernier bloc.",
   },
   {
@@ -17,18 +17,18 @@ const FAQS = [
   },
   {
     q: "Qu'est-ce que la génération de tunnel par IA ?",
-    a: 'Décris ton offre en une phrase, Vendeko génère les pages, les textes et une palette de couleurs assortie. Incluse dans les plans Pro (20 générations/mois) et Entreprise (illimité).',
+    a: 'Décris ton offre en une phrase, TonTunnel génère les pages, les textes et une palette de couleurs assortie. Incluse dans les plans Pro (20 générations/mois) et Entreprise (illimité).',
   },
   {
-    q: 'Puis-je retirer la mention « Propulsé par Vendeko » ?',
-    a: "Oui, à partir du plan Pro, tes tunnels n'affichent plus aucune mention Vendeko.",
+    q: 'Puis-je retirer la mention « Propulsé par TonTunnel » ?',
+    a: "Oui, à partir du plan Pro, tes tunnels n'affichent plus aucune mention TonTunnel.",
   },
   {
     q: 'Puis-je exporter mes leads ?',
     a: "Oui, dès le plan Pro tu as accès à l'historique complet de tes leads et à l'export CSV. Le plan Starter affiche tes 5 derniers leads.",
   },
   {
-    q: 'Puis-je connecter Vendeko à mes autres outils ?',
+    q: 'Puis-je connecter TonTunnel à mes autres outils ?',
     a: "Oui, à partir du plan Pro : chaque nouveau lead peut être envoyé automatiquement vers Zapier, Make, Google Sheets ou ton CRM grâce aux webhooks.",
   },
   {

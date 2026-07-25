@@ -7,8 +7,8 @@ import ReactiveDotGrid from './ReactiveDotGrid';
 gsap.registerPlugin(ScrollTrigger);
 
 const STEPS = [
-  { id: '01', icon: MessageSquareText, title: 'Décris ton offre', desc: "En langage naturel, sans configuration ni jargon. Vendeko comprend ce que tu vends." },
-  { id: '02', icon: LayoutTemplate, title: 'Choisis ton tunnel', desc: 'Vendeko assemble automatiquement pages, textes et mise en page pour toi.' },
+  { id: '01', icon: MessageSquareText, title: 'Décris ton offre', desc: "En langage naturel, sans configuration ni jargon. TonTunnel comprend ce que tu vends." },
+  { id: '02', icon: LayoutTemplate, title: 'Choisis ton tunnel', desc: 'TonTunnel assemble automatiquement pages, textes et mise en page pour toi.' },
   { id: '03', icon: Rocket, title: 'Lance & vends', desc: 'Suis tes ventes en direct, sans aucune compétence technique requise.' },
 ];
 

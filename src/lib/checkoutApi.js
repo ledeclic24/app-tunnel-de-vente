@@ -1,6 +1,6 @@
 import { apiPost } from './apiClient';
 
-// Distinct de paymentsApi.js (facturation de l'abonnement Vendeko lui-même,
+// Distinct de paymentsApi.js (facturation de l'abonnement TonTunnel lui-même,
 // encore sur Supabase) : ceci concerne le paiement d'un client sur un
 // tunnel de vente, via le backend NestJS.
 export async function createMonerooCheckout(payload) {

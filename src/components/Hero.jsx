@@ -72,7 +72,7 @@ export default function Hero() {
         </h1>
 
         <p ref={subRef} className="text-xl text-background/60 max-w-xl mx-auto mb-10">
-          Décris ton offre, Vendeko assemble pages, textes et mise en page — tu ajustes le reste en un clic.
+          Décris ton offre, TonTunnel assemble pages, textes et mise en page — tu ajustes le reste en un clic.
         </p>
 
         <div ref={btnRef} className="flex flex-col items-center gap-2">

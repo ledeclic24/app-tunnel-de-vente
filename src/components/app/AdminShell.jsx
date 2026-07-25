@@ -31,7 +31,7 @@ export default function AdminShell() {
             </div>
             <div className="min-w-0">
               <p className="font-mono text-xs uppercase tracking-[0.2em] text-emerald-400 leading-none">Admin</p>
-              <p className="font-sans font-semibold text-sm text-zinc-100 truncate">Vendeko Control Room</p>
+              <p className="font-sans font-semibold text-sm text-zinc-100 truncate">TonTunnel Control Room</p>
             </div>
           </div>
           <div className="flex items-center gap-2 shrink-0">

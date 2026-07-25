@@ -76,7 +76,7 @@ export default function Testimonials() {
       <ReactiveDotGrid color="34,197,94" />
       <div className="max-w-7xl mx-auto relative z-10">
         <div className="testimonials-header max-w-2xl mb-14">
-          <p className="font-mono text-xs uppercase tracking-widest text-accent mb-3">Ils utilisent Vendeko</p>
+          <p className="font-mono text-xs uppercase tracking-widest text-accent mb-3">Ils utilisent TonTunnel</p>
           <h2 className="text-3xl md:text-4xl font-sans font-bold text-surface tracking-tight">Des débutants, pas des experts marketing.</h2>
         </div>
       </div>

@@ -6,7 +6,7 @@ import { getLivePlans } from '../lib/plansApi';
 import ReactiveDotGrid from './ReactiveDotGrid';
 
 const DESCRIPTIONS = {
-  starter: "Pour découvrir Vendeko et publier ton premier tunnel.",
+  starter: "Pour découvrir TonTunnel et publier ton premier tunnel.",
   createur: "Pour vendre sérieusement, avec l'IA et tes outils connectés.",
   entreprise: "Équipe, pixels publicitaires et statistiques pour passer à l'échelle.",
 };

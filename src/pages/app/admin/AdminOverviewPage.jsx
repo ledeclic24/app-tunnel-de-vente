@@ -103,7 +103,7 @@ export default function AdminOverviewPage() {
           <h2 className="text-sm font-semibold text-zinc-300 mb-1 uppercase tracking-wider flex items-center gap-2">
             <Shield className="w-4 h-4 text-emerald-400" /> Nommer un administrateur
           </h2>
-          <p className="text-xs text-zinc-500 mb-4">La personne doit déjà avoir un compte Vendeko.</p>
+          <p className="text-xs text-zinc-500 mb-4">La personne doit déjà avoir un compte TonTunnel.</p>
           <form onSubmit={handlePromote} className="flex gap-2">
             <input
               type="email"

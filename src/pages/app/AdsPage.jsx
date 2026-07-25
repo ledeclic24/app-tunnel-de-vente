@@ -204,7 +204,7 @@ export default function AdsPage() {
         <span className="inline-flex items-center gap-1.5 text-[10px] font-mono uppercase tracking-wider px-2.5 py-1 rounded-full bg-accent/10 text-accent mb-4">
           <Sparkles className="w-3 h-3" /> Bientôt disponible
         </span>
-        <h1 className="text-xl font-sans font-bold text-surface mb-2">Pilote tes campagnes Meta Ads depuis Vendeko</h1>
+        <h1 className="text-xl font-sans font-bold text-surface mb-2">Pilote tes campagnes Meta Ads depuis TonTunnel</h1>
         <p className="text-surface/60">
           Connecte ton compte publicitaire Facebook, suis tes dépenses et ton coût par lead réel, directement croisé avec tes tunnels — en cours de finalisation.
         </p>
@@ -218,7 +218,7 @@ export default function AdsPage() {
         <Lock className="w-10 h-10 text-surface/30 mx-auto mb-4" />
         <h1 className="text-xl font-sans font-bold text-surface mb-2">Publicité réservée au plan Entreprise</h1>
         <p className="text-surface/60 mb-6">
-          Connecte ton compte Meta Ads et suis tes dépenses publicitaires croisées avec tes leads Vendeko, avec le plan Entreprise.
+          Connecte ton compte Meta Ads et suis tes dépenses publicitaires croisées avec tes leads TonTunnel, avec le plan Entreprise.
         </p>
         <Link to="/app/billing" className="magnetic-btn inline-flex bg-accent text-background px-6 py-3 rounded-full font-semibold">
           Voir les offres
@@ -236,7 +236,7 @@ export default function AdsPage() {
         <h1 className="text-2xl font-sans font-bold text-surface">Publicité</h1>
       </div>
       <p className="text-surface/60 mb-8 max-w-2xl">
-        Connecte ton compte Meta Ads pour suivre tes dépenses publicitaires et les croiser avec les leads captés sur tes tunnels Vendeko.
+        Connecte ton compte Meta Ads pour suivre tes dépenses publicitaires et les croiser avec les leads captés sur tes tunnels TonTunnel.
       </p>
 
       {justConnected && <p className="text-sm text-accent mb-6">Compte Meta Ads connecté avec succès.</p>}

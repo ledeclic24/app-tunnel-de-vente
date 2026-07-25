@@ -145,7 +145,7 @@ export default function ImageStudioPage() {
         <span className="inline-flex items-center gap-1.5 text-[10px] font-mono uppercase tracking-wider px-2.5 py-1 rounded-full bg-accent/10 text-accent mb-4">
           <Sparkles className="w-3 h-3" /> Bientôt disponible
         </span>
-        <h1 className="text-xl font-sans font-bold text-surface mb-2">Génère tes visuels directement dans Vendeko</h1>
+        <h1 className="text-xl font-sans font-bold text-surface mb-2">Génère tes visuels directement dans TonTunnel</h1>
         <p className="text-surface/60">
           Images d'illustration et d'arrière-plan générées par IA, réutilisables directement dans tes tunnels — en cours de finalisation.
         </p>

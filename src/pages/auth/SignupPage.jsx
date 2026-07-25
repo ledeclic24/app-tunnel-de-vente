@@ -62,7 +62,7 @@ export default function SignupPage() {
 
   return (
     <AuthLayout
-      title="Crée ton compte Vendeko"
+      title="Crée ton compte TonTunnel"
       subtitle="Aucune carte bancaire requise. Ton premier tunnel est prêt en quelques minutes."
       footer={<>Déjà un compte ? <Link to="/connexion" className="text-accent hover:underline">Se connecter</Link></>}
     >

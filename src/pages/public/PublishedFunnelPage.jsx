@@ -84,7 +84,7 @@ export default function PublishedFunnelPage({ funnelSlugOverride } = {}) {
     const stepLabel = currentStep && steps.length > 1 ? ` — ${currentStep.name}` : '';
     document.title = `${funnel.name}${stepLabel}`;
     return () => {
-      document.title = 'Vendeko — Crée ton tunnel de vente sans expertise';
+      document.title = 'TonTunnel — Crée ton tunnel de vente sans expertise';
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [funnel, currentStep?.id, steps.length]);
@@ -162,7 +162,7 @@ export default function PublishedFunnelPage({ funnelSlugOverride } = {}) {
       </div>
       {funnel.show_branding && (
         <footer className="text-center py-8 text-xs text-surface/30">
-          Propulsé par <Link to="/" className="text-accent hover:underline">Vendeko</Link>
+          Propulsé par <Link to="/" className="text-accent hover:underline">TonTunnel</Link>
         </footer>
       )}
       <PurchaseNotification config={chrome.purchaseNotification} liftForFooter={Boolean(chrome.stickyFooterCta?.enabled)} />

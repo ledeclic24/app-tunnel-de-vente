@@ -34,7 +34,7 @@ export default function CtaBanner() {
       <div className="cta-banner-content max-w-2xl mx-auto relative z-10">
         <div className="inline-flex items-center gap-2 bg-accent/10 text-accent px-3.5 py-1.5 rounded-full text-sm font-semibold mb-7">
           <Sparkles className="w-4 h-4" />
-          Rejoins les créateurs qui vendent déjà avec Vendeko
+          Rejoins les créateurs qui vendent déjà avec TonTunnel
         </div>
         <h2 className="font-sans font-bold text-4xl md:text-5xl leading-[1.08] tracking-tight mb-6">
           Prêt à vendre <span className="font-serif italic text-accent">sans te prendre la tête ?</span>

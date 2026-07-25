@@ -61,9 +61,9 @@ function RouteFallback() {
   );
 }
 
-// Domaines Vendeko connus : tout le reste est traité comme un domaine
+// Domaines TonTunnel connus : tout le reste est traité comme un domaine
 // personnalisé connecté par un utilisateur (voir CustomDomainGate).
-function isVendekoHost(hostname) {
+function isTonTunnelHost(hostname) {
   return hostname === 'localhost' || hostname === '127.0.0.1'
     || hostname.endsWith('.vercel.app')
     || hostname === 'tontunnel.com' || hostname === 'www.tontunnel.com';
@@ -73,7 +73,7 @@ function DomainNotConfiguredPage() {
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center text-center p-6">
       <h1 className="text-2xl font-sans font-bold text-surface mb-2">Ce domaine n'est pas encore configuré</h1>
-      <p className="text-surface/60">Vérifie la connexion de ce domaine dans les réglages de ton tunnel sur Vendeko.</p>
+      <p className="text-surface/60">Vérifie la connexion de ce domaine dans les réglages de ton tunnel sur TonTunnel.</p>
     </div>
   );
 }
@@ -84,7 +84,7 @@ function DomainNotConfiguredPage() {
 // la racine du domaine, sans passer par les routes normales de l'app.
 function CustomDomainGate({ children }) {
   const hostname = window.location.hostname;
-  const [state, setState] = useState(() => (isVendekoHost(hostname) ? 'vendeko' : 'resolving'));
+  const [state, setState] = useState(() => (isTonTunnelHost(hostname) ? 'known-host' : 'resolving'));
   const [resolvedSlug, setResolvedSlug] = useState(null);
 
   useEffect(() => {
@@ -97,7 +97,7 @@ function CustomDomainGate({ children }) {
     return () => { cancelled = true; };
   }, [state, hostname]);
 
-  if (state === 'vendeko') return children;
+  if (state === 'known-host') return children;
   if (state === 'resolving') return <RouteFallback />;
   if (state === 'unconfigured') return <DomainNotConfiguredPage />;
 

@@ -16,7 +16,7 @@ const FEATURES = [
   {
     id: '01',
     title: 'Assistant guidé',
-    desc: 'Vendeko te pose des questions simples et assemble ton tunnel à ta place, zéro vocabulaire marketing.',
+    desc: 'TonTunnel te pose des questions simples et assemble ton tunnel à ta place, zéro vocabulaire marketing.',
   },
   {
     id: '02',

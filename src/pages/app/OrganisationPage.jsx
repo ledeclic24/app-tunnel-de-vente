@@ -189,7 +189,7 @@ function PaymentMethodsTab() {
           ) : (
             <>
               <p className="text-xs text-surface/50">
-                Récupère ces informations dans ton dashboard Moneroo (Paramètres → API). L'argent des paiements va directement sur ton compte Moneroo, Vendeko ne le touche jamais.
+                Récupère ces informations dans ton dashboard Moneroo (Paramètres → API). L'argent des paiements va directement sur ton compte Moneroo, TonTunnel ne le touche jamais.
               </p>
               <div className="flex flex-col sm:flex-row gap-3">
                 <input
@@ -439,7 +439,7 @@ function SecurityTab() {
 
       <div className="flex items-start gap-3 bg-accent/5 border border-accent/20 rounded-2xl p-4 text-sm text-surface/70">
         <Info className="w-4 h-4 text-accent shrink-0 mt-0.5" />
-        <p>Seul le compte administrateur désigné de Vendeko peut modifier les plans manuellement.</p>
+        <p>Seul le compte administrateur désigné de TonTunnel peut modifier les plans manuellement.</p>
       </div>
     </div>
   );

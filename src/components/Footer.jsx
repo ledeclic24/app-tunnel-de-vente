@@ -10,7 +10,7 @@ export default function Footer() {
 
         {/* Brand & Status */}
         <div className="md:col-span-2 flex flex-col items-start">
-          <h2 className="text-3xl font-sans font-bold mb-4">Vendeko</h2>
+          <h2 className="text-3xl font-sans font-bold mb-4">TonTunnel</h2>
           <p className="text-background/60 text-sm max-w-sm mb-8">
             Crée un tunnel de vente complet en quelques minutes, même si tu n'as jamais vendu en ligne.
           </p>
@@ -44,7 +44,7 @@ export default function Footer() {
       </div>
 
       <div className="max-w-7xl mx-auto border-t border-background/10 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 relative z-10 text-xs text-background/40">
-        <p>© {new Date().getFullYear()} Vendeko. Tous droits réservés.</p>
+        <p>© {new Date().getFullYear()} TonTunnel. Tous droits réservés.</p>
         <div className="flex gap-4">
           <a href="#" className="hover:text-background transition-colors">LinkedIn</a>
           <a href="#" className="hover:text-background transition-colors">Instagram</a>
