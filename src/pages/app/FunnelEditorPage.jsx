@@ -34,6 +34,9 @@ import FunnelSettingsPanel from '../../components/app/FunnelSettingsPanel';
 import PageSettingsPanel from '../../components/app/PageSettingsPanel';
 import FunnelPreviewModal from '../../components/app/FunnelPreviewModal';
 import HealthScoreCard from '../../components/app/HealthScoreCard';
+import CountdownBar from '../../components/public/CountdownBar';
+import PurchaseNotification from '../../components/public/PurchaseNotification';
+import StickyFooterCta from '../../components/public/StickyFooterCta';
 
 const HISTORY_LIMIT = 20;
 
@@ -111,7 +114,7 @@ function BlockCard({
         </div>
       </div>
 
-      <div className="opacity-95 scale-[0.97] origin-top">
+      <div>
         <BlockRenderer
           block={block}
           onAdvance={() => {}}
@@ -694,6 +697,11 @@ export default function FunnelEditorPage() {
     );
   }
 
+  // Rendu identique à la page publiée (voir PublishedFunnelPage) : le
+  // vendeur doit voir compte à rebours, notification d'achat et pied de
+  // page collant pendant qu'il les configure, pas seulement après publication.
+  const currentStepChrome = steps.find((s) => s.id === selectedStepId)?.chrome || {};
+
   return (
     <div>
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
@@ -874,12 +882,14 @@ export default function FunnelEditorPage() {
         </SortableContext>
       </DndContext>
 
+      <CountdownBar config={currentStepChrome.countdownBar} />
+
       <div className="max-w-2xl">
         <HealthScoreCard score={score} checks={checks} />
       </div>
 
       <div
-        className="space-y-4 max-w-2xl"
+        className={`space-y-4 max-w-2xl ${currentStepChrome.stickyFooterCta?.enabled ? 'pb-24' : ''}`}
         style={brandStyleVars(funnel.brand)}
         onDragOver={(e) => e.preventDefault()}
         onDrop={(e) => e.preventDefault()}
@@ -997,6 +1007,9 @@ export default function FunnelEditorPage() {
           )}
         </div>
       </div>
+
+      <PurchaseNotification config={currentStepChrome.purchaseNotification} liftForFooter={Boolean(currentStepChrome.stickyFooterCta?.enabled)} />
+      <StickyFooterCta config={currentStepChrome.stickyFooterCta} onNavigateToStep={() => {}} onAdvance={() => {}} />
 
       {selection && (
         <ElementStylePanel

@@ -2,6 +2,9 @@ import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Monitor, Smartphone, ChevronLeft, ChevronRight } from 'lucide-react';
 import BlockRenderer from '../blocks/BlockRenderer';
+import CountdownBar from '../public/CountdownBar';
+import PurchaseNotification from '../public/PurchaseNotification';
+import StickyFooterCta from '../public/StickyFooterCta';
 import { brandStyleVars } from '../../lib/colorUtils';
 
 // Un simple conteneur rétréci en CSS ne suffit pas à simuler un téléphone : les classes
@@ -52,18 +55,25 @@ export default function FunnelPreviewModal({ funnel, steps, blocksByStepId, onCl
 
   const goTo = (i) => { if (i >= 0 && i < steps.length) setStepId(steps[i].id); };
 
+  const chrome = currentStep?.chrome || {};
+
   const content = (
-    <div style={brandStyleVars(funnel.brand)} className={device === 'mobile' ? 'p-4 space-y-4 min-h-full' : 'max-w-4xl mx-auto space-y-6 py-2'}>
-      {funnel.brand?.logoUrl && (
-        <img src={funnel.brand.logoUrl} alt={funnel.name} className="h-10 mx-auto object-contain" />
-      )}
-      {blocks.length === 0 ? (
-        <p className="text-center text-sm text-surface/40 py-12">Cette page ne contient aucun bloc.</p>
-      ) : (
-        blocks.map((block) => (
-          <BlockRenderer key={block.id} block={block} onAdvance={() => goTo(idx + 1)} />
-        ))
-      )}
+    <div style={brandStyleVars(funnel.brand)}>
+      <CountdownBar config={chrome.countdownBar} />
+      <div className={`${device === 'mobile' ? 'p-4 space-y-4 min-h-full' : 'max-w-4xl mx-auto space-y-6 py-2'} ${chrome.stickyFooterCta?.enabled ? 'pb-24' : ''}`}>
+        {funnel.brand?.logoUrl && (
+          <img src={funnel.brand.logoUrl} alt={funnel.name} className="h-10 mx-auto object-contain" />
+        )}
+        {blocks.length === 0 ? (
+          <p className="text-center text-sm text-surface/40 py-12">Cette page ne contient aucun bloc.</p>
+        ) : (
+          blocks.map((block) => (
+            <BlockRenderer key={block.id} block={block} onAdvance={() => goTo(idx + 1)} />
+          ))
+        )}
+      </div>
+      <PurchaseNotification config={chrome.purchaseNotification} liftForFooter={Boolean(chrome.stickyFooterCta?.enabled)} />
+      <StickyFooterCta config={chrome.stickyFooterCta} onNavigateToStep={() => {}} onAdvance={() => goTo(idx + 1)} />
     </div>
   );
 
