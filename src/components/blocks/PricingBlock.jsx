@@ -4,6 +4,7 @@ import { getEditableProps, getContentEditableProps, getSectionBackground, cx } f
 import { parsePriceAmount } from '../../lib/checkoutApi';
 import SlotList, { SlotReadOnly } from './SlotList';
 import EditableItemImage from './EditableItemImage';
+import FloatingOrbs from './FloatingOrbs';
 
 // Mini-formulaire nom + email affiché avant la redirection vers Moneroo —
 // requis par leur API pour initialiser une transaction (voir
@@ -238,7 +239,8 @@ export default function PricingBlock({ content, onAdvance, onMonerooCheckout, ed
   const effectiveSlots = slots && isSlotsValid(slots, plans.length) ? slots : buildDefaultSlots(plans.length);
 
   return (
-    <section className={cx('px-6 py-16 md:px-16 md:py-24 max-w-5xl mx-auto', bg.sectionClassName)}>
+    <section className={cx('ambient-glow relative overflow-hidden px-6 py-16 md:px-16 md:py-24 max-w-5xl mx-auto', bg.sectionClassName)}>
+      <FloatingOrbs />
       <div className="gradient-divider w-32 mx-auto mb-10" />
       {heading && (
         <h2

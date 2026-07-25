@@ -2,6 +2,7 @@ import React from 'react';
 import { ArrowRight } from 'lucide-react';
 import { getButtonStyle, getEditableProps, getContentEditableProps, getSectionBackground, renderRichText, cx } from '../../lib/blockStyle';
 import SlotList from './SlotList';
+import FloatingOrbs from './FloatingOrbs';
 
 function buildDefaultSlots() {
   return [
@@ -68,7 +69,8 @@ export default function CtaBlock({ content, onAdvance, editMode, selectedElement
   const effectiveSlots = slots && isSlotsValid(slots) ? slots : buildDefaultSlots();
 
   return (
-    <section className={cx('ambient-glow px-6 py-16 md:px-16 md:py-24 text-center', bg.sectionClassName)}>
+    <section className={cx('ambient-glow relative overflow-hidden px-6 py-16 md:px-16 md:py-24 text-center', bg.sectionClassName)}>
+      <FloatingOrbs />
       <SlotList
         slots={effectiveSlots}
         onSlotsChange={(next) => onContentChange?.({ ...content, slots: next })}

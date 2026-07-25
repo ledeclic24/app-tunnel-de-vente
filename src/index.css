@@ -156,6 +156,23 @@
   background: radial-gradient(600px circle at 70% 20%, rgb(var(--color-accent) / 0.12), transparent 60%);
 }
 
+@keyframes floatOrb {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(24px, -28px) scale(1.08); }
+  66% { transform: translate(-18px, 16px) scale(0.94); }
+}
+
+/* Décor animé discret (halo flou qui dérive lentement) — renforce le
+   dynamisme des sections clés sans distraire du contenu, toujours en
+   arrière-plan (pointer-events: none, z-index négatif via l'ordre DOM). */
+.floating-orb {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(60px);
+  pointer-events: none;
+  animation: floatOrb 16s ease-in-out infinite;
+}
+
 .gradient-divider {
   height: 1px;
   background: linear-gradient(90deg, transparent, rgb(var(--color-accent) / 0.5), transparent);
@@ -207,7 +224,8 @@
   .stagger-children > *,
   .ambient-pulse,
   .signature-icon-float,
-  .testimonial-marquee-track {
+  .testimonial-marquee-track,
+  .floating-orb {
     transition: none !important;
     animation: none !important;
   }

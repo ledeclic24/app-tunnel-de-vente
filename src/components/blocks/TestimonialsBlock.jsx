@@ -3,6 +3,7 @@ import { Quote } from 'lucide-react';
 import { getEditableProps, getContentEditableProps, getSectionBackground, cx } from '../../lib/blockStyle';
 import SlotList, { SlotReadOnly } from './SlotList';
 import EditableItemImage from './EditableItemImage';
+import FloatingOrbs from './FloatingOrbs';
 
 function buildDefaultSlots(itemCount) {
   const slots = [];
@@ -80,7 +81,8 @@ export default function TestimonialsBlock({ content, editMode, selectedElement, 
   const readOnlyWrapperClass = isCarousel ? 'flex gap-6 overflow-x-auto snap-x snap-mandatory pb-4 -mx-6 px-6 md:mx-0 md:px-0' : 'stagger-children grid grid-cols-1 md:grid-cols-2 gap-6';
 
   return (
-    <section className={cx('ambient-glow px-6 py-16 md:px-16 md:py-24 max-w-5xl mx-auto', bg.sectionClassName)}>
+    <section className={cx('ambient-glow relative overflow-hidden px-6 py-16 md:px-16 md:py-24 max-w-5xl mx-auto', bg.sectionClassName)}>
+      <FloatingOrbs />
       <div className="gradient-divider w-32 mx-auto mb-10" />
       {heading && (
         <h2
