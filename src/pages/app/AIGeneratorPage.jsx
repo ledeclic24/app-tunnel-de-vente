@@ -41,8 +41,11 @@ export default function AIGeneratorPage() {
   const [name, setName] = useState('');
   const [categoryKey, setCategoryKey] = useState('');
   const [cible, setCible] = useState('');
+  const [priceMode, setPriceMode] = useState(''); // 'fixed' | 'free' | 'flexible'
   const [price, setPrice] = useState('');
   const [images, setImages] = useState([]);
+  const [testimonialText, setTestimonialText] = useState('');
+  const [testimonialScreenshots, setTestimonialScreenshots] = useState([]);
   const [customPalette, setCustomPalette] = useState(false);
   const [primaryColor, setPrimaryColor] = useState('#0B0B0B');
   const [accentColor, setAccentColor] = useState('#D4AF37');
@@ -108,7 +111,12 @@ export default function AIGeneratorPage() {
   const selectedCategory = categoryKey ? CATEGORIES.find((c) => c.key === categoryKey) : null;
   const categoryLabel = selectedCategory?.label || '';
   const priceRequired = Boolean(selectedCategory?.pricingRequired);
-  const priceMissing = priceRequired && !price.trim();
+  const effectivePrice = priceMode === 'free'
+    ? 'Gratuit'
+    : priceMode === 'flexible'
+      ? 'Prix libre — le client choisit son montant'
+      : price.trim();
+  const priceMissing = priceRequired && (!priceMode || (priceMode === 'fixed' && !price.trim()));
 
   const runGeneration = async (nextBrief) => {
     setGenerating(true);
@@ -120,8 +128,10 @@ export default function AIGeneratorPage() {
         categoryKey,
         cible: cible.trim(),
         images,
-        price: price.trim(),
+        price: effectivePrice,
         paletteHint: customPalette ? `couleur principale ${primaryColor}, couleur d'accent ${accentColor}` : '',
+        testimonialText: testimonialText.trim(),
+        testimonialScreenshots,
       });
       setDraftFunnel(generatedFunnel);
       const stepCount = generatedFunnel.steps?.length || 0;
@@ -129,7 +139,7 @@ export default function AIGeneratorPage() {
         ...prev,
         {
           role: 'assistant',
-          text: `C'est fait — ${stepCount} étape${stepCount > 1 ? 's' : ''} générée${stepCount > 1 ? 's' : ''}${price.trim() ? `, avec le prix ${price.trim()} repris tel quel` : ''}. Vous pouvez ouvrir le tunnel pour le voir, ou m'écrire ce que vous voulez ajuster (ex. « rends le titre plus percutant »).`,
+          text: `C'est fait — ${stepCount} étape${stepCount > 1 ? 's' : ''} générée${stepCount > 1 ? 's' : ''}${effectivePrice ? `, avec le prix ${effectivePrice} repris tel quel` : ''}. Vous pouvez ouvrir le tunnel pour le voir, ou m'écrire ce que vous voulez ajuster (ex. « rends le titre plus percutant »).`,
         },
       ]);
     } catch (err) {
@@ -260,21 +270,72 @@ export default function AIGeneratorPage() {
             <p className="text-xs text-surface/40 mt-1.5">Précise à qui s'adresse ton offre pour un ton et des exemples plus justes.</p>
           </div>
 
+          {priceRequired ? (
+            <div>
+              <label className="block text-xs font-semibold text-surface/70 uppercase tracking-wider mb-2">
+                Prix de votre offre (obligatoire pour ce type de tunnel)
+              </label>
+              <div className="flex flex-wrap gap-2 mb-3">
+                {[
+                  { key: 'fixed', label: 'Prix fixe' },
+                  { key: 'free', label: 'Gratuit' },
+                  { key: 'flexible', label: 'Prix libre (le client choisit)' },
+                ].map((opt) => (
+                  <button
+                    key={opt.key}
+                    type="button"
+                    onClick={() => setPriceMode(opt.key)}
+                    className={`px-3.5 py-2 rounded-full text-xs font-semibold border transition-colors ${
+                      priceMode === opt.key
+                        ? 'bg-accent text-background border-accent'
+                        : 'bg-primary/5 text-surface/70 border-surface/10 hover:border-accent/50'
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+              {priceMode === 'fixed' && (
+                <input
+                  value={price}
+                  onChange={(e) => setPrice(e.target.value)}
+                  placeholder="Ex : 19 000 FCFA, 49 000 FCFA/mois..."
+                  className={`w-full bg-primary/5 border rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-accent transition-colors text-surface ${priceMissing ? 'border-red-500' : 'border-surface/10'}`}
+                />
+              )}
+              <p className={`text-xs mt-1.5 ${priceMissing ? 'text-red-500' : 'text-surface/40'}`}>
+                {priceMissing
+                  ? 'Choisis une modalité de prix (et son montant si "Prix fixe") avant de générer.'
+                  : "Ce type de tunnel vend une offre : l'IA reprendra cette information exactement, sans jamais en inventer une autre."}
+              </p>
+            </div>
+          ) : (
+            <div>
+              <label className="block text-xs font-semibold text-surface/70 uppercase tracking-wider mb-2">Prix de votre offre (optionnel)</label>
+              <input
+                value={price}
+                onChange={(e) => setPrice(e.target.value)}
+                placeholder="Ex : 19 000 FCFA, 49 000 FCFA/mois..."
+                className="w-full bg-primary/5 border border-surface/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-accent transition-colors text-surface"
+              />
+              <p className="text-xs text-surface/40 mt-1.5">Précisez-le pour que l'IA l'utilise partout où un prix est affiché, sans en inventer un autre.</p>
+            </div>
+          )}
+
           <div>
-            <label className="block text-xs font-semibold text-surface/70 uppercase tracking-wider mb-2">
-              Prix de votre offre {priceRequired ? '(obligatoire pour ce type de tunnel)' : '(optionnel)'}
-            </label>
-            <input
-              value={price}
-              onChange={(e) => setPrice(e.target.value)}
-              placeholder="Ex : 19 000 FCFA, 49 000 FCFA/mois..."
-              className={`w-full bg-primary/5 border rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-accent transition-colors text-surface ${priceMissing ? 'border-red-500' : 'border-surface/10'}`}
+            <label className="block text-xs font-semibold text-surface/70 uppercase tracking-wider mb-2">Preuves / témoignages clients réels (optionnel)</label>
+            <textarea
+              value={testimonialText}
+              onChange={(e) => setTestimonialText(e.target.value)}
+              placeholder="Colle ici de vrais avis reçus (ex : « Jean D. — Incroyable, j'ai... »), un par ligne ou séparés par un saut de ligne."
+              rows={3}
+              className="w-full bg-primary/5 border border-surface/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-accent transition-colors text-surface resize-y"
             />
-            <p className={`text-xs mt-1.5 ${priceMissing ? 'text-red-500' : 'text-surface/40'}`}>
-              {priceRequired
-                ? "Ce type de tunnel vend une offre : indique son prix, l'IA l'utilisera partout tel quel."
-                : "Précisez-le pour que l'IA l'utilise partout où un prix est affiché, sans en inventer un autre."}
+            <p className="text-xs text-surface/40 mt-1.5 mb-3">
+              Uniquement de vrais avis — l'IA ne les modifie pas dans le fond, et n'en invente jamais si tu laisses ce champ vide.
             </p>
+            <label className="block text-xs font-semibold text-surface/70 uppercase tracking-wider mb-2">Captures d'écran de vrais avis (optionnel)</label>
+            <MultiImageUpload userId={effectiveOwnerId} images={testimonialScreenshots} onChange={setTestimonialScreenshots} />
           </div>
 
           <div>

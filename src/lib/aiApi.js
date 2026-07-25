@@ -1,7 +1,7 @@
 import { apiGet, apiPost } from './apiClient';
 
-export async function generateTunnelWithAI({ description, category, categoryKey, cible, images, price, paletteHint }) {
-  const { funnel } = await apiPost('/ai/funnels', { description, category, categoryKey, cible, images, price, paletteHint });
+export async function generateTunnelWithAI({ description, category, categoryKey, cible, images, price, paletteHint, testimonialText, testimonialScreenshots }) {
+  const { funnel } = await apiPost('/ai/funnels', { description, category, categoryKey, cible, images, price, paletteHint, testimonialText, testimonialScreenshots });
   return funnel;
 }
 
