@@ -51,7 +51,7 @@ export default function VideoNavBlock({
               type="button"
               onClick={editMode ? undefined : () => onNavigateToStep?.(slug)}
               className={cx(
-                'flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-semibold border transition-colors',
+                'hover-lift flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-semibold border transition-colors',
                 isActive
                   ? 'bg-accent text-background border-accent'
                   : bg.isDark

@@ -51,7 +51,7 @@ export default function StatsBlock({ content, editMode, selectedElement, onSelec
   const effectiveSlots = slots && isSlotsValid(slots, items.length) ? slots : buildDefaultSlots(items.length);
 
   return (
-    <section className={cx('px-6 py-10 md:px-16 md:py-12 max-w-5xl mx-auto', bg.sectionClassName)}>
+    <section className={cx('ambient-glow px-6 py-10 md:px-16 md:py-12 max-w-5xl mx-auto', bg.sectionClassName)}>
       {editMode ? (
         <SlotList
           slots={effectiveSlots}
@@ -65,7 +65,7 @@ export default function StatsBlock({ content, editMode, selectedElement, onSelec
           onSelectElement={onSelectElement}
         />
       ) : (
-        <div className="flex flex-wrap items-start justify-center gap-x-12 gap-y-6 text-center">
+        <div className="stagger-children flex flex-wrap items-start justify-center gap-x-12 gap-y-6 text-center">
           {effectiveSlots.map((slot) => <SlotReadOnly key={slot.id} slot={slot} renderField={renderField} bg={bg} />)}
         </div>
       )}
