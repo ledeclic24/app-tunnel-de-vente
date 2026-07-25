@@ -2,8 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { Save } from 'lucide-react';
 import { fetchPlanPrices, updatePlanPrice } from '../../../lib/plansApi';
 import { PLAN_ORDER, getPlan } from '../../../lib/plans';
+import { useToast } from '../../../components/app/Toast';
 
 export default function AdminPlansPage() {
+  const toast = useToast();
   const [prices, setPrices] = useState(null);
   const [drafts, setDrafts] = useState({});
   const [savingKey, setSavingKey] = useState(null);
@@ -21,11 +23,16 @@ export default function AdminPlansPage() {
 
   const handleSave = async (key) => {
     setSavingKey(key);
-    await updatePlanPrice(key, Number(drafts[key]) || 0);
-    await load();
-    setSavingKey(null);
-    setSavedKey(key);
-    setTimeout(() => setSavedKey(null), 2000);
+    try {
+      await updatePlanPrice(key, Number(drafts[key]) || 0);
+      await load();
+      setSavedKey(key);
+      setTimeout(() => setSavedKey(null), 2000);
+    } catch (err) {
+      toast.error(err.message || 'Impossible d\'enregistrer ce tarif.');
+    } finally {
+      setSavingKey(null);
+    }
   };
 
   if (!prices) {
