@@ -79,7 +79,7 @@ export default function BillingPage() {
         <div className="flex items-start gap-3 bg-accent/5 border border-accent/20 rounded-2xl p-4 mb-8 text-sm text-surface/70">
           <CreditCard className="w-4 h-4 text-accent shrink-0 mt-0.5" />
           <p>
-            Paiement sécurisé par Mobile Money ou carte bancaire (Moneroo). Ton plan s'active automatiquement
+            Paiement sécurisé par Mobile Money ou carte bancaire. Ton plan s'active automatiquement
             dès la confirmation du paiement, pour 30 jours renouvelables.
           </p>
         </div>
@@ -139,7 +139,7 @@ export default function BillingPage() {
                     </>
                   ) : (
                     <>
-                      <CreditCard className="w-4 h-4" /> Payer avec Moneroo
+                      <CreditCard className="w-4 h-4" /> Passer à ce plan
                     </>
                   )}
                 </button>
