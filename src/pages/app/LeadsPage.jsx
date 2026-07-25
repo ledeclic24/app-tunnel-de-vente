@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Download, Lock, Mail } from 'lucide-react';
+import { Download, Lock, Mail, AlertTriangle, CheckCircle2, RefreshCw } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { fetchLeadsForUser } from '../../lib/funnelsApi';
+import { fetchLeadsForUser, resendLeadEmail } from '../../lib/funnelsApi';
 import { getPlan } from '../../lib/plans';
+import { useToast } from '../../components/app/Toast';
 
 function exportToCsv(leads) {
   const header = ['Nom', 'Email', 'Tunnel', 'Date'];
@@ -20,13 +21,31 @@ function exportToCsv(leads) {
 
 export default function LeadsPage() {
   const { effectiveOwnerId, effectiveProfile } = useAuth();
+  const toast = useToast();
   const [leads, setLeads] = useState(null);
+  const [resendingId, setResendingId] = useState(null);
   const plan = getPlan(effectiveProfile?.plan);
 
   useEffect(() => {
     if (!effectiveOwnerId) return;
     fetchLeadsForUser(effectiveOwnerId).then(setLeads).catch(() => setLeads([]));
   }, [effectiveOwnerId]);
+
+  const handleResend = async (leadId) => {
+    setResendingId(leadId);
+    try {
+      const sent = await resendLeadEmail(leadId);
+      setLeads((prev) => prev.map((l) => (l.id === leadId
+        ? { ...l, email_status: sent ? 'sent' : 'failed' }
+        : l)));
+      if (sent) toast.success('E-mail renvoyé avec succès.');
+      else toast.error("Le renvoi a échoué — vérifie la configuration email du service.");
+    } catch (err) {
+      toast.error(err.message || "Impossible de renvoyer cet e-mail.");
+    } finally {
+      setResendingId(null);
+    }
+  };
 
   if (leads === null) {
     return (
@@ -79,6 +98,7 @@ export default function LeadsPage() {
                   <th className="px-6 py-4 font-medium">Email</th>
                   <th className="px-6 py-4 font-medium">Tunnel</th>
                   <th className="px-6 py-4 font-medium">Date</th>
+                  <th className="px-6 py-4 font-medium">Contenu envoyé</th>
                 </tr>
               </thead>
               <tbody>
@@ -90,6 +110,29 @@ export default function LeadsPage() {
                     <td className="px-6 py-4 text-surface/80">{lead.email}</td>
                     <td className="px-6 py-4 text-surface/60">{lead.funnelName}</td>
                     <td className="px-6 py-4 text-surface/40">{new Date(lead.created_at).toLocaleDateString('fr-FR')}</td>
+                    <td className="px-6 py-4">
+                      {lead.email_status === 'sent' && (
+                        <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-500">
+                          <CheckCircle2 className="w-3.5 h-3.5" /> Reçu
+                        </span>
+                      )}
+                      {lead.email_status === 'failed' && (
+                        <button
+                          onClick={() => handleResend(lead.id)}
+                          disabled={resendingId === lead.id}
+                          title={lead.email_error || 'Échec de l\'envoi'}
+                          className="inline-flex items-center gap-1.5 text-xs font-semibold text-red-500 hover:text-red-400 disabled:opacity-50"
+                        >
+                          {resendingId === lead.id ? (
+                            <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                          ) : (
+                            <AlertTriangle className="w-3.5 h-3.5" />
+                          )}
+                          {resendingId === lead.id ? 'Renvoi...' : 'Échec — renvoyer'}
+                        </button>
+                      )}
+                      {!lead.email_status && <span className="text-surface/30 text-xs">—</span>}
+                    </td>
                   </tr>
                 ))}
               </tbody>

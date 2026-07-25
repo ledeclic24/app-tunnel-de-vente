@@ -40,6 +40,8 @@ function normalizeLead(l) {
     name: l.name,
     created_at: l.createdAt,
     funnelName: l.funnelName,
+    email_status: l.emailStatus,
+    email_error: l.emailError,
   };
 }
 
@@ -187,6 +189,11 @@ export async function incrementStepView(stepId) {
 export async function fetchLeadsForUser(_userId) {
   const rows = await apiGet('/leads/mine');
   return rows.map(normalizeLead);
+}
+
+export async function resendLeadEmail(leadId) {
+  const { sent } = await apiPost(`/leads/${leadId}/resend-email`);
+  return sent;
 }
 
 export async function fetchFunnelStepsAnalytics(funnelId) {
