@@ -82,9 +82,12 @@ function PaymentMethodsTab() {
   const handleRemove = async (method) => {
     if (!(await confirm(`Supprimer "${method.label}" ? Il ne sera plus disponible pour de nouveaux tunnels, mais restera inchangé sur les tunnels déjà publiés.`))) return;
     setRemovingId(method.id);
+    setError('');
     try {
       await deletePaymentMethod(method.id);
       load();
+    } catch {
+      setError('Impossible de supprimer ce moyen de paiement pour le moment.');
     } finally {
       setRemovingId(null);
     }

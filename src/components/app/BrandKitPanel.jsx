@@ -37,8 +37,11 @@ export default function BrandKitPanel({ brand, onSave, userId, canUseBrandKit, c
 
   const handleSave = async () => {
     setSaving(true);
-    await onSave(draft);
-    setSaving(false);
+    try {
+      await onSave(draft);
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (

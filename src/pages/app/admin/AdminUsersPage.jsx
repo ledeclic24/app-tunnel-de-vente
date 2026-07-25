@@ -3,8 +3,10 @@ import { Search, Shield, ShieldOff } from 'lucide-react';
 import { fetchAllProfiles, updateUserPlanAsAdmin, setAdminStatus } from '../../../lib/adminApi';
 import { useAuth } from '../../../context/AuthContext';
 import { PLAN_ORDER, getPlan } from '../../../lib/plans';
+import { useToast } from '../../../components/app/Toast';
 
 export default function AdminUsersPage() {
+  const toast = useToast();
   const { user, refreshProfile } = useAuth();
   const [profiles, setProfiles] = useState(null);
   const [query, setQuery] = useState('');
@@ -25,11 +27,16 @@ export default function AdminUsersPage() {
 
   const handlePlanChange = async (profileId, plan) => {
     setBusyId(profileId);
-    // Le changement de plan et son journal d'audit sont désormais gérés
-    // automatiquement côté serveur (voir AdminService.updateUserPlan).
-    await updateUserPlanAsAdmin(profileId, plan);
-    await load();
-    setBusyId(null);
+    try {
+      // Le changement de plan et son journal d'audit sont désormais gérés
+      // automatiquement côté serveur (voir AdminService.updateUserPlan).
+      await updateUserPlanAsAdmin(profileId, plan);
+      await load();
+    } catch (err) {
+      toast.error(err.message || 'Impossible de changer ce plan.');
+    } finally {
+      setBusyId(null);
+    }
   };
 
   const handleToggleAdmin = async (p) => {
@@ -38,6 +45,8 @@ export default function AdminUsersPage() {
       await setAdminStatus(p.id, !p.is_admin);
       await load();
       if (p.id === user?.id) await refreshProfile();
+    } catch (err) {
+      toast.error(err.message || 'Impossible de modifier ce statut.');
     } finally {
       setBusyId(null);
     }

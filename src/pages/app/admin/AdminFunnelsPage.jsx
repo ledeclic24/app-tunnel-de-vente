@@ -2,8 +2,10 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Search, ExternalLink, Trash2 } from 'lucide-react';
 import { fetchAllProfiles, fetchAllFunnels, fetchAllLeadCounts, deleteFunnelAsAdmin } from '../../../lib/adminApi';
 import { useConfirm } from '../../../components/app/ConfirmDialog';
+import { useToast } from '../../../components/app/Toast';
 
 export default function AdminFunnelsPage() {
+  const toast = useToast();
   const [profiles, setProfiles] = useState(null);
   const [funnels, setFunnels] = useState(null);
   const [leadCounts, setLeadCounts] = useState(null);
@@ -41,11 +43,16 @@ export default function AdminFunnelsPage() {
   const handleDelete = async (funnel) => {
     if (!(await confirm(`Supprimer définitivement "${funnel.name}" ? Cette action est irréversible.`))) return;
     setBusyId(funnel.id);
-    // Le journal d'audit est désormais géré automatiquement côté serveur
-    // (voir AdminService.deleteFunnel).
-    await deleteFunnelAsAdmin(funnel.id);
-    await load();
-    setBusyId(null);
+    try {
+      // Le journal d'audit est désormais géré automatiquement côté serveur
+      // (voir AdminService.deleteFunnel).
+      await deleteFunnelAsAdmin(funnel.id);
+      await load();
+    } catch (err) {
+      toast.error(err.message || 'Impossible de supprimer ce tunnel.');
+    } finally {
+      setBusyId(null);
+    }
   };
 
   if (!profiles || !funnels || !leadCounts) {

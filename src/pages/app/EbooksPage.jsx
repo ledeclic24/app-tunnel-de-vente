@@ -149,9 +149,13 @@ export default function EbooksPage() {
 
   const handleDelete = async (ebook) => {
     if (!(await confirm(`Supprimer "${ebook.title}" ?`))) return;
-    await deleteEbook(ebook.id);
-    setEbooks((prev) => prev.filter((e) => e.id !== ebook.id));
-    setSelectedIds((prev) => { const next = new Set(prev); next.delete(ebook.id); return next; });
+    try {
+      await deleteEbook(ebook.id);
+      setEbooks((prev) => prev.filter((e) => e.id !== ebook.id));
+      setSelectedIds((prev) => { const next = new Set(prev); next.delete(ebook.id); return next; });
+    } catch (err) {
+      toast.error(err.message || 'Impossible de supprimer cet ebook.');
+    }
   };
 
   const toggleSelect = (id) => {

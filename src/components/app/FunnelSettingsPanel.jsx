@@ -81,6 +81,7 @@ function DomainSection({ funnelId }) {
   const [newDomain, setNewDomain] = useState('');
   const [adding, setAdding] = useState(false);
   const [checkingId, setCheckingId] = useState(null);
+  const [removingId, setRemovingId] = useState(null);
   const [error, setError] = useState('');
   const confirm = useConfirm();
 
@@ -116,8 +117,16 @@ function DomainSection({ funnelId }) {
 
   const handleRemove = async (domainId) => {
     if (!(await confirm('Déconnecter ce domaine ?'))) return;
-    await removeDomain(domainId);
-    setDomains((prev) => prev.filter((d) => d.id !== domainId));
+    setRemovingId(domainId);
+    setError('');
+    try {
+      await removeDomain(domainId);
+      setDomains((prev) => prev.filter((d) => d.id !== domainId));
+    } catch {
+      setError('La déconnexion a échoué. Réessaie.');
+    } finally {
+      setRemovingId(null);
+    }
   };
 
   return (
@@ -143,7 +152,7 @@ function DomainSection({ funnelId }) {
               <button onClick={() => handleCheck(d.id)} disabled={checkingId === d.id} className="p-2 rounded-lg text-surface/40 hover:text-surface" aria-label="Vérifier">
                 <RefreshCw className={`w-4 h-4 ${checkingId === d.id ? 'animate-spin' : ''}`} />
               </button>
-              <button onClick={() => handleRemove(d.id)} className="p-2 rounded-lg text-surface/40 hover:text-red-500" aria-label="Déconnecter">
+              <button onClick={() => handleRemove(d.id)} disabled={removingId === d.id} className="p-2 rounded-lg text-surface/40 hover:text-red-500 disabled:opacity-50" aria-label="Déconnecter">
                 <Trash2 className="w-4 h-4" />
               </button>
             </div>

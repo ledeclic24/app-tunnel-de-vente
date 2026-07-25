@@ -229,22 +229,34 @@ export default function EbookEditorPage() {
   };
 
   const handleUpdateChapter = async (chapterId, patch) => {
-    const updated = await updateChapter(chapterId, patch);
-    setChapters((prev) => prev.map((c) => (c.id === chapterId ? updated : c)));
+    try {
+      const updated = await updateChapter(chapterId, patch);
+      setChapters((prev) => prev.map((c) => (c.id === chapterId ? updated : c)));
+    } catch (err) {
+      setError(ERROR_MESSAGES[err.message] || ERROR_MESSAGES.server_error);
+    }
   };
 
   const handleDeleteChapter = async (chapterId) => {
     if (!(await confirm('Supprimer ce chapitre ?'))) return;
-    await deleteChapter(chapterId);
-    setChapters((prev) => prev.filter((c) => c.id !== chapterId));
+    try {
+      await deleteChapter(chapterId);
+      setChapters((prev) => prev.filter((c) => c.id !== chapterId));
+    } catch (err) {
+      setError(ERROR_MESSAGES[err.message] || ERROR_MESSAGES.server_error);
+    }
   };
 
   const handleAddChapter = async (e) => {
     e.preventDefault();
     if (!newTitle.trim()) return;
-    const chapter = await addChapter(ebookId, { title: newTitle.trim(), description: newDescription.trim() || newTitle.trim() });
-    setChapters((prev) => [...prev, chapter]);
-    setNewTitle(''); setNewDescription(''); setShowAddChapter(false);
+    try {
+      const chapter = await addChapter(ebookId, { title: newTitle.trim(), description: newDescription.trim() || newTitle.trim() });
+      setChapters((prev) => [...prev, chapter]);
+      setNewTitle(''); setNewDescription(''); setShowAddChapter(false);
+    } catch (err) {
+      setError(ERROR_MESSAGES[err.message] || ERROR_MESSAGES.server_error);
+    }
   };
 
   const handleGenerateAll = async () => {
@@ -351,16 +363,26 @@ export default function EbookEditorPage() {
   const handleDragEnd = async (event) => {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
+    const previous = chapters;
     const oldIndex = chapters.findIndex((c) => c.id === active.id);
     const newIndex = chapters.findIndex((c) => c.id === over.id);
     const next = arrayMove(chapters, oldIndex, newIndex);
     setChapters(next);
-    await reorderChapters(next.map((c) => c.id));
+    try {
+      await reorderChapters(next.map((c) => c.id));
+    } catch (err) {
+      setChapters(previous);
+      setError(ERROR_MESSAGES[err.message] || ERROR_MESSAGES.server_error);
+    }
   };
 
   const handleSaveSettings = async (patch) => {
-    const updated = await updateEbook(ebookId, patch);
-    setEbook(updated);
+    try {
+      const updated = await updateEbook(ebookId, patch);
+      setEbook(updated);
+    } catch (err) {
+      setError(ERROR_MESSAGES[err.message] || ERROR_MESSAGES.server_error);
+    }
   };
 
   const handleGenerateCover = async () => {

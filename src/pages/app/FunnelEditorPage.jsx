@@ -527,13 +527,21 @@ export default function FunnelEditorPage() {
   };
 
   const handleSaveSettings = async (patch) => {
-    await updateFunnel(funnelId, patch);
-    setFunnel((f) => ({ ...f, ...patch }));
+    try {
+      await updateFunnel(funnelId, patch);
+      setFunnel((f) => ({ ...f, ...patch }));
+    } catch {
+      setActionError('L\'enregistrement des réglages a échoué. Réessaie.');
+    }
   };
 
   const handleSaveChrome = async (chrome) => {
-    await updateStep(selectedStepId, { chrome });
-    setSteps((prev) => prev.map((s) => (s.id === selectedStepId ? { ...s, chrome } : s)));
+    try {
+      await updateStep(selectedStepId, { chrome });
+      setSteps((prev) => prev.map((s) => (s.id === selectedStepId ? { ...s, chrome } : s)));
+    } catch {
+      setActionError('L\'enregistrement des réglages de page a échoué. Réessaie.');
+    }
   };
 
   const reconcileToSnapshot = useCallback(async (snapshot) => {
