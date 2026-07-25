@@ -105,7 +105,10 @@ export default function AIGeneratorPage() {
 
   const remaining = plan.aiMonthlyLimit === Infinity || usage === null ? null : Math.max(plan.aiMonthlyLimit - usage, 0);
   const atLimit = remaining !== null && remaining <= 0;
-  const categoryLabel = categoryKey ? CATEGORIES.find((c) => c.key === categoryKey)?.label || '' : '';
+  const selectedCategory = categoryKey ? CATEGORIES.find((c) => c.key === categoryKey) : null;
+  const categoryLabel = selectedCategory?.label || '';
+  const priceRequired = Boolean(selectedCategory?.pricingRequired);
+  const priceMissing = priceRequired && !price.trim();
 
   const runGeneration = async (nextBrief) => {
     setGenerating(true);
@@ -139,6 +142,11 @@ export default function AIGeneratorPage() {
   const handleSend = async (e) => {
     e.preventDefault();
     if (!input.trim() || generating || atLimit || !name.trim()) return;
+    if (priceMissing) {
+      setShowOptions(true);
+      setError('Indique le prix de ton offre avant de générer ce type de tunnel.');
+      return;
+    }
     const message = input.trim();
     setInput('');
     setMessages((prev) => [...prev, { role: 'user', text: message }]);
@@ -253,14 +261,20 @@ export default function AIGeneratorPage() {
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-surface/70 uppercase tracking-wider mb-2">Prix de votre offre (optionnel)</label>
+            <label className="block text-xs font-semibold text-surface/70 uppercase tracking-wider mb-2">
+              Prix de votre offre {priceRequired ? '(obligatoire pour ce type de tunnel)' : '(optionnel)'}
+            </label>
             <input
               value={price}
               onChange={(e) => setPrice(e.target.value)}
-              placeholder="Ex : 19 000 FCFA, 49€/mois, 29$..."
-              className="w-full bg-primary/5 border border-surface/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-accent transition-colors text-surface"
+              placeholder="Ex : 19 000 FCFA, 49 000 FCFA/mois..."
+              className={`w-full bg-primary/5 border rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-accent transition-colors text-surface ${priceMissing ? 'border-red-500' : 'border-surface/10'}`}
             />
-            <p className="text-xs text-surface/40 mt-1.5">Précisez-le pour que l'IA l'utilise partout où un prix est affiché, sans en inventer un autre.</p>
+            <p className={`text-xs mt-1.5 ${priceMissing ? 'text-red-500' : 'text-surface/40'}`}>
+              {priceRequired
+                ? "Ce type de tunnel vend une offre : indique son prix, l'IA l'utilisera partout tel quel."
+                : "Précisez-le pour que l'IA l'utilise partout où un prix est affiché, sans en inventer un autre."}
+            </p>
           </div>
 
           <div>
@@ -298,18 +312,23 @@ export default function AIGeneratorPage() {
       {error && <p className="text-sm text-red-500 mb-3">{error}</p>}
       {atLimit && <p className="text-sm text-red-500 mb-3">{ERROR_MESSAGES.limit_reached}</p>}
       {!name.trim() && <p className="text-xs text-surface/40 mb-3">Ajoutez un nom au tunnel ci-dessus avant de discuter avec le copilote.</p>}
+      {name.trim() && priceMissing && (
+        <p className="text-xs text-red-500 mb-3">
+          Indique le prix de ton offre dans les réglages avancés — ce type de tunnel ({categoryLabel}) affiche toujours un prix.
+        </p>
+      )}
 
       <form onSubmit={handleSend} className="flex items-center gap-3">
         <input
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder={draftFunnel ? "Ex : rends le titre plus percutant" : "Ex : Je vends un ebook à 19 000 FCFA qui apprend aux débutants à cuisiner en 15 minutes..."}
-          disabled={generating || atLimit || !name.trim()}
+          disabled={generating || atLimit || !name.trim() || priceMissing}
           className="flex-1 bg-background border border-surface/10 rounded-full px-5 py-3.5 text-sm focus:outline-none focus:border-accent transition-colors text-surface disabled:opacity-50"
         />
         <button
           type="submit"
-          disabled={!input.trim() || generating || atLimit || !name.trim()}
+          disabled={!input.trim() || generating || atLimit || !name.trim() || priceMissing}
           className="magnetic-btn shrink-0 flex items-center justify-center gap-2 gradient-accent text-background w-12 h-12 rounded-full disabled:opacity-50"
           aria-label="Envoyer"
         >

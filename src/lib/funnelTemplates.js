@@ -3,17 +3,20 @@ import {
   PartyPopper, ListChecks, Users, UserCircle, FileText,
 } from 'lucide-react';
 
+// pricingRequired : catégories où un tunnel affiche presque toujours un prix
+// (vente d'une offre/produit/accès payant) — sert à forcer la saisie du prix
+// dans le copilote IA plutôt que de laisser l'IA en inventer un.
 export const CATEGORIES = [
-  { key: 'leads', label: 'Génération de leads', icon: Mail, description: "Récolte des adresses email grâce à une offre gratuite." },
-  { key: 'vente', label: 'Vente', icon: Rocket, description: "Présente une offre et convertis tes visiteurs en clients." },
-  { key: 'webinaire', label: 'Webinaire', icon: Video, description: "Fais s'inscrire tes visiteurs à un évènement en direct ou à un replay." },
-  { key: 'coaching', label: 'Coaching', icon: CalendarCheck, description: "Remplis ton agenda d'appels ou de candidatures qualifiées." },
-  { key: 'ecommerce', label: 'E-commerce', icon: ShoppingBag, description: "Vends un produit physique en ligne." },
-  { key: 'evenement', label: 'Évènement', icon: PartyPopper, description: "Fais s'inscrire des participants à un évènement." },
-  { key: 'quiz', label: 'Quiz', icon: ListChecks, description: "Engage tes visiteurs avec un quiz interactif avant de les convertir." },
-  { key: 'communaute', label: 'Communauté', icon: Users, description: "Fais grandir une communauté ou un programme payant." },
-  { key: 'marque-perso', label: 'Marque personnelle', icon: UserCircle, description: "Présente-toi et centralise tes liens." },
-  { key: 'personnalise', label: 'Personnalisé', icon: FileText, description: "Pars d'une page blanche et construis à ta façon." },
+  { key: 'leads', label: 'Génération de leads', icon: Mail, description: "Récolte des adresses email grâce à une offre gratuite.", pricingRequired: false },
+  { key: 'vente', label: 'Vente', icon: Rocket, description: "Présente une offre et convertis tes visiteurs en clients.", pricingRequired: true },
+  { key: 'webinaire', label: 'Webinaire', icon: Video, description: "Fais s'inscrire tes visiteurs à un évènement en direct ou à un replay.", pricingRequired: false },
+  { key: 'coaching', label: 'Coaching', icon: CalendarCheck, description: "Remplis ton agenda d'appels ou de candidatures qualifiées.", pricingRequired: false },
+  { key: 'ecommerce', label: 'E-commerce', icon: ShoppingBag, description: "Vends un produit physique en ligne.", pricingRequired: true },
+  { key: 'evenement', label: 'Évènement', icon: PartyPopper, description: "Fais s'inscrire des participants à un évènement.", pricingRequired: false },
+  { key: 'quiz', label: 'Quiz', icon: ListChecks, description: "Engage tes visiteurs avec un quiz interactif avant de les convertir.", pricingRequired: false },
+  { key: 'communaute', label: 'Communauté', icon: Users, description: "Fais grandir une communauté ou un programme payant.", pricingRequired: true },
+  { key: 'marque-perso', label: 'Marque personnelle', icon: UserCircle, description: "Présente-toi et centralise tes liens.", pricingRequired: false },
+  { key: 'personnalise', label: 'Personnalisé', icon: FileText, description: "Pars d'une page blanche et construis à ta façon.", pricingRequired: false },
 ];
 
 export function getCategory(key) {
