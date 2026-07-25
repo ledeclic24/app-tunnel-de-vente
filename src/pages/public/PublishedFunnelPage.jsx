@@ -114,6 +114,7 @@ export default function PublishedFunnelPage({ funnelSlugOverride } = {}) {
       amount,
       customerEmail,
       customerName,
+      returnUrl: window.location.href,
     });
     window.location.href = checkoutUrl;
   };
