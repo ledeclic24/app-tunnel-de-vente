@@ -344,7 +344,7 @@ export default function FunnelEditorPage() {
   // modifications ont eu lieu depuis le dernier snapshot (voir
   // hasUnpublishedChanges côté backend) ; "Publié" (clic = dépublier)
   // seulement quand le snapshot public reflète exactement l'état actuel.
-  const needsPublish = !funnel.is_published || funnel.has_unpublished_changes;
+  const needsPublish = !funnel?.is_published || funnel?.has_unpublished_changes;
 
   const togglePublish = async () => {
     try {
