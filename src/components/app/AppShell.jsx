@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { NavLink, Link, Outlet, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, User, LogOut, Menu, X, Shield, Mail, BarChart3, Lock, Sparkles, ArrowRight,
@@ -175,73 +175,107 @@ function SearchButton({ onClick }) {
   );
 }
 
-function NotificationBell({ leads, dark = false }) {
+function NotificationBell({ leads, dark = false, ownerId }) {
   const [open, setOpen] = useState(false);
-  const [coords, setCoords] = useState(null);
-  const buttonRef = useRef(null);
-  const recent = (leads || []).slice(0, 5);
-  const hasRecent = (leads || []).some((l) => Date.now() - new Date(l.created_at).getTime() < 24 * 60 * 60 * 1000);
+  const [lastSeenAt, setLastSeenAt] = useState(0);
+  const navigate = useNavigate();
+  const storageKey = ownerId ? `tontunnel_notif_seen_at_${ownerId}` : null;
 
-  const handleToggle = () => {
-    setOpen((v) => {
-      const next = !v;
-      if (next && buttonRef.current) {
-        const rect = buttonRef.current.getBoundingClientRect();
-        // Positionné en `fixed` par rapport à l'écran (pas au bouton) : la
-        // sidebar a `overflow-y-auto`, ce qui force son overflow-x à se
-        // comporter en `auto` aussi (règle du spec CSS) et rognait le
-        // panneau en `absolute` dès qu'il dépassait la largeur de la sidebar.
-        // Aligné par défaut sur le bord gauche du bouton (le panneau s'étend
-        // vers la droite, où il y a de la place) puis ramené dans l'écran si
-        // ça déborde — nécessaire en topbar mobile, où le bouton est proche
-        // du bord droit.
-        const PANEL_WIDTH = 288;
-        const margin = 12;
-        let left = rect.left;
-        if (left + PANEL_WIDTH > window.innerWidth - margin) left = window.innerWidth - margin - PANEL_WIDTH;
-        if (left < margin) left = margin;
-        setCoords({ top: rect.bottom + 8, left });
+  useEffect(() => {
+    if (!storageKey) return;
+    try {
+      setLastSeenAt(Number(window.localStorage.getItem(storageKey)) || 0);
+    } catch {
+      setLastSeenAt(0);
+    }
+  }, [storageKey]);
+
+  const recent = (leads || []).slice(0, 8);
+  const hasUnread = recent.some((l) => new Date(l.created_at).getTime() > lastSeenAt);
+
+  const markAllRead = () => {
+    const now = Date.now();
+    setLastSeenAt(now);
+    if (storageKey) {
+      try {
+        window.localStorage.setItem(storageKey, String(now));
+      } catch {
+        // stockage indisponible, tant pis pour la persistance
       }
-      return next;
-    });
+    }
+  };
+
+  const goToLead = (lead) => {
+    setOpen(false);
+    if (lead.funnel_id) navigate(`/app/funnels/${lead.funnel_id}/edit`);
   };
 
   return (
     <div className="relative">
       <button
-        ref={buttonRef}
-        onClick={handleToggle}
+        onClick={() => setOpen(true)}
         className={`relative p-2 rounded-xl transition-colors ${dark ? 'text-background/60 hover:bg-background/10 hover:text-background' : 'text-surface/60 hover:bg-surface/5 hover:text-surface'}`}
         aria-label="Notifications"
       >
         <Bell className="w-4 h-4" />
-        {hasRecent && <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-red-500" />}
+        {hasUnread && <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-red-500" />}
       </button>
-      {open && coords && (
-        <>
-          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)}></div>
+      {open && (
+        <div className="fixed inset-0 z-[100] bg-primary/60 backdrop-blur-sm" onClick={() => setOpen(false)}>
           <div
-            className="fixed w-72 bg-background border border-surface/10 rounded-xl shadow-2xl z-50 overflow-hidden"
-            style={{ top: coords.top, left: coords.left }}
+            className="bg-background rounded-2xl shadow-2xl max-w-lg mx-auto mt-24 overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
           >
-            <p className="px-4 py-3 text-[10px] uppercase tracking-wider text-surface/40 font-mono border-b border-surface/10">
-              Activité récente
-            </p>
-            {recent.length === 0 ? (
-              <p className="px-4 py-6 text-sm text-surface/40 text-center">Aucune activité récente</p>
-            ) : (
-              <div className="max-h-72 overflow-y-auto">
-                {recent.map((lead) => (
-                  <div key={lead.id} className="px-4 py-3 border-b border-surface/5 last:border-b-0">
-                    <p className="text-sm font-medium text-surface truncate">{lead.name || lead.email}</p>
-                    <p className="text-xs text-surface/50 truncate">{lead.funnelName}</p>
-                    <p className="text-[10px] text-surface/40 font-mono mt-0.5">{formatRelativeTime(lead.created_at)}</p>
-                  </div>
-                ))}
+            <div className="flex items-center justify-between gap-3 px-5 py-4 border-b border-surface/10">
+              <div className="flex items-center gap-2">
+                <Bell className="w-4 h-4 text-surface/40" />
+                <p className="text-sm font-semibold text-surface">Activité récente</p>
               </div>
-            )}
+              <div className="flex items-center gap-3">
+                {hasUnread && (
+                  <button onClick={markAllRead} className="text-xs font-semibold text-accent hover:underline">
+                    Tout marquer comme lu
+                  </button>
+                )}
+                <button onClick={() => setOpen(false)} className="text-surface/40 hover:text-surface" aria-label="Fermer les notifications">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            <div className="max-h-96 overflow-y-auto py-2">
+              {recent.length === 0 ? (
+                <p className="px-5 py-8 text-sm text-surface/40 text-center">Aucune activité récente</p>
+              ) : (
+                <div className="px-2">
+                  {recent.map((lead) => {
+                    const unread = new Date(lead.created_at).getTime() > lastSeenAt;
+                    return (
+                      <button
+                        key={lead.id}
+                        onClick={() => goToLead(lead)}
+                        className="w-full flex items-start gap-3 px-3 py-2.5 rounded-xl text-left hover:bg-accent/10 transition-colors"
+                      >
+                        <span className={`mt-1.5 w-1.5 h-1.5 rounded-full shrink-0 ${unread ? 'bg-accent' : 'bg-transparent'}`} />
+                        <span className="min-w-0 flex-1">
+                          <span className="block text-sm font-medium text-surface truncate">{lead.name || lead.email}</span>
+                          <span className="block text-xs text-surface/50 truncate">{lead.funnelName}</span>
+                        </span>
+                        <span className="text-[10px] text-surface/40 font-mono shrink-0 mt-0.5">{formatRelativeTime(lead.created_at)}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            <div className="border-t border-surface/10 px-5 py-3">
+              <Link to="/app/leads" onClick={() => setOpen(false)} className="text-xs font-semibold text-accent hover:underline">
+                Voir tous les leads →
+              </Link>
+            </div>
           </div>
-        </>
+        </div>
       )}
     </div>
   );
@@ -282,7 +316,7 @@ export default function AppShell() {
       <aside className="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0 bg-primary p-6 overflow-y-auto">
         <div className="flex items-center justify-between mb-6">
           <ShellLogo />
-          <NotificationBell leads={notifLeads} dark />
+          <NotificationBell leads={notifLeads} ownerId={effectiveOwnerId} dark />
         </div>
         <SearchButton onClick={() => setPaletteOpen(true)} />
         <NavLinks isAdmin={profile?.is_admin} plan={plan} />
@@ -306,7 +340,7 @@ export default function AppShell() {
           <button onClick={() => setPaletteOpen(true)} className="p-2 text-surface/60" aria-label="Rechercher">
             <Search className="w-5 h-5" />
           </button>
-          <NotificationBell leads={notifLeads} />
+          <NotificationBell leads={notifLeads} ownerId={effectiveOwnerId} />
           <button onClick={() => setDrawerOpen(true)} className="p-2 text-surface" aria-label="Ouvrir le menu">
             <Menu className="w-6 h-6" />
           </button>
