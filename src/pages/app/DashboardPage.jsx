@@ -1,29 +1,36 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, ExternalLink, Pencil, Trash2, Rocket, Mail, Eye, Layers, CheckCircle2, Circle } from 'lucide-react';
+import { Plus, ExternalLink, Pencil, Trash2, Rocket, Mail, Eye, Layers, CheckCircle2, Circle, LayoutDashboard } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { fetchUserFunnels, deleteFunnel, fetchLeadsForUser, fetchFunnelStepsAnalytics } from '../../lib/funnelsApi';
 import { getPlan } from '../../lib/plans';
 import { useConfirm } from '../../components/app/ConfirmDialog';
+import GradientBanner from '../../components/ui/GradientBanner';
 
-// Chaque KPI a sa propre teinte (toujours les couleurs de marque existantes,
-// juste à faible opacité) plutôt qu'un fond blanc uniforme pour les trois —
-// permet de les distinguer d'un coup d'œil et de rythmer la rangée.
-const KPI_TINTS = {
-  accent: { bg: 'bg-accent/5', border: 'border-accent/15', icon: 'text-accent' },
-  primary: { bg: 'bg-primary/5', border: 'border-primary/15', icon: 'text-primary' },
-  surface: { bg: 'bg-surface/5', border: 'border-surface/10', icon: 'text-surface/50' },
-};
-
-function KpiCard({ icon: Icon, label, value, tint = 'surface' }) {
-  const t = KPI_TINTS[tint];
+// Une carte est "mise en avant" (fond dégradé sombre, comme la bannière)
+// plutôt que les autres (fond clair, icône dans un cercle teinté) — reprend
+// le contraste vu sur le tableau de bord de référence, où le KPI le plus
+// parlant (ici les leads récents, signal d'activité le plus direct) se
+// détache visuellement des deux autres.
+function KpiCard({ icon: Icon, label, value, highlight = false }) {
+  if (highlight) {
+    return (
+      <div className="gradient-banner rounded-2xl p-5 text-background">
+        <div className="w-9 h-9 rounded-full bg-background/15 flex items-center justify-center mb-3">
+          <Icon className="w-4 h-4 text-background" />
+        </div>
+        <p className="text-2xl font-sans font-bold text-background">{value}</p>
+        <p className="text-xs text-background/60 mt-1">{label}</p>
+      </div>
+    );
+  }
   return (
-    <div className={`${t.bg} border ${t.border} rounded-xl p-4`}>
-      <div className={`flex items-center gap-2 ${t.icon} mb-2`}>
-        <Icon className="w-4 h-4" />
-        <p className="text-[10px] uppercase tracking-wider font-mono">{label}</p>
+    <div className="bg-background border border-surface/10 rounded-2xl shadow-soft p-5">
+      <div className="w-9 h-9 rounded-full bg-accent/10 flex items-center justify-center mb-3">
+        <Icon className="w-4 h-4 text-accent" />
       </div>
       <p className="text-2xl font-sans font-bold text-surface">{value}</p>
+      <p className="text-xs text-surface/50 mt-1">{label}</p>
     </div>
   );
 }
@@ -131,30 +138,29 @@ export default function DashboardPage() {
 
   return (
     <div>
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
-        <div>
-          <h1 className="text-2xl font-sans font-bold text-surface">Tes tunnels de vente</h1>
-          <p className="text-surface/60 text-sm mt-1">
-            Plan {plan.name} — {funnels ? funnels.length : '…'} / {plan.maxFunnels === Infinity ? '∞' : plan.maxFunnels} tunnel(s) utilisé(s)
-          </p>
-        </div>
-        {atLimit ? (
-          <Link to="/app/billing" className="magnetic-btn inline-flex items-center gap-2 bg-primary text-background px-5 py-3 rounded-full text-sm font-semibold">
-            <Rocket className="w-4 h-4" /> Passer au plan supérieur
-          </Link>
-        ) : (
-          <Link to="/app/funnels/new" className="magnetic-btn btn-fill-slide group relative inline-flex items-center gap-2 bg-accent text-background px-5 py-3 rounded-full text-sm font-semibold">
-            <span className="relative z-10 flex items-center gap-2"><Plus className="w-4 h-4" /> Créer un tunnel</span>
-            <div className="fill-layer bg-white/20 rounded-full"></div>
-          </Link>
-        )}
-      </div>
+      <GradientBanner
+        icon={LayoutDashboard}
+        title={`Bonjour, ${(profile?.full_name || profile?.email || '').split(/[\s@]/)[0] || ''} 👋`}
+        description={`Plan ${plan.name} — ${funnels ? funnels.length : '…'} / ${plan.maxFunnels === Infinity ? '∞' : plan.maxFunnels} tunnel(s) utilisé(s)`}
+        actions={
+          atLimit ? (
+            <Link to="/app/billing" className="magnetic-btn inline-flex items-center gap-2 bg-background text-primary px-5 py-3 rounded-full text-sm font-semibold">
+              <Rocket className="w-4 h-4" /> Passer au plan supérieur
+            </Link>
+          ) : (
+            <Link to="/app/funnels/new" className="magnetic-btn btn-fill-slide group relative inline-flex items-center gap-2 bg-accent text-background px-5 py-3 rounded-full text-sm font-semibold">
+              <span className="relative z-10 flex items-center gap-2"><Plus className="w-4 h-4" /> Créer un tunnel</span>
+              <div className="fill-layer bg-white/20 rounded-full"></div>
+            </Link>
+          )
+        }
+      />
 
       {funnels && (
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-          <KpiCard icon={Mail} label="Leads (7 derniers jours)" value={leads7d} tint="accent" />
-          <KpiCard icon={Eye} label="Vues totales" value={totalViews} tint="primary" />
-          <KpiCard icon={Layers} label="Tunnels actifs" value={`${publishedCount} / ${funnels.length}`} tint="surface" />
+          <KpiCard icon={Mail} label="Leads (7 derniers jours)" value={leads7d} highlight />
+          <KpiCard icon={Eye} label="Vues totales" value={totalViews} />
+          <KpiCard icon={Layers} label="Tunnels actifs" value={`${publishedCount} / ${funnels.length}`} />
         </div>
       )}
 
@@ -181,7 +187,7 @@ export default function DashboardPage() {
             // Une fine barre de couleur en tête de carte, alternée entre
             // accent/primary/surface selon l'index — repère visuel rapide
             // dans une grille de plusieurs tunnels, mêmes couleurs de marque.
-            <div key={funnel.id} className="bg-background border border-surface/10 rounded-[2rem] overflow-hidden shadow-sm flex flex-col">
+            <div key={funnel.id} className="bg-background border border-surface/10 rounded-[2rem] overflow-hidden shadow-soft flex flex-col">
               <div className={`h-1.5 ${['bg-accent', 'bg-primary', 'bg-surface/30'][i % 3]}`} />
               <div className="p-6 flex flex-col flex-1">
               <div className="flex items-start justify-between mb-3">

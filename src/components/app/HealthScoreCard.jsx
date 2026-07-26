@@ -13,7 +13,7 @@ export default function HealthScoreCard({ score, checks }) {
   const passedCount = checks.filter((c) => c.passed).length;
 
   return (
-    <div className="bg-background border border-surface/10 rounded-[2rem] p-5 mb-4">
+    <div className="bg-background border border-surface/10 rounded-[2rem] p-5 mb-4 shadow-soft">
       <button type="button" onClick={() => setOpen((v) => !v)} className="w-full flex items-center gap-4 text-left">
         <div
           className="w-14 h-14 rounded-full flex items-center justify-center shrink-0"

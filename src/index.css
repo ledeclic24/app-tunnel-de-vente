@@ -32,6 +32,17 @@
   background-image: linear-gradient(135deg, rgb(var(--color-accent)) 0%, #86EFAC 100%);
 }
 
+/* Bannière de page façon "hero card" — dégradé sombre dérivé des deux
+   couleurs de marque existantes (primary → accent), jamais une teinte
+   arbitraire ajoutée à côté. */
+.gradient-banner {
+  background-image: linear-gradient(
+    135deg,
+    rgb(var(--color-primary)) 0%,
+    color-mix(in srgb, rgb(var(--color-primary)) 45%, rgb(var(--color-accent)) 55%) 100%
+  );
+}
+
 .gradient-text-accent {
   background-image: linear-gradient(135deg, rgb(var(--color-accent)) 0%, #4ADE80 100%);
   -webkit-background-clip: text;

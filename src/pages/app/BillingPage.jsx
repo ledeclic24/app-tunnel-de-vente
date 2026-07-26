@@ -7,6 +7,7 @@ import { updateBrandingForUser } from '../../lib/funnelsApi';
 import { getLivePlans } from '../../lib/plansApi';
 import { createPayment } from '../../lib/paymentsApi';
 import { fetchCreditsBalance, fetchCreditPacks, purchaseCreditPack } from '../../lib/creditsApi';
+import GradientBanner from '../../components/ui/GradientBanner';
 
 const PACK_LABELS = {
   boost: 'Boost',
@@ -93,8 +94,7 @@ export default function BillingPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-sans font-bold text-surface mb-2">Facturation</h1>
-      <p className="text-surface/60 mb-6">Choisis le plan adapté à ton usage.</p>
+      <GradientBanner icon={CreditCard} title="Facturation" description="Choisis le plan adapté à ton usage." />
 
       {returnStatus && (
         <div className={`flex items-start gap-3 rounded-2xl p-4 mb-6 text-sm ${returnStatus.tone === 'ok' ? 'bg-accent/5 border border-accent/20 text-surface/70' : 'bg-red-500/5 border border-red-500/20 text-red-600'}`}>
@@ -119,11 +119,17 @@ export default function BillingPage() {
         {PLAN_ORDER.map((key) => {
           const plan = livePlans[key];
           const isCurrent = key === currentPlan;
+          const isRecommended = !isCurrent && key === 'createur';
           return (
-            <div key={key} className={`rounded-[2rem] p-8 border relative ${isCurrent ? 'bg-primary text-background border-accent/30 shadow-xl' : 'bg-background text-surface border-surface/10'}`}>
+            <div key={key} className={`rounded-[2rem] p-8 border relative ${isCurrent ? 'bg-primary text-background border-accent/30 shadow-xl' : 'bg-background text-surface border-surface/10 shadow-soft'}`}>
               {isCurrent && (
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-accent text-background font-mono text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
                   Plan actuel
+                </div>
+              )}
+              {isRecommended && (
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-background font-mono text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
+                  Recommandé
                 </div>
               )}
               <h3 className="text-xl font-sans mb-2">{plan.name}</h3>
@@ -193,7 +199,7 @@ export default function BillingPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {(packs || []).map((pack) => (
-              <div key={pack.key} className="bg-background border border-surface/10 rounded-[2rem] p-6">
+              <div key={pack.key} className="bg-background border border-surface/10 rounded-[2rem] p-6 shadow-soft">
                 <h3 className="font-sans font-semibold text-surface mb-1">{PACK_LABELS[pack.key] || pack.key}</h3>
                 <p className="text-surface/60 text-sm mb-4">{pack.credits} crédits</p>
                 <p className="text-2xl font-bold text-surface mb-4">{formatPrice(pack.price)}</p>

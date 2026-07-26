@@ -11,6 +11,7 @@ import {
   fetchMetaAdCampaigns, fetchMetaAdsSummary,
 } from '../../lib/metaAdsApi';
 import { useConfirm } from '../../components/app/ConfirmDialog';
+import GradientBanner from '../../components/ui/GradientBanner';
 
 // Le code est prêt (OAuth, tableau de bord, coût par lead) mais attend les
 // identifiants de l'App Facebook côté serveur — passer à false dès qu'ils
@@ -231,13 +232,11 @@ export default function AdsPage() {
 
   return (
     <div>
-      <div className="flex items-center gap-2 mb-2">
-        <Megaphone className="w-5 h-5 text-accent" />
-        <h1 className="text-2xl font-sans font-bold text-surface">Publicité</h1>
-      </div>
-      <p className="text-surface/60 mb-8 max-w-2xl">
-        Connecte ton compte Meta Ads pour suivre tes dépenses publicitaires et les croiser avec les leads captés sur tes tunnels TonTunnel.
-      </p>
+      <GradientBanner
+        icon={Megaphone}
+        title="Publicité"
+        description="Connecte ton compte Meta Ads pour suivre tes dépenses et les croiser avec tes leads."
+      />
 
       {justConnected && <p className="text-sm text-accent mb-6">Compte Meta Ads connecté avec succès.</p>}
       {oauthError && <p className="text-sm text-red-500 mb-6">La connexion à Facebook a échoué, réessaie.</p>}

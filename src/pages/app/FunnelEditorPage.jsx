@@ -55,7 +55,7 @@ function BlockCard({
   const headerTint = defaultBg === 'primary' ? 'bg-primary/5' : 'bg-accent/5';
 
   return (
-    <div className={`bg-background border rounded-[2rem] overflow-hidden ${locked ? 'border-accent/30' : 'border-surface/10'}`}>
+    <div className={`bg-background border rounded-[2rem] overflow-hidden shadow-soft ${locked ? 'border-accent/30' : 'border-surface/10'}`}>
       <div className={`flex items-center justify-between px-5 py-3 border-b border-surface/10 ${headerTint}`}>
         <div className="flex items-center gap-2 text-sm font-medium text-surface/70 min-w-0">
           <button

@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Users, ShieldCheck, CreditCard, Trash2, Lock, Info, UserPlus, Wallet, ExternalLink, Zap, Copy, Check as CheckIcon } from 'lucide-react';
+import { Users, ShieldCheck, CreditCard, Trash2, Lock, Info, UserPlus, Wallet, ExternalLink, Zap, Copy, Check as CheckIcon, Building2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { getPlan } from '../../lib/plans';
 import { fetchOrgMembers, inviteOrgMember, removeOrgMember } from '../../lib/growthApi';
@@ -8,6 +8,8 @@ import { fetchPaymentMethods, createPaymentMethod, deletePaymentMethod } from '.
 import { API_URL } from '../../lib/apiClient';
 import { useConfirm } from '../../components/app/ConfirmDialog';
 import BillingPage from './BillingPage';
+import GradientBanner from '../../components/ui/GradientBanner';
+import Tabs from '../../components/ui/Tabs';
 
 const TABS = [
   { key: 'equipe', label: 'Équipe', icon: Users },
@@ -95,7 +97,7 @@ function PaymentMethodsTab() {
 
   return (
     <div className="space-y-6">
-      <div className="bg-background border border-surface/10 rounded-[2rem] p-6 md:p-8">
+      <div className="bg-background border border-surface/10 rounded-[2rem] shadow-soft p-6 md:p-8">
         <h2 className="text-sm font-sans font-semibold text-surface mb-1">Tes moyens de paiement</h2>
         <p className="text-sm text-surface/60 mb-4">
           Un simple lien externe (Wave, Orange Money, ou autre), ou un vrai flux de paiement intégré via Moneroo — le client paie sans jamais quitter ton tunnel, et l'argent va directement sur ton compte.
@@ -150,7 +152,7 @@ function PaymentMethodsTab() {
         )}
       </div>
 
-      <div className="bg-background border border-surface/10 rounded-[2rem] p-6 md:p-8">
+      <div className="bg-background border border-surface/10 rounded-[2rem] shadow-soft p-6 md:p-8">
         <h2 className="text-sm font-sans font-semibold text-surface mb-4">Ajouter un moyen de paiement</h2>
 
         <div className="inline-flex bg-surface/5 rounded-xl p-1 mb-4">
@@ -270,7 +272,7 @@ function TeamTab() {
 
   if (!isOwner) {
     return (
-      <div className="bg-background border border-surface/10 rounded-[2rem] p-6 md:p-8">
+      <div className="bg-background border border-surface/10 rounded-[2rem] shadow-soft p-6 md:p-8">
         <p className="text-sm text-surface/70">Seul le propriétaire du compte peut gérer l'équipe.</p>
       </div>
     );
@@ -278,7 +280,7 @@ function TeamTab() {
 
   if (plan.teamSeats <= 1) {
     return (
-      <div className="bg-background border border-surface/10 rounded-[2rem] p-6 md:p-8 flex items-start gap-3">
+      <div className="bg-background border border-surface/10 rounded-[2rem] shadow-soft p-6 md:p-8 flex items-start gap-3">
         <Lock className="w-5 h-5 text-surface/40 shrink-0 mt-0.5" />
         <div>
           <p className="text-sm text-surface/70 mb-3">La gestion d'équipe est réservée au plan Entreprise.</p>
@@ -334,7 +336,7 @@ function TeamTab() {
 
   return (
     <div className="space-y-6">
-      <div className="bg-background border border-surface/10 rounded-[2rem] p-6 md:p-8">
+      <div className="bg-background border border-surface/10 rounded-[2rem] shadow-soft p-6 md:p-8">
         <h2 className="text-sm font-sans font-semibold text-surface mb-4">Membres de l'équipe</h2>
 
         {loadError && <p className="text-sm text-red-500 mb-4">{loadError}</p>}
@@ -376,7 +378,7 @@ function TeamTab() {
         </p>
       </div>
 
-      <div className="bg-background border border-surface/10 rounded-[2rem] p-6 md:p-8">
+      <div className="bg-background border border-surface/10 rounded-[2rem] shadow-soft p-6 md:p-8">
         <h2 className="text-sm font-sans font-semibold text-surface mb-4 flex items-center gap-2">
           <UserPlus className="w-4 h-4" /> Inviter un collaborateur
         </h2>
@@ -417,7 +419,7 @@ function TeamTab() {
 function SecurityTab() {
   return (
     <div className="space-y-6">
-      <div className="bg-background border border-surface/10 rounded-[2rem] p-6 md:p-8">
+      <div className="bg-background border border-surface/10 rounded-[2rem] shadow-soft p-6 md:p-8">
         <h2 className="text-sm font-sans font-semibold text-surface mb-2">Mot de passe</h2>
         <p className="text-sm text-surface/60 mb-4">
           Le changement de mot de passe se fait depuis la page de ton compte.
@@ -427,7 +429,7 @@ function SecurityTab() {
         </Link>
       </div>
 
-      <div className="bg-background border border-surface/10 rounded-[2rem] p-6 md:p-8 flex items-start justify-between gap-4">
+      <div className="bg-background border border-surface/10 rounded-[2rem] shadow-soft p-6 md:p-8 flex items-start justify-between gap-4">
         <div>
           <h2 className="text-sm font-sans font-semibold text-surface mb-1">Authentification à deux facteurs</h2>
           <p className="text-sm text-surface/60">Ajoute une couche de sécurité supplémentaire à ta connexion.</p>
@@ -457,23 +459,9 @@ export default function OrganisationPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-sans font-bold text-surface mb-2">Organisation</h1>
-      <p className="text-surface/60 mb-6">Gère ton équipe, ta sécurité et ta facturation.</p>
+      <GradientBanner icon={Building2} title="Organisation" description="Gère ton équipe, ta sécurité et ta facturation." />
 
-      <div className="inline-flex bg-surface/5 rounded-xl p-1 mb-8">
-        {TABS.map(({ key, label, icon: Icon }) => (
-          <button
-            key={key}
-            onClick={() => handleTabChange(key)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
-              activeTab === key ? 'bg-background text-surface shadow-sm' : 'text-surface/50 hover:text-surface/80'
-            }`}
-          >
-            <Icon className="w-4 h-4" />
-            {label}
-          </button>
-        ))}
-      </div>
+      <Tabs tabs={TABS} value={activeTab} onChange={handleTabChange} className="mb-8" />
 
       {activeTab === 'equipe' && <TeamTab />}
       {activeTab === 'paiements' && <PaymentMethodsTab />}

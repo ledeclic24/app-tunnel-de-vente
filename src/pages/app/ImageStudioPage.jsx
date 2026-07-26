@@ -8,6 +8,7 @@ import { generateImages, fetchImages, deleteImage, downloadImage, fetchImageBlob
 import { fetchCreditsBalance } from '../../lib/creditsApi';
 import { useConfirm } from '../../components/app/ConfirmDialog';
 import { useToast } from '../../components/app/Toast';
+import GradientBanner from '../../components/ui/GradientBanner';
 
 const COMING_SOON = false;
 
@@ -277,18 +278,12 @@ export default function ImageStudioPage() {
 
   return (
     <div className="max-w-3xl mx-auto">
-      <div className="inline-flex items-center gap-2 bg-accent/10 text-accent px-3 py-1.5 rounded-full text-xs font-semibold mb-4">
-        <ImageIcon className="w-3.5 h-3.5" /> Studio visuel IA
-      </div>
-      <h1 className="text-2xl font-sans font-bold text-surface mb-2">Génère des images pour tes tunnels</h1>
-      {credits !== null ? (
-        <p className="text-xs text-surface/40 mb-6 font-mono">
-          {credits.balance} crédit{credits.balance > 1 ? 's' : ''} IA disponible{credits.balance > 1 ? 's' : ''}
-          {' · '}<Link to="/app/billing" className="underline hover:text-surface/70">en acheter plus</Link>
-        </p>
-      ) : (
-        <div className="mb-6" />
-      )}
+      <GradientBanner
+        icon={ImageIcon}
+        title="Génère des images pour tes tunnels"
+        description={credits !== null ? `${credits.balance} crédit${credits.balance > 1 ? 's' : ''} IA disponible${credits.balance > 1 ? 's' : ''}` : undefined}
+        actions={credits !== null && <Link to="/app/billing" className="text-background/80 text-sm font-semibold hover:underline">En acheter plus</Link>}
+      />
 
       <form onSubmit={handleGenerate} className="bg-background border border-surface/10 rounded-[2rem] p-4 md:p-6 space-y-4 mb-6">
         <div>

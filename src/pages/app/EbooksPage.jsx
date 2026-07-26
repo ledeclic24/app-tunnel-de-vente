@@ -9,6 +9,7 @@ import ImageUploadField from '../../components/blocks/ImageUploadField';
 import DownloadMenu from '../../components/app/DownloadMenu';
 import { useConfirm } from '../../components/app/ConfirmDialog';
 import { useToast } from '../../components/app/Toast';
+import GradientBanner from '../../components/ui/GradientBanner';
 
 const ERROR_MESSAGES = {
   plan_required: "Le générateur d'ebook nécessite le plan Pro ou Entreprise.",
@@ -187,20 +188,19 @@ export default function EbooksPage() {
 
   return (
     <div className="max-w-3xl mx-auto">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <div className="inline-flex items-center gap-2 bg-accent/10 text-accent px-3 py-1.5 rounded-full text-xs font-semibold mb-3">
-            <BookOpen className="w-3.5 h-3.5" /> Ebooks
-          </div>
-          <h1 className="text-2xl font-sans font-bold text-surface">Tes ebooks</h1>
-        </div>
-        <button
-          onClick={() => setShowForm((v) => !v)}
-          className="magnetic-btn inline-flex items-center gap-2 bg-accent text-background px-4 py-2.5 rounded-full text-sm font-semibold"
-        >
-          <Plus className="w-4 h-4" /> Nouvel ebook
-        </button>
-      </div>
+      <GradientBanner
+        icon={BookOpen}
+        title="Tes ebooks"
+        description="Couverture, sommaire et chapitres générés par IA, exportables en PDF."
+        actions={
+          <button
+            onClick={() => setShowForm((v) => !v)}
+            className="magnetic-btn inline-flex items-center gap-2 bg-background text-primary px-4 py-2.5 rounded-full text-sm font-semibold"
+          >
+            <Plus className="w-4 h-4" /> Nouvel ebook
+          </button>
+        }
+      />
 
       {showForm && (
         <form onSubmit={handleGenerate} className="bg-background border border-surface/10 rounded-[2rem] p-4 md:p-6 space-y-4 mb-6">

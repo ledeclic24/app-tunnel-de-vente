@@ -5,6 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 import { fetchLeadsForUser, resendLeadEmail } from '../../lib/funnelsApi';
 import { getPlan } from '../../lib/plans';
 import { useToast } from '../../components/app/Toast';
+import GradientBanner from '../../components/ui/GradientBanner';
 
 function exportToCsv(leads) {
   const header = ['Nom', 'Email', 'Tunnel', 'Date'];
@@ -61,25 +62,26 @@ export default function LeadsPage() {
 
   return (
     <div>
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
-        <div>
-          <h1 className="text-2xl font-sans font-bold text-surface">Tes leads</h1>
-          <p className="text-surface/60 text-sm mt-1">{leads.length} prospect(s) capturé(s) au total.</p>
-        </div>
-        {plan.leadsExport ? (
-          <button
-            onClick={() => exportToCsv(leads)}
-            disabled={leads.length === 0}
-            className="magnetic-btn inline-flex items-center gap-2 bg-surface text-background px-5 py-3 rounded-full text-sm font-semibold disabled:opacity-40"
-          >
-            <Download className="w-4 h-4" /> Exporter en CSV
-          </button>
-        ) : (
-          <Link to="/app/billing" className="inline-flex items-center gap-2 bg-surface/10 text-surface/60 px-5 py-3 rounded-full text-sm font-semibold">
-            <Lock className="w-4 h-4" /> Export CSV — plan Pro
-          </Link>
-        )}
-      </div>
+      <GradientBanner
+        icon={Mail}
+        title="Tes leads"
+        description={`${leads.length} prospect(s) capturé(s) au total.`}
+        actions={
+          plan.leadsExport ? (
+            <button
+              onClick={() => exportToCsv(leads)}
+              disabled={leads.length === 0}
+              className="magnetic-btn inline-flex items-center gap-2 bg-background text-primary px-5 py-3 rounded-full text-sm font-semibold disabled:opacity-40"
+            >
+              <Download className="w-4 h-4" /> Exporter en CSV
+            </button>
+          ) : (
+            <Link to="/app/billing" className="inline-flex items-center gap-2 bg-background/10 text-background px-5 py-3 rounded-full text-sm font-semibold">
+              <Lock className="w-4 h-4" /> Export CSV — plan Pro
+            </Link>
+          )
+        }
+      />
 
       {leads.length === 0 && (
         <div className="text-center py-16 border border-dashed border-surface/20 rounded-[2rem]">
@@ -89,7 +91,7 @@ export default function LeadsPage() {
       )}
 
       {leads.length > 0 && (
-        <div className="bg-background border border-surface/10 rounded-[2rem] overflow-hidden">
+        <div className="bg-background border border-surface/10 rounded-[2rem] overflow-hidden shadow-soft">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>

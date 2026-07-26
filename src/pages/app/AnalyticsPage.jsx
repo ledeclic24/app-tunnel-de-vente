@@ -6,6 +6,7 @@ import { fetchUserFunnels, fetchFunnelStepsAnalytics } from '../../lib/funnelsAp
 import { fetchCategoryBenchmark } from '../../lib/growthApi';
 import { getPlan } from '../../lib/plans';
 import { getCategory } from '../../lib/funnelTemplates';
+import GradientBanner from '../../components/ui/GradientBanner';
 
 function Spinner() {
   return (
@@ -71,7 +72,7 @@ function FunnelJourney({ funnel }) {
   const totalViews = steps ? steps.reduce((sum, s) => sum + s.views, 0) : 0;
 
   return (
-    <div className="bg-background border border-surface/10 rounded-[2rem] p-6 md:p-8">
+    <div className="bg-background border border-surface/10 rounded-[2rem] p-6 md:p-8 shadow-soft">
       <div className="flex items-center justify-between mb-6">
         <h3 className="font-sans font-semibold text-surface">{funnel.name}</h3>
         <span className={`text-[10px] font-mono uppercase tracking-wider px-2 py-1 rounded-full ${funnel.is_published ? 'bg-accent/10 text-accent' : 'bg-surface/10 text-surface/50'}`}>
@@ -139,7 +140,7 @@ function BenchmarkCard({ funnel }) {
   }, [funnel.id, funnel.category]);
 
   return (
-    <div className="bg-background border border-surface/10 rounded-[2rem] p-6 md:p-8">
+    <div className="bg-background border border-surface/10 rounded-[2rem] p-6 md:p-8 shadow-soft">
       <div className="flex items-center justify-between mb-6">
         <h3 className="font-sans font-semibold text-surface">{funnel.name}</h3>
         <span className="text-[10px] font-mono uppercase tracking-wider px-2 py-1 rounded-full bg-surface/10 text-surface/50">
@@ -213,13 +214,12 @@ export default function AnalyticsPage() {
 
   return (
     <div>
-      <div className="flex items-center gap-2 mb-2">
-        <TrendingUp className="w-5 h-5 text-accent" />
-        <h1 className="text-2xl font-sans font-bold text-surface">Analytique</h1>
-      </div>
-      <p className="text-surface/60 mb-10">
-        Le parcours de tes visiteurs à travers chaque tunnel, et la performance de tes tunnels publiés comparée à leur secteur.
-      </p>
+      <GradientBanner
+        icon={TrendingUp}
+        title="Analytique"
+        description="Le parcours de tes visiteurs, et la performance de tes tunnels comparée à leur secteur."
+        className="mb-10"
+      />
 
       <section className="mb-12">
         <h2 className="text-lg font-sans font-bold text-surface mb-1">Parcours client</h2>

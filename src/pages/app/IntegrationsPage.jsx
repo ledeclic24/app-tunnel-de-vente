@@ -6,6 +6,7 @@ import { fetchUserFunnels } from '../../lib/funnelsApi';
 import { fetchWebhooks, createWebhook, toggleWebhook, deleteWebhook, fetchWebhookLogs } from '../../lib/growthApi';
 import { getPlan } from '../../lib/plans';
 import { useConfirm } from '../../components/app/ConfirmDialog';
+import GradientBanner from '../../components/ui/GradientBanner';
 
 function Spinner() {
   return (
@@ -182,13 +183,11 @@ export default function IntegrationsPage() {
 
   return (
     <div>
-      <div className="flex items-center gap-2 mb-2">
-        <Webhook className="w-5 h-5 text-accent" />
-        <h1 className="text-2xl font-sans font-bold text-surface">Intégrations</h1>
-      </div>
-      <p className="text-surface/60 mb-2 max-w-2xl">
-        Un webhook envoie automatiquement les informations d'un nouveau lead vers un autre outil (Zapier, Google Sheets, ton CRM...) dès qu'il remplit un formulaire sur l'un de tes tunnels.
-      </p>
+      <GradientBanner
+        icon={Webhook}
+        title="Intégrations"
+        description="Envoie automatiquement chaque nouveau lead vers Zapier, Google Sheets ou ton CRM."
+      />
       <p className="text-surface/40 text-sm mb-8 max-w-2xl">
         Compatible avec Zapier (déclencheur « Webhooks by Zapier »), Make, ou toute autre URL capable de recevoir un envoi POST au format JSON.
       </p>
@@ -220,7 +219,7 @@ export default function IntegrationsPage() {
       )}
 
       {webhooks && webhooks.length > 0 && (
-        <div className="bg-background border border-surface/10 rounded-[2rem] overflow-hidden mb-10">
+        <div className="bg-background border border-surface/10 rounded-[2rem] overflow-hidden shadow-soft mb-10">
           <div className="divide-y divide-surface/10">
             {webhooks.map((w) => (
               <div key={w.id} className="flex flex-col md:flex-row md:items-center gap-3 px-6 py-4">
@@ -267,7 +266,7 @@ export default function IntegrationsPage() {
       )}
 
       {logs && logs.length > 0 && (
-        <div className="bg-background border border-surface/10 rounded-[2rem] overflow-hidden">
+        <div className="bg-background border border-surface/10 rounded-[2rem] overflow-hidden shadow-soft">
           <div className="divide-y divide-surface/10">
             {logs.map((log) => {
               const webhook = webhooks?.find((w) => w.id === log.webhook_id);
