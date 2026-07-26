@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { fetchFunnelBySlug, fetchSteps, fetchBlocks, insertLead, incrementStepView } from '../../lib/funnelsApi';
+import { fetchPublishedSnapshot, insertLead, incrementStepView } from '../../lib/funnelsApi';
 import { createMonerooCheckout } from '../../lib/checkoutApi';
 import { brandStyleVars } from '../../lib/colorUtils';
 import BlockRenderer from '../../components/blocks/BlockRenderer';
@@ -61,14 +61,13 @@ export default function PublishedFunnelPage({ funnelSlugOverride } = {}) {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const f = await fetchFunnelBySlug(funnelSlug);
-      const s = await fetchSteps(f.id);
+      const snapshot = await fetchPublishedSnapshot(funnelSlug);
+      const s = snapshot.steps;
       const currentStep = stepSlug ? s.find((st) => st.slug === stepSlug) : s[0];
       if (!currentStep) { setNotFound(true); setLoading(false); return; }
-      const b = await fetchBlocks(currentStep.id);
-      setFunnel(f);
+      setFunnel(snapshot);
       setSteps(s);
-      setBlocks(b);
+      setBlocks(currentStep.blocks);
       incrementStepView(currentStep.id).catch(() => {});
     } catch (err) {
       setNotFound(true);

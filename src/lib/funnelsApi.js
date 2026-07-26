@@ -15,6 +15,8 @@ function normalizeFunnel(f) {
     slug: f.slug,
     template: f.template,
     is_published: f.isPublished,
+    has_unpublished_changes: f.hasUnpublishedChanges,
+    last_published_at: f.lastPublishedAt,
     show_branding: f.showBranding,
     brand: f.brand,
     category: f.category,
@@ -49,7 +51,6 @@ function normalizeLead(l) {
 
 const FUNNEL_PATCH_KEY_MAP = {
   name: 'name',
-  is_published: 'isPublished',
   show_branding: 'showBranding',
   brand: 'brand',
   category: 'category',
@@ -128,6 +129,45 @@ export async function updateFunnel(funnelId, patch) {
     if (mapped) body[mapped] = value;
   }
   await apiPatch(`/funnels/${funnelId}`, body);
+}
+
+// Fige un nouveau snapshot public à partir de l'état actuel de l'éditeur —
+// seul moyen de rendre un tunnel visible publiquement (voir FunnelsService.
+// publish côté backend). unpublishFunnel n'efface pas le snapshot, il
+// masque juste la page publique.
+export async function publishFunnel(funnelId) {
+  const funnel = await apiPost(`/funnels/${funnelId}/publish`, undefined);
+  return normalizeFunnel(funnel);
+}
+
+export async function unpublishFunnel(funnelId) {
+  const funnel = await apiPost(`/funnels/${funnelId}/unpublish`, undefined);
+  return normalizeFunnel(funnel);
+}
+
+// Utilisé exclusivement par PublishedFunnelPage.jsx (visiteurs publics) :
+// renvoie {id,name,slug,brand,show_branding,seo*,steps:[{...,blocks}]} déjà
+// figé au dernier "Publier" — jamais les tables live steps/blocks.
+export async function fetchPublishedSnapshot(slug) {
+  const data = await apiGet(`/funnels/public/${encodeURIComponent(slug)}`);
+  return {
+    id: data.id,
+    name: data.name,
+    slug: data.slug,
+    brand: data.brand || {},
+    show_branding: data.showBranding,
+    seo_title: data.seoTitle,
+    seo_description: data.seoDescription,
+    seo_image_url: data.seoImageUrl,
+    steps: (data.steps || []).map((s) => ({
+      id: s.id,
+      name: s.name,
+      slug: s.slug,
+      step_type: s.stepType,
+      chrome: s.chrome || {},
+      blocks: s.blocks || [],
+    })),
+  };
 }
 
 export async function deleteFunnel(funnelId) {

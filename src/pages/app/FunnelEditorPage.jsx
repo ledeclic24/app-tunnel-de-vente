@@ -13,7 +13,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import {
-  fetchFunnel, updateFunnel, fetchSteps, addStep, deleteStep, reorderSteps, updateStep,
+  fetchFunnel, updateFunnel, publishFunnel, unpublishFunnel, fetchSteps, addStep, deleteStep, reorderSteps, updateStep,
   fetchBlocks, addBlock, updateBlock, deleteBlock, reorderBlocks, countLeads, toggleBlockLock,
 } from '../../lib/funnelsApi';
 import { BLOCK_TYPES, createDefaultContent } from '../../lib/blockTypes';
@@ -340,13 +340,22 @@ export default function FunnelEditorPage() {
     }
   };
 
+  // "Publier" tant que le tunnel n'a jamais été publié OU que des
+  // modifications ont eu lieu depuis le dernier snapshot (voir
+  // hasUnpublishedChanges côté backend) ; "Publié" (clic = dépublier)
+  // seulement quand le snapshot public reflète exactement l'état actuel.
+  const needsPublish = !funnel.is_published || funnel.has_unpublished_changes;
+
   const togglePublish = async () => {
-    const next = !funnel.is_published;
     try {
-      await updateFunnel(funnelId, { is_published: next });
-      setFunnel((f) => ({ ...f, is_published: next }));
+      const updated = needsPublish
+        ? await publishFunnel(funnelId)
+        : await unpublishFunnel(funnelId);
+      setFunnel((f) => ({ ...f, ...updated }));
     } catch {
-      setActionError('La publication a échoué. Réessaie.');
+      setActionError(
+        needsPublish ? 'La publication a échoué. Réessaie.' : 'La dépublication a échoué. Réessaie.',
+      );
     }
   };
 
@@ -809,9 +818,9 @@ export default function FunnelEditorPage() {
           )}
           <button
             onClick={togglePublish}
-            className={`magnetic-btn flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-semibold ${funnel.is_published ? 'bg-surface/10 text-surface' : 'bg-accent text-background'}`}
+            className={`magnetic-btn flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-semibold ${!needsPublish ? 'bg-surface/10 text-surface' : 'bg-accent text-background'}`}
           >
-            {funnel.is_published ? <><Check className="w-4 h-4" /> Publié</> : 'Publier'}
+            {!needsPublish ? <><Check className="w-4 h-4" /> Publié</> : 'Publier'}
           </button>
         </div>
       </div>
