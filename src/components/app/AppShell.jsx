@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { NavLink, Link, Outlet, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, User, LogOut, Menu, X, Shield, Mail, BarChart3, Lock, Sparkles, ArrowRight,
@@ -177,23 +177,53 @@ function SearchButton({ onClick }) {
 
 function NotificationBell({ leads, dark = false }) {
   const [open, setOpen] = useState(false);
+  const [coords, setCoords] = useState(null);
+  const buttonRef = useRef(null);
   const recent = (leads || []).slice(0, 5);
   const hasRecent = (leads || []).some((l) => Date.now() - new Date(l.created_at).getTime() < 24 * 60 * 60 * 1000);
+
+  const handleToggle = () => {
+    setOpen((v) => {
+      const next = !v;
+      if (next && buttonRef.current) {
+        const rect = buttonRef.current.getBoundingClientRect();
+        // Positionné en `fixed` par rapport à l'écran (pas au bouton) : la
+        // sidebar a `overflow-y-auto`, ce qui force son overflow-x à se
+        // comporter en `auto` aussi (règle du spec CSS) et rognait le
+        // panneau en `absolute` dès qu'il dépassait la largeur de la sidebar.
+        // Aligné par défaut sur le bord gauche du bouton (le panneau s'étend
+        // vers la droite, où il y a de la place) puis ramené dans l'écran si
+        // ça déborde — nécessaire en topbar mobile, où le bouton est proche
+        // du bord droit.
+        const PANEL_WIDTH = 288;
+        const margin = 12;
+        let left = rect.left;
+        if (left + PANEL_WIDTH > window.innerWidth - margin) left = window.innerWidth - margin - PANEL_WIDTH;
+        if (left < margin) left = margin;
+        setCoords({ top: rect.bottom + 8, left });
+      }
+      return next;
+    });
+  };
 
   return (
     <div className="relative">
       <button
-        onClick={() => setOpen((v) => !v)}
+        ref={buttonRef}
+        onClick={handleToggle}
         className={`relative p-2 rounded-xl transition-colors ${dark ? 'text-background/60 hover:bg-background/10 hover:text-background' : 'text-surface/60 hover:bg-surface/5 hover:text-surface'}`}
         aria-label="Notifications"
       >
         <Bell className="w-4 h-4" />
         {hasRecent && <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-red-500" />}
       </button>
-      {open && (
+      {open && coords && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)}></div>
-          <div className="absolute right-0 mt-2 w-72 bg-background border border-surface/10 rounded-xl shadow-2xl z-50 overflow-hidden">
+          <div
+            className="fixed w-72 bg-background border border-surface/10 rounded-xl shadow-2xl z-50 overflow-hidden"
+            style={{ top: coords.top, left: coords.left }}
+          >
             <p className="px-4 py-3 text-[10px] uppercase tracking-wider text-surface/40 font-mono border-b border-surface/10">
               Activité récente
             </p>
