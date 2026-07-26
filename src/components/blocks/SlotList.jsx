@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { Type, ImagePlus, Rows3, X, GripVertical, Upload } from 'lucide-react';
+import { Type, ImagePlus, Rows3, MousePointerClick, X, GripVertical, Upload } from 'lucide-react';
 import {
   DndContext, closestCenter, PointerSensor, KeyboardSensor, useSensor, useSensors,
 } from '@dnd-kit/core';
@@ -16,13 +16,28 @@ import { useToast } from '../app/Toast';
 // extras ajoutés en bas", mais une liste ordonnée d'emplacements
 // (`content.slots`) mêlant champs fixes du bloc (kind:'field', rendus par
 // le bloc lui-même via `renderField`) et éléments libres ajoutés par
-// glisser-déposer (kind:'text'|'image'|'container'). Absent par défaut
-// (content.slots undefined) → chaque bloc calcule son ordre par défaut
-// (DEFAULT_SLOTS), donc aucun changement visuel tant que l'utilisateur
-// n'a rien déplacé/inséré — 100% rétrocompatible avec les tunnels déjà
-// publiés et les contenus générés par l'IA.
+// glisser-déposer (kind:'text'|'image'|'button'|'container'). Absent par
+// défaut (content.slots undefined) → chaque bloc calcule son ordre par
+// défaut (DEFAULT_SLOTS), donc aucun changement visuel tant que
+// l'utilisateur n'a rien déplacé/inséré — 100% rétrocompatible avec les
+// tunnels déjà publiés et les contenus générés par l'IA.
+//
+// Les conteneurs peuvent eux-mêmes contenir un conteneur (MAX_CONTAINER_DEPTH
+// niveaux de profondeur au total) : au-delà, on cesse de proposer/accepter
+// "conteneur" comme enfant — une imbrication illimitée devient vite
+// ingérable en glisser-déposer, surtout au doigt.
+const MAX_CONTAINER_DEPTH = 1;
+
 function newId() {
   return crypto.randomUUID();
+}
+
+function newExtra(kind) {
+  if (kind === 'container') return { id: newId(), kind: 'container', items: [] };
+  if (kind === 'button') return { id: newId(), kind: 'button', label: 'Nouveau bouton', url: '' };
+  if (kind === 'text') return { id: newId(), kind: 'text', value: 'Nouveau texte — clique pour modifier' };
+  if (kind === 'image') return { id: newId(), kind: 'image', value: '' };
+  return null;
 }
 
 function GripHandle({ dragHandleProps, bg }) {
@@ -44,13 +59,19 @@ function GripHandle({ dragHandleProps, bg }) {
   );
 }
 
-function RemoveButton({ onRemove }) {
+// Visible au survol (souris) ET dès que l'élément est sélectionné (clic) —
+// la seule dépendance au survol rendait la suppression peu découvrable,
+// en particulier au doigt sur mobile où "survoler" n'existe pas.
+function RemoveButton({ onRemove, isSelected }) {
   if (!onRemove) return null;
   return (
     <button
       type="button"
       onClick={onRemove}
-      className="absolute -right-2 -top-2 z-10 w-5 h-5 rounded-full bg-surface/80 text-background flex items-center justify-center opacity-0 group-hover/slot:opacity-100 transition-opacity"
+      className={cx(
+        'absolute -right-2 -top-2 z-10 w-5 h-5 rounded-full bg-surface/80 text-background flex items-center justify-center transition-opacity',
+        isSelected ? 'opacity-100' : 'opacity-0 group-hover/slot:opacity-100',
+      )}
       aria-label="Supprimer"
     >
       <X className="w-3 h-3" />
@@ -58,13 +79,15 @@ function RemoveButton({ onRemove }) {
   );
 }
 
-// Élément texte/image libre — utilisé aussi bien comme emplacement de
-// premier niveau que comme enfant d'un conteneur.
+// Élément texte/image/bouton libre — utilisé aussi bien comme emplacement
+// de premier niveau que comme enfant d'un conteneur (à n'importe quel
+// niveau d'imbrication).
 function ExtraLeaf({ extra, bg, editable, onUpdate, userId, compact }) {
   const fileRef = useRef(null);
   const [uploading, setUploading] = useState(false);
   const toast = useToast();
-  const props = editable(`extra-${extra.id}`, extra.kind === 'text' ? 'text' : 'image', extra.kind === 'text' ? 'Texte' : 'Image');
+  const kindLabel = extra.kind === 'text' ? 'Texte' : extra.kind === 'button' ? 'Bouton' : 'Image';
+  const props = editable(`extra-${extra.id}`, extra.kind === 'button' ? 'button' : extra.kind === 'text' ? 'text' : 'image', kindLabel);
 
   const handleFile = async (e) => {
     const file = e.target.files?.[0];
@@ -73,7 +96,7 @@ function ExtraLeaf({ extra, bg, editable, onUpdate, userId, compact }) {
     setUploading(true);
     try {
       const url = await uploadImage(userId, file);
-      onUpdate(url);
+      onUpdate({ value: url });
     } catch (err) {
       toast.error(err.message || "L'image n'a pas pu être importée.");
     }
@@ -88,12 +111,44 @@ function ExtraLeaf({ extra, bg, editable, onUpdate, userId, compact }) {
         onClick={props.onClick}
         contentEditable
         suppressContentEditableWarning
-        onBlur={(e) => onUpdate(e.currentTarget.textContent ?? '')}
+        onBlur={(e) => onUpdate({ value: e.currentTarget.textContent ?? '' })}
       >
         {extra.value}
       </p>
     );
   }
+
+  if (extra.kind === 'button') {
+    return (
+      <div className={cx(compact && 'flex-1 min-w-0', 'space-y-1.5')}>
+        <span
+          className={cx(
+            'inline-flex items-center justify-center px-4 py-2 rounded-full font-semibold text-sm outline-none bg-accent text-background',
+            props.className,
+          )}
+          style={props.style}
+          onClick={props.onClick}
+          contentEditable
+          suppressContentEditableWarning
+          onBlur={(e) => onUpdate({ label: e.currentTarget.textContent ?? '' })}
+        >
+          {extra.label}
+        </span>
+        <input
+          type="text"
+          value={extra.url || ''}
+          onChange={(e) => onUpdate({ url: e.target.value })}
+          onClick={(e) => e.stopPropagation()}
+          placeholder="https:// ou /nom-de-page"
+          className={cx(
+            'block w-full text-xs px-2 py-1 rounded-lg border bg-transparent outline-none',
+            bg.isDark ? 'border-background/15 text-background/70 placeholder:text-background/30' : 'border-surface/15 text-surface/70 placeholder:text-surface/30',
+          )}
+        />
+      </div>
+    );
+  }
+
   return (
     <>
       {extra.value ? (
@@ -128,14 +183,33 @@ function ExtraLeaf({ extra, bg, editable, onUpdate, userId, compact }) {
   );
 }
 
-function ContainerChild({ child, bg, editable, userId, onUpdate, onRemove, dragHandleProps, isDragging }) {
+function ContainerChild({ child, bg, editable, userId, onUpdate, onRemove, dragHandleProps, isDragging, depth, selectedElement, onSelectElement, styles, editMode }) {
   const { setNodeRef, transform, transition } = dragHandleProps.sortable;
   const style = { transform: CSS.Transform.toString(transform), transition };
+  const elementKey = child.kind === 'container' ? `container-${child.id}` : `extra-${child.id}`;
+  const isSelected = selectedElement === elementKey;
+
   return (
     <div ref={setNodeRef} style={style} className={cx('relative group/slot flex-1 min-w-[140px]', isDragging && 'opacity-50')}>
       <GripHandle dragHandleProps={dragHandleProps.attributes} bg={bg} />
-      <RemoveButton onRemove={onRemove} />
-      <ExtraLeaf extra={child} bg={bg} editable={editable} onUpdate={onUpdate} userId={userId} compact />
+      <RemoveButton onRemove={onRemove} isSelected={isSelected} />
+      {child.kind === 'container' ? (
+        <ContainerSlot
+          container={child}
+          bg={bg}
+          editable={editable}
+          userId={userId}
+          onUpdateItems={(items) => onUpdate({ items })}
+          onRemoveContainer={onRemove}
+          depth={depth}
+          selectedElement={selectedElement}
+          onSelectElement={onSelectElement}
+          styles={styles}
+          editMode={editMode}
+        />
+      ) : (
+        <ExtraLeaf extra={child} bg={bg} editable={editable} onUpdate={onUpdate} userId={userId} compact />
+      )}
     </div>
   );
 }
@@ -147,12 +221,15 @@ function SortableContainerChild(props) {
 }
 
 // Conteneur : un "groupe" qui range plusieurs extras côte à côte
-// (desktop) / empilés (mobile). Zone de dépôt propre pour y ajouter des
-// enfants, réordonnancement interne indépendant de la liste parente.
-function ContainerSlot({ container, bg, editable, userId, onUpdateItems, onRemoveContainer }) {
+// (desktop) / empilés (mobile) — peut lui-même contenir un conteneur
+// jusqu'à MAX_CONTAINER_DEPTH niveaux. Zone de dépôt propre pour y ajouter
+// des enfants, réordonnancement interne indépendant de la liste parente.
+function ContainerSlot({ container, bg, editable, userId, onUpdateItems, onRemoveContainer, depth = 0, selectedElement, onSelectElement, styles, editMode }) {
   const [dragOver, setDragOver] = useState(false);
   const toast = useToast();
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
+  const canNestContainer = depth < MAX_CONTAINER_DEPTH;
+  const elementKey = `container-${container.id}`;
 
   const handleDragEnd = (event) => {
     const { active, over } = event;
@@ -179,13 +256,19 @@ function ContainerSlot({ container, bg, editable, userId, onUpdateItems, onRemov
       return;
     }
     const kind = e.dataTransfer.getData('application/x-vendeko-extra');
-    if (kind === 'text' || kind === 'image') {
-      onUpdateItems([...container.items, { id: newId(), kind, value: kind === 'text' ? 'Nouveau texte — clique pour modifier' : '' }]);
-    }
+    if (kind === 'container' && !canNestContainer) return;
+    const extra = newExtra(kind);
+    if (extra) onUpdateItems([...container.items, extra]);
   };
 
+  const containerProps = editable(elementKey, 'card', 'Conteneur');
+
   return (
-    <div className={cx('border border-dashed rounded-xl p-3', bg.isDark ? 'border-background/15' : 'border-surface/15')}>
+    <div
+      className={cx('border border-dashed rounded-xl p-3', bg.isDark ? 'border-background/15' : 'border-surface/15', containerProps.className)}
+      style={containerProps.style}
+      onClick={containerProps.onClick}
+    >
       {container.items.length > 0 && (
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
           <SortableContext items={container.items.map((x) => x.id)} strategy={horizontalListSortingStrategy}>
@@ -197,7 +280,12 @@ function ContainerSlot({ container, bg, editable, userId, onUpdateItems, onRemov
                   bg={bg}
                   editable={editable}
                   userId={userId}
-                  onUpdate={(value) => onUpdateItems(container.items.map((c) => (c.id === child.id ? { ...c, value } : c)))}
+                  depth={depth + 1}
+                  selectedElement={selectedElement}
+                  onSelectElement={onSelectElement}
+                  styles={styles}
+                  editMode={editMode}
+                  onUpdate={(patch) => onUpdateItems(container.items.map((c) => (c.id === child.id ? { ...c, ...patch } : c)))}
                   onRemove={() => onUpdateItems(container.items.filter((c) => c.id !== child.id))}
                 />
               ))}
@@ -215,11 +303,13 @@ function ContainerSlot({ container, bg, editable, userId, onUpdateItems, onRemov
           dragOver ? 'border-accent text-accent bg-accent/5' : (bg.isDark ? 'border-background/10 text-background/30' : 'border-surface/10 text-surface/30'),
         )}
       >
-        {container.items.length === 0 ? 'Conteneur vide — glisse un élément texte ou image ici' : 'Glisser ici pour ajouter au conteneur'}
+        {container.items.length === 0
+          ? `Conteneur vide — glisse un élément ici (texte, image, bouton${canNestContainer ? ', conteneur' : ''})`
+          : 'Glisser ici pour ajouter au conteneur'}
       </div>
       <button
         type="button"
-        onClick={onRemoveContainer}
+        onClick={(e) => { e.stopPropagation(); onRemoveContainer(); }}
         className={cx('mt-2 text-[11px] underline', bg.isDark ? 'text-background/40 hover:text-background' : 'text-surface/40 hover:text-surface')}
       >
         Supprimer ce conteneur
@@ -228,10 +318,12 @@ function ContainerSlot({ container, bg, editable, userId, onUpdateItems, onRemov
   );
 }
 
-function SortableSlotItem({ slot, bg, editable, userId, renderField, onUpdateValue, onUpdateContainerItems, onRemove }) {
+function SortableSlotItem({ slot, bg, editable, userId, renderField, onUpdateFields, onUpdateContainerItems, onRemove, selectedElement, onSelectElement, styles, editMode }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: slot.id });
   const style = { transform: CSS.Transform.toString(transform), transition };
   const dragHandleProps = { ...attributes, ...listeners };
+  const elementKey = slot.kind === 'container' ? `container-${slot.id}` : slot.kind !== 'field' ? `extra-${slot.id}` : null;
+  const isSelected = elementKey != null && selectedElement === elementKey;
 
   let content;
   if (slot.kind === 'field') {
@@ -245,10 +337,15 @@ function SortableSlotItem({ slot, bg, editable, userId, renderField, onUpdateVal
         userId={userId}
         onUpdateItems={onUpdateContainerItems}
         onRemoveContainer={onRemove}
+        depth={0}
+        selectedElement={selectedElement}
+        onSelectElement={onSelectElement}
+        styles={styles}
+        editMode={editMode}
       />
     );
   } else {
-    content = <ExtraLeaf extra={slot} bg={bg} editable={editable} onUpdate={onUpdateValue} userId={userId} />;
+    content = <ExtraLeaf extra={slot} bg={bg} editable={editable} onUpdate={onUpdateFields} userId={userId} />;
   }
 
   if (content == null) return null;
@@ -256,7 +353,7 @@ function SortableSlotItem({ slot, bg, editable, userId, renderField, onUpdateVal
   return (
     <div ref={setNodeRef} style={style} className={cx('relative group/slot', isDragging && 'opacity-50')}>
       <GripHandle dragHandleProps={dragHandleProps} bg={bg} />
-      {slot.kind !== 'field' && <RemoveButton onRemove={onRemove} />}
+      {slot.kind !== 'field' && <RemoveButton onRemove={onRemove} isSelected={isSelected} />}
       {content}
     </div>
   );
@@ -269,15 +366,27 @@ export function SlotReadOnly({ slot, renderField, bg }) {
   if (slot.kind === 'field') return renderField(slot.field);
   if (slot.kind === 'text') return slot.value ? <p className={cx('whitespace-pre-line', bg.bodyClassName)}>{slot.value}</p> : null;
   if (slot.kind === 'image') return slot.value ? <img src={slot.value} alt="" loading="lazy" className="max-w-full h-auto rounded-xl" /> : null;
+  if (slot.kind === 'button') {
+    if (!slot.label) return null;
+    const isInternal = slot.url && slot.url.startsWith('/');
+    return (
+      <a
+        href={slot.url || undefined}
+        target={isInternal || !slot.url ? undefined : '_blank'}
+        rel={isInternal || !slot.url ? undefined : 'noreferrer'}
+        className="inline-flex items-center justify-center px-4 py-2 rounded-full font-semibold text-sm bg-accent text-background"
+      >
+        {slot.label}
+      </a>
+    );
+  }
   if (slot.kind === 'container') {
     return (
       <div className="flex flex-col sm:flex-row gap-4 items-start">
         {slot.items.map((child) => (
-          child.kind === 'text' ? (
-            child.value && <p key={child.id} className={cx('whitespace-pre-line flex-1 min-w-0', bg.bodyClassName)}>{child.value}</p>
-          ) : (
-            child.value && <img key={child.id} src={child.value} alt="" loading="lazy" className="flex-1 min-w-0 max-w-full h-auto rounded-xl" />
-          )
+          <div key={child.id} className="flex-1 min-w-0">
+            <SlotReadOnly slot={child} renderField={renderField} bg={bg} />
+          </div>
         ))}
       </div>
     );
@@ -323,6 +432,7 @@ function Palette({ bg, onInsert }) {
       <span>Glisse un élément à l&apos;endroit voulu, ou clique pour l&apos;ajouter en fin de section :</span>
       {chip('text', 'Texte', Type)}
       {chip('image', 'Image', ImagePlus)}
+      {chip('button', 'Bouton', MousePointerClick)}
       {chip('container', 'Conteneur', Rows3)}
     </div>
   );
@@ -351,7 +461,7 @@ export default function SlotList({ slots, onSlotsChange, renderField, bg, userId
     onSlotsChange(next);
   };
   const removeSlot = (id) => onSlotsChange(slots.filter((s) => s.id !== id));
-  const updateExtraValue = (id, value) => onSlotsChange(slots.map((s) => (s.id === id ? { ...s, value } : s)));
+  const updateExtraFields = (id, patch) => onSlotsChange(slots.map((s) => (s.id === id ? { ...s, ...patch } : s)));
   const updateContainerItems = (id, items) => onSlotsChange(slots.map((s) => (s.id === id ? { ...s, items } : s)));
 
   const handleDragEnd = (event) => {
@@ -378,16 +488,13 @@ export default function SlotList({ slots, onSlotsChange, renderField, bg, userId
       return;
     }
     const kind = e.dataTransfer.getData('application/x-vendeko-extra');
-    if (kind === 'text' || kind === 'image') {
-      insertAt(index, { id: newId(), kind, value: kind === 'text' ? 'Nouveau texte — clique pour modifier' : '' });
-    } else if (kind === 'container') {
-      insertAt(index, { id: newId(), kind: 'container', items: [] });
-    }
+    const extra = newExtra(kind);
+    if (extra) insertAt(index, extra);
   };
 
   const insertAtEnd = (kind) => {
-    if (kind === 'container') insertAt(slots.length, { id: newId(), kind: 'container', items: [] });
-    else insertAt(slots.length, { id: newId(), kind, value: kind === 'text' ? 'Nouveau texte — clique pour modifier' : '' });
+    const extra = newExtra(kind);
+    if (extra) insertAt(slots.length, extra);
   };
 
   return (
@@ -403,7 +510,11 @@ export default function SlotList({ slots, onSlotsChange, renderField, bg, userId
                 editable={editable}
                 userId={userId}
                 renderField={renderField}
-                onUpdateValue={(value) => updateExtraValue(slot.id, value)}
+                styles={styles}
+                editMode={editMode}
+                selectedElement={selectedElement}
+                onSelectElement={onSelectElement}
+                onUpdateFields={(patch) => updateExtraFields(slot.id, patch)}
                 onUpdateContainerItems={(items) => updateContainerItems(slot.id, items)}
                 onRemove={slot.kind !== 'field' ? () => removeSlot(slot.id) : undefined}
               />
