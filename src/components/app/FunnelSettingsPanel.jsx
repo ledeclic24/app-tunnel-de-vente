@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Lock, Check, Globe, RefreshCw, Trash2, Mail } from 'lucide-react';
+import { Lock, Check, Globe, RefreshCw, Trash2, Mail, Sparkles } from 'lucide-react';
 import { fetchDomains, addDomain, checkDomainStatus, removeDomain } from '../../lib/domainsApi';
 import { fetchEbooks } from '../../lib/ebooksApi';
 import { useConfirm } from './ConfirmDialog';
@@ -190,6 +190,7 @@ export default function FunnelSettingsPanel({ funnel, plan, onSave }) {
     unpublish_at: toDatetimeLocalValue(funnel.unpublish_at),
     deliverable_ebook_id: funnel.deliverable_ebook_id || '',
     post_purchase_instructions: funnel.post_purchase_instructions || '',
+    is_gallery_opt_in: Boolean(funnel.is_gallery_opt_in),
   });
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -214,6 +215,7 @@ export default function FunnelSettingsPanel({ funnel, plan, onSave }) {
         unpublish_at: fromDatetimeLocalValue(draft.unpublish_at),
         deliverable_ebook_id: draft.deliverable_ebook_id || null,
         post_purchase_instructions: draft.post_purchase_instructions.trim() || null,
+        is_gallery_opt_in: draft.is_gallery_opt_in,
       });
       setSaved(true);
     } catch {
@@ -333,6 +335,24 @@ export default function FunnelSettingsPanel({ funnel, plan, onSave }) {
             Envoyées par email juste après l'achat — en plus de l'ebook si les deux sont renseignés, ou seules sinon. Si ni ebook ni instructions ne sont renseignés, le client ne reçoit aucun email après son achat.
           </p>
         </div>
+      </div>
+
+      <div className="space-y-3 pt-6 border-t border-surface/10">
+        <div className="flex items-center gap-2">
+          <Sparkles className="w-4 h-4 text-surface/40" />
+          <h3 className="font-sans font-semibold text-surface">Galerie d'inspiration</h3>
+        </div>
+        <label className="flex items-start gap-3 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={draft.is_gallery_opt_in}
+            onChange={(e) => set({ is_gallery_opt_in: e.target.checked })}
+            className="w-4 h-4 mt-0.5 accent-accent shrink-0"
+          />
+          <span className="text-sm text-surface/70">
+            Afficher ce tunnel (une fois publié) dans la galerie publique d'inspiration, pour aider d'autres créateurs à démarrer. Désactivé par défaut — ton nom et tes coordonnées ne sont jamais affichés, seulement le tunnel lui-même.
+          </span>
+        </label>
       </div>
 
       <DomainSection funnelId={funnel.id} />

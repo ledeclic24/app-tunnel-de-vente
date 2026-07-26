@@ -1,10 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Monitor, Smartphone, ChevronLeft, ChevronRight } from 'lucide-react';
+import { X, Monitor, Tablet, Smartphone, ChevronLeft, ChevronRight } from 'lucide-react';
 import BlockRenderer from '../blocks/BlockRenderer';
 import CountdownBar from '../public/CountdownBar';
 import PurchaseNotification from '../public/PurchaseNotification';
 import StickyFooterCta from '../public/StickyFooterCta';
+import ExitIntentPopup from '../public/ExitIntentPopup';
 import { brandStyleVars } from '../../lib/colorUtils';
 
 // Un simple conteneur rétréci en CSS ne suffit pas à simuler un téléphone : les classes
@@ -60,7 +61,7 @@ export default function FunnelPreviewModal({ funnel, steps, blocksByStepId, onCl
   const content = (
     <div style={brandStyleVars(funnel.brand)}>
       <CountdownBar config={chrome.countdownBar} />
-      <div className={`${device === 'mobile' ? 'p-4 space-y-4 min-h-full' : 'max-w-4xl mx-auto space-y-6 py-2'} ${chrome.stickyFooterCta?.enabled ? 'pb-24' : ''}`}>
+      <div className={`${device !== 'desktop' ? 'p-4 space-y-4 min-h-full' : 'max-w-4xl mx-auto space-y-6 py-2'} ${chrome.stickyFooterCta?.enabled ? 'pb-24' : ''}`}>
         {funnel.brand?.logoUrl && (
           <img src={funnel.brand.logoUrl} alt={funnel.name} className="h-10 mx-auto object-contain" />
         )}
@@ -74,6 +75,7 @@ export default function FunnelPreviewModal({ funnel, steps, blocksByStepId, onCl
       </div>
       <PurchaseNotification config={chrome.purchaseNotification} liftForFooter={Boolean(chrome.stickyFooterCta?.enabled)} />
       <StickyFooterCta config={chrome.stickyFooterCta} onNavigateToStep={() => {}} onAdvance={() => goTo(idx + 1)} />
+      <ExitIntentPopup config={chrome.exitIntent} onNavigateToStep={() => {}} onAdvance={() => goTo(idx + 1)} />
     </div>
   );
 
@@ -92,6 +94,12 @@ export default function FunnelPreviewModal({ funnel, steps, blocksByStepId, onCl
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${device === 'desktop' ? 'bg-primary text-background' : 'text-surface/60'}`}
           >
             <Monitor className="w-4 h-4" /> Ordinateur
+          </button>
+          <button
+            onClick={() => setDevice('tablet')}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${device === 'tablet' ? 'bg-primary text-background' : 'text-surface/60'}`}
+          >
+            <Tablet className="w-4 h-4" /> Tablette
           </button>
           <button
             onClick={() => setDevice('mobile')}
@@ -120,6 +128,10 @@ export default function FunnelPreviewModal({ funnel, steps, blocksByStepId, onCl
         ) : device === 'mobile' ? (
           <div className="border border-surface/10 rounded-[2.5rem] overflow-hidden shadow-xl" style={{ width: 390, height: '100%' }}>
             <DeviceFrame width={390}>{content}</DeviceFrame>
+          </div>
+        ) : device === 'tablet' ? (
+          <div className="border border-surface/10 rounded-[2rem] overflow-hidden shadow-xl" style={{ width: 768, height: '100%' }}>
+            <DeviceFrame width={768}>{content}</DeviceFrame>
           </div>
         ) : (
           <div className="w-full">{content}</div>

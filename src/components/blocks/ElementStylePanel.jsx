@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Monitor, Smartphone } from 'lucide-react';
+import { X, Monitor, Smartphone, Wand2 } from 'lucide-react';
 import {
   SHADOW_OPTIONS, ROUNDED_OPTIONS, FONT_OPTIONS, FONT_WEIGHT_OPTIONS, TEXT_ALIGN_OPTIONS,
   LETTER_SPACING_OPTIONS, LINE_HEIGHT_OPTIONS, TEXT_TRANSFORM_OPTIONS, PADDING_OPTIONS,
@@ -115,7 +115,7 @@ const HAS_BORDER = ['button', 'image', 'card'];
 const HAS_EFFECTS = ['button', 'image', 'card'];
 const HAS_SPACING = ['button', 'card'];
 
-export default function ElementStylePanel({ block, elementKey, kind, label, onChange, onClose }) {
+export default function ElementStylePanel({ block, elementKey, kind, label, onChange, onClose, onImproveWithAI, improvingElement, canUseAI }) {
   const [device, setDevice] = useState('mobile');
   const styles = block?.content?.styles || {};
   const style = styles[elementKey] || {};
@@ -144,6 +144,24 @@ export default function ElementStylePanel({ block, elementKey, kind, label, onCh
           <X className="w-4 h-4" />
         </button>
       </div>
+
+      {TEXT_KINDS.includes(kind) && canUseAI && (
+        <div className="px-5 pt-4 shrink-0">
+          <button
+            type="button"
+            onClick={() => onImproveWithAI?.(elementKey)}
+            disabled={improvingElement}
+            className="magnetic-btn w-full flex items-center justify-center gap-2 bg-accent/10 text-accent border border-accent/20 py-2.5 rounded-xl text-sm font-semibold disabled:opacity-50"
+          >
+            {improvingElement ? (
+              <span className="w-3.5 h-3.5 border-2 border-accent/30 border-t-accent rounded-full animate-spin" />
+            ) : (
+              <Wand2 className="w-3.5 h-3.5" />
+            )}
+            {improvingElement ? 'Amélioration...' : 'Améliorer ce texte avec l\'IA'}
+          </button>
+        </div>
+      )}
 
       {kind === 'section' && (
         <div className="flex items-center gap-1 mx-5 mt-4 bg-surface/[0.04] rounded-xl p-1 shrink-0">

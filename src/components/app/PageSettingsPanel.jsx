@@ -46,6 +46,7 @@ export default function PageSettingsPanel({ step, steps, plan, onSave }) {
   const countdownBar = chrome.countdownBar || {};
   const purchaseNotification = chrome.purchaseNotification || {};
   const stickyFooterCta = chrome.stickyFooterCta || {};
+  const exitIntent = chrome.exitIntent || {};
 
   return (
     <div className="bg-background border border-surface/10 rounded-[2rem] p-4 md:p-6 space-y-4">
@@ -113,6 +114,56 @@ export default function PageSettingsPanel({ step, steps, plan, onSave }) {
             className={inputClass}
             value={stickyFooterCta.targetStepSlug || ''}
             onChange={(e) => setChrome({ stickyFooterCta: { ...stickyFooterCta, targetStepSlug: e.target.value || null } })}
+          >
+            <option value="">Étape suivante (par défaut)</option>
+            {(steps || []).map((s) => (
+              <option key={s.id} value={s.slug}>{s.name}</option>
+            ))}
+          </select>
+        </div>
+      </Toggle>
+
+      <Toggle
+        label="Capture à l'intention de sortie"
+        checked={Boolean(exitIntent.enabled)}
+        onChange={(enabled) => setChrome({ exitIntent: { ...exitIntent, enabled } })}
+      >
+        <p className="text-xs text-surface/40">
+          S'affiche quand le visiteur s'apprête à quitter la page (uniquement sur ordinateur, jamais sur mobile). Une seule fois par visite.
+        </p>
+        <div>
+          <label className={labelClass}>Titre</label>
+          <input
+            className={inputClass}
+            placeholder="Attends, une dernière chose..."
+            value={exitIntent.heading || ''}
+            onChange={(e) => setChrome({ exitIntent: { ...exitIntent, heading: e.target.value } })}
+          />
+        </div>
+        <div>
+          <label className={labelClass}>Description (optionnel)</label>
+          <input
+            className={inputClass}
+            placeholder="Ex : profite de -20% si tu commandes maintenant"
+            value={exitIntent.description || ''}
+            onChange={(e) => setChrome({ exitIntent: { ...exitIntent, description: e.target.value } })}
+          />
+        </div>
+        <div>
+          <label className={labelClass}>Texte du bouton</label>
+          <input
+            className={inputClass}
+            placeholder="J'en profite"
+            value={exitIntent.buttonText || ''}
+            onChange={(e) => setChrome({ exitIntent: { ...exitIntent, buttonText: e.target.value } })}
+          />
+        </div>
+        <div>
+          <label className={labelClass}>Page vers laquelle renvoie le bouton</label>
+          <select
+            className={inputClass}
+            value={exitIntent.targetStepSlug || ''}
+            onChange={(e) => setChrome({ exitIntent: { ...exitIntent, targetStepSlug: e.target.value || null } })}
           >
             <option value="">Étape suivante (par défaut)</option>
             {(steps || []).map((s) => (

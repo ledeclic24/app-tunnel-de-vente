@@ -18,6 +18,7 @@ function normalizeFunnel(f) {
     show_branding: f.showBranding,
     brand: f.brand,
     category: f.category,
+    is_gallery_opt_in: f.isGalleryOptIn,
     seo_title: f.seoTitle,
     seo_description: f.seoDescription,
     seo_image_url: f.seoImageUrl,
@@ -42,6 +43,7 @@ function normalizeLead(l) {
     funnelName: l.funnelName,
     email_status: l.emailStatus,
     email_error: l.emailError,
+    payment_status: l.paymentStatus,
   };
 }
 
@@ -51,6 +53,7 @@ const FUNNEL_PATCH_KEY_MAP = {
   show_branding: 'showBranding',
   brand: 'brand',
   category: 'category',
+  is_gallery_opt_in: 'isGalleryOptIn',
   seo_title: 'seoTitle',
   seo_description: 'seoDescription',
   seo_image_url: 'seoImageUrl',
@@ -72,6 +75,12 @@ function buildStepsPayload(steps) {
 export async function fetchUserFunnels(_userId) {
   const rows = await apiGet('/funnels');
   return rows.map(normalizeFunnel);
+}
+
+export async function fetchGalleryFunnels(category) {
+  const query = category ? `?category=${encodeURIComponent(category)}` : '';
+  const rows = await apiGet(`/funnels/gallery${query}`);
+  return rows.map((f) => ({ id: f.id, name: f.name, slug: f.slug, category: f.category, brand: f.brand || {} }));
 }
 
 export async function createFunnelFromTemplate({ name, templateKey, showBranding = true }) {

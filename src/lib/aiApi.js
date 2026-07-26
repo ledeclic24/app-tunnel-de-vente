@@ -15,6 +15,11 @@ export async function regenerateBlockWithAI(blockId, instruction) {
   return block;
 }
 
+export async function improveElementWithAI(blockId, elementKey, instruction) {
+  const { block } = await apiPost(`/ai/blocks/${blockId}/improve-element`, { elementKey, ...(instruction ? { instruction } : {}) });
+  return block;
+}
+
 export async function generateBlockImageWithAI(blockId, imageType) {
   const { block } = await apiPost(`/ai/blocks/${blockId}/generate-image`, { imageType });
   return block;

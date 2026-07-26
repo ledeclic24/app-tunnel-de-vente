@@ -25,7 +25,7 @@ import { computeHealthScore } from '../../lib/healthScore';
 import { fetchReusableBlocks, saveReusableBlock, deleteReusableBlock, incrementReusableBlockUsage } from '../../lib/growthApi';
 import { useConfirm } from '../../components/app/ConfirmDialog';
 import { useToast } from '../../components/app/Toast';
-import { editFunnelWithAI, regenerateBlockWithAI, generateBlockImageWithAI } from '../../lib/aiApi';
+import { editFunnelWithAI, regenerateBlockWithAI, generateBlockImageWithAI, improveElementWithAI } from '../../lib/aiApi';
 import BlockRenderer from '../../components/blocks/BlockRenderer';
 import BlockEditorPanel from '../../components/blocks/BlockEditorPanel';
 import ElementStylePanel from '../../components/blocks/ElementStylePanel';
@@ -212,6 +212,7 @@ export default function FunnelEditorPage() {
   const [aiGenerating, setAiGenerating] = useState(false);
   const [regeneratingBlockId, setRegeneratingBlockId] = useState(null);
   const [imageGeneratingBlockId, setImageGeneratingBlockId] = useState(null);
+  const [improvingElementKey, setImprovingElementKey] = useState(null);
   const [leadsCount, setLeadsCount] = useState(0);
   const [nameDraft, setNameDraft] = useState('');
   const [editingName, setEditingName] = useState(false);
@@ -502,6 +503,21 @@ export default function FunnelEditorPage() {
       setActionError(IMAGE_ERROR_MESSAGES[err.message] || IMAGE_ERROR_MESSAGES.server_error);
     }
     setImageGeneratingBlockId(null);
+  };
+
+  const handleImproveElement = async (elementKey) => {
+    if (improvingElementKey || !selection) return;
+    setImprovingElementKey(elementKey);
+    setActionError('');
+    try {
+      const updated = await improveElementWithAI(selection.blockId, elementKey);
+      const next = blocks.map((b) => (b.id === selection.blockId ? { ...b, content: updated.content } : b));
+      applyBlocks(next);
+      pushHistory(next);
+    } catch (err) {
+      setActionError(AI_ERROR_MESSAGES[err.message] || AI_ERROR_MESSAGES.server_error);
+    }
+    setImprovingElementKey(null);
   };
 
   const handleBlockChange = async (block, newContent) => {
@@ -1010,6 +1026,12 @@ export default function FunnelEditorPage() {
 
       <PurchaseNotification config={currentStepChrome.purchaseNotification} liftForFooter={Boolean(currentStepChrome.stickyFooterCta?.enabled)} />
       <StickyFooterCta config={currentStepChrome.stickyFooterCta} onNavigateToStep={() => {}} onAdvance={() => {}} />
+      {/* ExitIntentPopup n'est délibérément PAS rendu ici : il écoute le
+          mouseleave du curseur vers le haut de la fenêtre, exactement ce que
+          fait un créateur en visant la barre d'outils pendant qu'il édite —
+          le rendre ici déclencherait la popup en boucle plutôt qu'un vrai
+          test. Seule exception à la parité éditeur/publié pour cette raison
+          précise ; réglable et testable via "Aperçu" (FunnelPreviewModal). */}
 
       {selection && (
         <ElementStylePanel
@@ -1019,6 +1041,9 @@ export default function FunnelEditorPage() {
           label={selection.label}
           onChange={(newStyles) => handleElementStyleChange(blocks.find((b) => b.id === selection.blockId), newStyles)}
           onClose={() => setSelection(null)}
+          onImproveWithAI={handleImproveElement}
+          improvingElement={Boolean(improvingElementKey)}
+          canUseAI={plan.aiAccess}
         />
       )}
 

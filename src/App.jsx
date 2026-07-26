@@ -23,6 +23,7 @@ import LegalPage from './pages/marketing/LegalPage';
 const DashboardPage = lazy(() => import('./pages/app/DashboardPage'));
 const NewFunnelPage = lazy(() => import('./pages/app/NewFunnelPage'));
 const AIGeneratorPage = lazy(() => import('./pages/app/AIGeneratorPage'));
+const GalleryPage = lazy(() => import('./pages/app/GalleryPage'));
 const FunnelEditorPage = lazy(() => import('./pages/app/FunnelEditorPage'));
 const BillingPage = lazy(() => import('./pages/app/BillingPage'));
 const AccountPage = lazy(() => import('./pages/app/AccountPage'));
@@ -137,6 +138,7 @@ function App() {
                 <Route index element={<DashboardPage />} />
                 <Route path="funnels/new" element={<NewFunnelPage />} />
                 <Route path="funnels/ai" element={<AIGeneratorPage />} />
+                <Route path="gallery" element={<GalleryPage />} />
                 <Route path="funnels/:funnelId/edit" element={<FunnelEditorPage />} />
                 <Route path="leads" element={<LeadsPage />} />
                 <Route path="analytics" element={<AnalyticsPage />} />

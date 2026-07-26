@@ -17,6 +17,7 @@ import BonusStackBlock from './BonusStackBlock';
 import StatsBlock from './StatsBlock';
 import TeamBlock from './TeamBlock';
 import LogosBlock from './LogosBlock';
+import TrustBadgesBlock from './TrustBadgesBlock';
 import { getEditableProps, buildDesktopStyleTag, cx } from '../../lib/blockStyle';
 import useScrollReveal from '../../lib/useScrollReveal';
 
@@ -39,6 +40,7 @@ const COMPONENTS = {
   stats: StatsBlock,
   team: TeamBlock,
   logos: LogosBlock,
+  'trust-badges': TrustBadgesBlock,
 };
 
 export default function BlockRenderer({

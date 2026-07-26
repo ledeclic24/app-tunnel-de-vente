@@ -1,7 +1,7 @@
 import {
   LayoutTemplate, Type, Image, LayoutGrid, MessageSquareQuote,
   Tag, Mail, Timer, HelpCircle, MousePointerClick, ListChecks, Video, ListVideo,
-  ListOrdered, Gift, BarChart3, Users, Building2,
+  ListOrdered, Gift, BarChart3, Users, Building2, ShieldCheck,
 } from 'lucide-react';
 
 export const BLOCK_TYPES = [
@@ -215,6 +215,19 @@ export const BLOCK_TYPES = [
     defaultContent: () => ({
       heading: 'Ils nous font confiance',
       items: [],
+    }),
+  },
+  {
+    type: 'trust-badges',
+    label: 'Réassurance',
+    icon: ShieldCheck,
+    tier: 'starter',
+    defaultContent: () => ({
+      heading: '',
+      items: [
+        { icon: 'secure-payment', title: 'Paiement 100% sécurisé' },
+        { icon: 'support', title: 'Support réactif' },
+      ],
     }),
   },
 ];

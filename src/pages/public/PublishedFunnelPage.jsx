@@ -7,6 +7,7 @@ import BlockRenderer from '../../components/blocks/BlockRenderer';
 import CountdownBar from '../../components/public/CountdownBar';
 import PurchaseNotification from '../../components/public/PurchaseNotification';
 import StickyFooterCta from '../../components/public/StickyFooterCta';
+import ExitIntentPopup from '../../components/public/ExitIntentPopup';
 
 const META_PIXEL_RE = /^[0-9]{5,20}$/;
 const GA_ID_RE = /^(G|UA|AW)-[A-Z0-9-]{4,20}$/i;
@@ -105,7 +106,7 @@ export default function PublishedFunnelPage({ funnelSlugOverride } = {}) {
     await insertLead({ funnelId: funnel.id, stepId: currentStep.id, name, email });
   };
 
-  const handleMonerooCheckout = async ({ paymentMethodId, planName, amount, customerEmail, customerName }) => {
+  const handleMonerooCheckout = async ({ paymentMethodId, planName, amount, customerEmail, customerName, orderBumpTaken, orderBumpAmount }) => {
     const { checkoutUrl } = await createMonerooCheckout({
       funnelId: funnel.id,
       stepId: currentStep.id,
@@ -114,6 +115,8 @@ export default function PublishedFunnelPage({ funnelSlugOverride } = {}) {
       amount,
       customerEmail,
       customerName,
+      orderBumpTaken,
+      orderBumpAmount,
       returnUrl: window.location.href,
     });
     window.location.href = checkoutUrl;
@@ -167,6 +170,7 @@ export default function PublishedFunnelPage({ funnelSlugOverride } = {}) {
       )}
       <PurchaseNotification config={chrome.purchaseNotification} liftForFooter={Boolean(chrome.stickyFooterCta?.enabled)} />
       <StickyFooterCta config={chrome.stickyFooterCta} onNavigateToStep={handleNavigateToStep} onAdvance={handleAdvance} />
+      <ExitIntentPopup config={chrome.exitIntent} onNavigateToStep={handleNavigateToStep} onAdvance={handleAdvance} />
     </div>
   );
 }

@@ -72,6 +72,41 @@ export function computeHealthScore(steps, blocksByStepId) {
     passed: steps.length === 0 || lastStepHasThanks,
   });
 
+  // Critères de psychologie de vente — s'ajoutent aux vérifications
+  // techniques ci-dessus, dans le même esprit "coach IA" : enseigner de
+  // bonnes pratiques pendant la construction plutôt qu'après coup.
+  const hasUrgency = steps.some((s) => s.chrome?.countdownBar?.enabled);
+  checks.push({
+    id: 'urgency',
+    label: hasUrgency ? 'Un compte à rebours crée un sentiment d\'urgence' : 'Aucun élément d\'urgence (ex : compte à rebours) — envisagez d\'en ajouter un si votre offre est limitée dans le temps',
+    passed: hasUrgency,
+  });
+
+  const hasFaq = allBlocks.some((b) => b.type === 'faq');
+  checks.push({
+    id: 'objection-handling',
+    label: hasFaq ? 'Une FAQ répond aux objections avant l\'achat' : 'Aucune FAQ — les objections des visiteurs restent sans réponse',
+    passed: hasFaq,
+  });
+
+  const hasTrustBadges = allBlocks.some((b) => b.type === 'trust-badges');
+  checks.push({
+    id: 'reassurance',
+    label: hasTrustBadges ? 'Un bloc de réassurance renforce la confiance au moment de payer' : 'Aucun élément de réassurance (paiement sécurisé, garantie...) près du bouton d\'achat',
+    passed: hasTrustBadges,
+  });
+
+  const ctaBlocks = allBlocks.filter((b) => b.type === 'cta');
+  const ctaBlocksGeneric = ctaBlocks.filter((b) => {
+    const txt = (b.content?.buttonText || '').trim().toLowerCase();
+    return !txt || txt === 'continuer';
+  });
+  checks.push({
+    id: 'cta-personalized',
+    label: ctaBlocksGeneric.length === 0 ? 'Les boutons d\'appel à l\'action sont personnalisés' : 'Un appel à l\'action utilise encore le texte par défaut ("Continuer") — un verbe d\'action à la première personne convertit mieux',
+    passed: ctaBlocks.length === 0 || ctaBlocksGeneric.length === 0,
+  });
+
   const passedCount = checks.filter((c) => c.passed).length;
   const score = checks.length === 0 ? 0 : Math.round((passedCount / checks.length) * 100);
 

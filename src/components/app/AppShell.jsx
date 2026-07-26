@@ -2,12 +2,13 @@ import React, { useEffect, useState } from 'react';
 import { NavLink, Link, Outlet, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, User, LogOut, Menu, X, Shield, Mail, BarChart3, Lock, Sparkles, ArrowRight,
-  Search, Bell, Building2, Webhook, Megaphone, Image as ImageIcon, BookOpen, Gem, CreditCard,
+  Search, Bell, Building2, Webhook, Megaphone, Image as ImageIcon, BookOpen, Gem, CreditCard, Compass,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { getPlan, PLAN_ORDER } from '../../lib/plans';
 import { fetchLeadsForUser, fetchUserFunnels } from '../../lib/funnelsApi';
 import CommandPalette from './CommandPalette';
+import { useToast } from './Toast';
 
 const NAV_GROUPS = [
   {
@@ -16,6 +17,7 @@ const NAV_GROUPS = [
       { to: '/app', label: 'Tableau de bord', icon: LayoutDashboard, end: true },
       { to: '/app/images', label: 'Visuels IA', icon: ImageIcon, requires: 'imageGeneration' },
       { to: '/app/ebooks', label: 'Ebooks', icon: BookOpen, requires: 'ebookAccess' },
+      { to: '/app/gallery', label: 'Inspiration', icon: Compass },
     ],
   },
   {
@@ -48,6 +50,30 @@ function formatRelativeTime(dateStr) {
   if (hours < 24) return `il y a ${hours} h`;
   const days = Math.floor(hours / 24);
   return `il y a ${days} j`;
+}
+
+// Un seul événement mérite d'être fêté, pas chaque lead qui arrive ensuite —
+// le drapeau "déjà célébré" persiste en localStorage (même pattern que
+// tontunnel_notif_seen_at_*) pour ne se déclencher qu'une fois par
+// utilisateur, même après un rechargement.
+function celebrateMilestones(leads, ownerId, toast) {
+  if (!ownerId || !leads || leads.length === 0) return;
+  const leadKey = `tontunnel_celebrated_first_lead_${ownerId}`;
+  const saleKey = `tontunnel_celebrated_first_sale_${ownerId}`;
+  try {
+    if (!window.localStorage.getItem(leadKey)) {
+      window.localStorage.setItem(leadKey, '1');
+      toast.success('🎉 Ton premier lead est arrivé ! Ton tunnel fonctionne.');
+      return;
+    }
+    const hasPaidLead = leads.some((l) => l.payment_status === 'paid');
+    if (hasPaidLead && !window.localStorage.getItem(saleKey)) {
+      window.localStorage.setItem(saleKey, '1');
+      toast.success('🎉 Première vente ! Félicitations, ton tunnel convertit.');
+    }
+  } catch {
+    // stockage indisponible, tant pis pour la persistance — pas de célébration répétée cette fois
+  }
 }
 
 function NavLinks({ onNavigate, isAdmin, plan }) {
@@ -298,11 +324,16 @@ export default function AppShell() {
   const [notifLeads, setNotifLeads] = useState([]);
   const [funnelsCount, setFunnelsCount] = useState(null);
   const plan = getPlan(effectiveProfile?.plan);
+  const toast = useToast();
 
   useEffect(() => {
     if (!effectiveOwnerId) return;
-    fetchLeadsForUser(effectiveOwnerId).then(setNotifLeads).catch(() => setNotifLeads([]));
+    fetchLeadsForUser(effectiveOwnerId).then((leads) => {
+      setNotifLeads(leads);
+      celebrateMilestones(leads, effectiveOwnerId, toast);
+    }).catch(() => setNotifLeads([]));
     fetchUserFunnels(effectiveOwnerId).then((f) => setFunnelsCount(f.length)).catch(() => setFunnelsCount(null));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [effectiveOwnerId]);
 
   const handleSignOut = async () => {

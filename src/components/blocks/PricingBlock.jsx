@@ -9,18 +9,24 @@ import FloatingOrbs from './FloatingOrbs';
 // Mini-formulaire nom + email affiché avant la redirection vers Moneroo —
 // requis par leur API pour initialiser une transaction (voir
 // PaymentsService côté backend), impossible de rediriger sans ces infos.
-function MonerooCheckoutModal({ planName, onClose, onSubmit }) {
+// L'order bump (offre complémentaire optionnelle, jamais cochée par
+// défaut) s'affiche ici, juste avant la redirection : c'est le seul moment
+// où l'acheteur est déjà engagé dans l'achat sans avoir encore payé.
+function MonerooCheckoutModal({ planName, orderBump, onClose, onSubmit }) {
   const [name, setName] = React.useState('');
   const [email, setEmail] = React.useState('');
+  const [bumpChecked, setBumpChecked] = React.useState(false);
   const [submitting, setSubmitting] = React.useState(false);
   const [error, setError] = React.useState('');
+
+  const bumpAmount = orderBump?.enabled ? parsePriceAmount(orderBump.price) : 0;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitting(true);
     setError('');
     try {
-      await onSubmit({ name, email });
+      await onSubmit({ name, email, orderBumpTaken: bumpChecked, orderBumpAmount: bumpChecked ? bumpAmount : undefined });
     } catch {
       setError('Impossible de lancer le paiement pour le moment. Réessaie dans un instant.');
       setSubmitting(false);
@@ -48,6 +54,21 @@ function MonerooCheckoutModal({ planName, onClose, onSubmit }) {
             required
             className="w-full bg-primary/5 border border-surface/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-accent transition-colors"
           />
+          {orderBump?.enabled && (
+            <label className="flex items-start gap-3 bg-accent/5 border border-accent/20 rounded-xl p-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={bumpChecked}
+                onChange={(e) => setBumpChecked(e.target.checked)}
+                className="w-4 h-4 mt-0.5 accent-accent shrink-0"
+              />
+              <span className="text-sm">
+                <span className="font-semibold block">{orderBump.heading || 'Ajouter une offre complémentaire'}</span>
+                {orderBump.description && <span className="block text-surface/60 text-xs mt-0.5">{orderBump.description}</span>}
+                <span className="block text-accent font-semibold mt-1">+ {orderBump.price}</span>
+              </span>
+            </label>
+          )}
           {error && <p className="text-sm text-red-500">{error}</p>}
           <button
             type="submit"
@@ -272,14 +293,18 @@ export default function PricingBlock({ content, onAdvance, onMonerooCheckout, ed
       {checkoutTarget && (
         <MonerooCheckoutModal
           planName={checkoutTarget.plan.name}
+          orderBump={content.orderBump}
           onClose={() => setCheckoutTarget(null)}
-          onSubmit={async ({ name, email }) => {
+          onSubmit={async ({ name, email, orderBumpTaken, orderBumpAmount }) => {
+            const baseAmount = parsePriceAmount(checkoutTarget.plan.price);
             await onMonerooCheckout?.({
               paymentMethodId: checkoutTarget.link.paymentMethodId,
               planName: checkoutTarget.plan.name,
-              amount: parsePriceAmount(checkoutTarget.plan.price),
+              amount: baseAmount + (orderBumpTaken ? orderBumpAmount : 0),
               customerEmail: email,
               customerName: name,
+              orderBumpTaken,
+              orderBumpAmount,
             });
           }}
         />

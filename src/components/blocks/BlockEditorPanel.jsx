@@ -2,6 +2,7 @@ import React from 'react';
 import { Plus, Trash2 } from 'lucide-react';
 import ImageUploadField from './ImageUploadField';
 import { fetchPaymentMethods } from '../../lib/paymentMethodsApi';
+import { TRUST_BADGE_ICONS } from './TrustBadgesBlock';
 
 const inputClass = "w-full bg-primary/5 border border-surface/10 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-accent transition-colors text-surface";
 const labelClass = "block text-xs font-semibold text-surface/70 uppercase tracking-wider mb-1";
@@ -383,6 +384,39 @@ function BlockFields({ type, content, set, userId, blockId, onGenerateImage, ima
               />
             </Field>
           )}
+          <div className="border-t border-surface/10 pt-4">
+            <label className="flex items-center gap-2 text-sm text-surface/70 mb-3">
+              <input
+                type="checkbox"
+                checked={Boolean(content.orderBump?.enabled)}
+                onChange={(e) => set({ orderBump: { ...(content.orderBump || {}), enabled: e.target.checked } })}
+              />
+              Order bump — offre complémentaire proposée juste avant le paiement (case à cocher, jamais cochée par défaut)
+            </label>
+            {content.orderBump?.enabled && (
+              <div className="space-y-2">
+                <input
+                  className={inputClass}
+                  placeholder="Titre (ex : Ajoute le guide PDF)"
+                  value={content.orderBump?.heading || ''}
+                  onChange={(e) => set({ orderBump: { ...content.orderBump, heading: e.target.value } })}
+                />
+                <textarea
+                  className={inputClass}
+                  placeholder="Description (optionnel)"
+                  rows={2}
+                  value={content.orderBump?.description || ''}
+                  onChange={(e) => set({ orderBump: { ...content.orderBump, description: e.target.value } })}
+                />
+                <input
+                  className={inputClass}
+                  placeholder="Prix (ex : 5 000 FCFA)"
+                  value={content.orderBump?.price || ''}
+                  onChange={(e) => set({ orderBump: { ...content.orderBump, price: e.target.value } })}
+                />
+              </div>
+            )}
+          </div>
         </div>
       );
     }
@@ -668,6 +702,33 @@ function BlockFields({ type, content, set, userId, blockId, onGenerateImage, ima
                   <input className={inputClass} placeholder="Nom (pour l'accessibilité)" value={item.name || ''} onChange={(e) => update({ name: e.target.value })} />
                   <ImageUploadField userId={userId} value={item.logoUrl} onChange={(logoUrl) => update({ logoUrl })} />
                 </>
+              )}
+            />
+          </Field>
+        </div>
+      );
+
+    case 'trust-badges':
+      return (
+        <div className="space-y-4">
+          <Field label="Titre de la section (optionnel)">
+            <input className={inputClass} placeholder="Ex : Achetez en toute confiance" value={content.heading || ''} onChange={(e) => set({ heading: e.target.value })} />
+          </Field>
+          <Field label="Éléments de réassurance">
+            <ListEditor
+              items={content.items || []}
+              onChange={(items) => set({ items })}
+              emptyItem={{ icon: 'secure-payment', title: '' }}
+              addLabel="Ajouter un élément"
+              renderRow={(item, update) => (
+                <div className="flex gap-2">
+                  <select className={inputClass} value={item.icon || 'secure-payment'} onChange={(e) => update({ icon: e.target.value })}>
+                    {Object.entries(TRUST_BADGE_ICONS).map(([key, def]) => (
+                      <option key={key} value={key}>{def.label}</option>
+                    ))}
+                  </select>
+                  <input className={inputClass} placeholder="Ex : Paiement 100% sécurisé" value={item.title || ''} onChange={(e) => update({ title: e.target.value })} />
+                </div>
               )}
             />
           </Field>
