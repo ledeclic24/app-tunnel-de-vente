@@ -27,7 +27,7 @@ export default function VideoNavBlock({
   if (targetSlugs.length === 0) {
     if (!editMode && !(content.extras?.length > 0)) return null;
     return (
-      <section className={cx('px-6 py-8 md:px-16 max-w-3xl mx-auto text-center', bg.sectionClassName)}>
+      <section className={cx('px-6 py-8 md:px-16 max-w-5xl mx-auto text-center', bg.sectionClassName)}>
         {editMode && (
           <p className={cx('text-sm', bg.isDark ? 'text-background/60' : 'text-surface/50')}>
             Choisis les pages vidéo à afficher dans les réglages de ce bloc.
@@ -39,7 +39,7 @@ export default function VideoNavBlock({
   }
 
   return (
-    <section className={cx('px-6 py-8 md:px-16 max-w-3xl mx-auto', bg.sectionClassName)}>
+    <section className={cx('px-6 py-8 md:px-16 max-w-5xl mx-auto', bg.sectionClassName)}>
       <div className="flex flex-wrap justify-center gap-3">
         {targetSlugs.map((slug, i) => {
           const step = siblingSteps?.find((s) => s.slug === slug);

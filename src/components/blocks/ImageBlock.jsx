@@ -127,7 +127,7 @@ export default function ImageBlock({ content, editMode, selectedElement, onSelec
   if (!url && !editMode && !hasFreeContent) return null;
 
   return (
-    <section className={cx('px-6 py-8 md:px-16 max-w-4xl mx-auto', bg.sectionClassName)}>
+    <section className={cx('px-6 py-8 md:px-16 max-w-5xl mx-auto', bg.sectionClassName)}>
       {url ? (
         <div className="relative group/img overflow-hidden rounded-[2rem]">
           <img
