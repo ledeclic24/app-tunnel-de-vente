@@ -525,8 +525,12 @@ export default function FunnelEditorPage() {
     applyBlocks(next);
     try {
       await updateBlock(block.id, newContent);
-    } catch {
-      setActionError("L'enregistrement du bloc a échoué. Réessaie.");
+    } catch (err) {
+      setActionError(
+        err.status === 413
+          ? 'Ce bloc est trop volumineux pour être enregistré (trop de contenu). Réduis le texte ou le nombre d\'éléments.'
+          : "L'enregistrement du bloc a échoué. Réessaie.",
+      );
       return;
     }
     if (contentHistoryTimer.current) clearTimeout(contentHistoryTimer.current);
@@ -778,26 +782,26 @@ export default function FunnelEditorPage() {
               seulement à l'état actif) — toujours les couleurs de marque
               existantes, pour que la barre d'outils ne soit plus uniforme. */}
           <button
-            onClick={() => { setShowSettings((v) => !v); setShowBrandKit(false); setShowAiAssistant(false); }}
+            onClick={() => { setShowSettings((v) => !v); setShowBrandKit(false); setShowAiAssistant(false); setActionError(''); }}
             className={`magnetic-btn flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-semibold border ${showSettings ? 'bg-surface/15 border-surface/30 text-surface' : 'bg-surface/5 border-surface/10 text-surface/70'}`}
           >
             <Settings className="w-4 h-4" /> Réglages
           </button>
           <button
-            onClick={() => { setShowBrandKit((v) => !v); setShowSettings(false); setShowAiAssistant(false); setShowPageSettings(false); }}
+            onClick={() => { setShowBrandKit((v) => !v); setShowSettings(false); setShowAiAssistant(false); setShowPageSettings(false); setActionError(''); }}
             className={`magnetic-btn flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-semibold border ${showBrandKit ? 'bg-accent/15 border-accent text-accent' : 'bg-accent/5 border-accent/15 text-accent/80'}`}
           >
             <Palette className="w-4 h-4" /> Design
           </button>
           <button
-            onClick={() => { setShowPageSettings((v) => !v); setShowSettings(false); setShowBrandKit(false); setShowAiAssistant(false); }}
+            onClick={() => { setShowPageSettings((v) => !v); setShowSettings(false); setShowBrandKit(false); setShowAiAssistant(false); setActionError(''); }}
             className={`magnetic-btn flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-semibold border ${showPageSettings ? 'bg-primary/15 border-primary/40 text-primary' : 'bg-primary/5 border-primary/15 text-primary/70'}`}
           >
             <Megaphone className="w-4 h-4" /> Page
           </button>
           {plan.aiAccess && (
             <button
-              onClick={() => { setShowAiAssistant((v) => !v); setShowSettings(false); setShowBrandKit(false); }}
+              onClick={() => { setShowAiAssistant((v) => !v); setShowSettings(false); setShowBrandKit(false); setActionError(''); }}
               className={`magnetic-btn flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-semibold border ${showAiAssistant ? 'gradient-accent border-transparent text-background' : 'bg-accent/5 border-accent/15 text-accent/80'}`}
             >
               <Sparkles className="w-4 h-4" /> Assistant IA
