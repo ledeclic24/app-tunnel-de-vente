@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { NavLink, Link, Outlet, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, User, LogOut, Menu, X, Shield, Mail, BarChart3, Lock, Sparkles, ArrowRight,
-  Search, Bell, Building2, Webhook, Megaphone, Image as ImageIcon, BookOpen, Gem, CreditCard, Compass,
+  Search, Bell, Building2, Webhook, Megaphone, Image as ImageIcon, BookOpen, Gem, CreditCard, Compass, MailWarning,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { getPlan, PLAN_ORDER } from '../../lib/plans';
@@ -316,6 +316,39 @@ function ShellLogo({ className = '' }) {
   );
 }
 
+// Nudge informatif, jamais bloquant : voir la discussion produit derrière
+// ce choix — Moneroo (pas TonTunnel) gère l'argent, donc le risque
+// technique de ne pas vérifier l'email est faible. Sert surtout à
+// s'assurer que le vendeur possède bien l'adresse à laquelle il recevra
+// notifications et alertes.
+function EmailVerificationBanner() {
+  const { resendVerificationEmail } = useAuth();
+  const toast = useToast();
+  const [sending, setSending] = useState(false);
+
+  const handleResend = async () => {
+    setSending(true);
+    const { error } = await resendVerificationEmail();
+    setSending(false);
+    if (error) toast.error("Impossible d'envoyer le lien pour le moment. Réessaie dans un instant.");
+    else toast.success('Lien de confirmation envoyé — vérifie ta boîte mail.');
+  };
+
+  return (
+    <div className="flex flex-wrap items-center gap-2 bg-orange-500/10 border border-orange-500/20 text-orange-600 text-sm px-4 py-2.5 rounded-xl mb-4">
+      <MailWarning className="w-4 h-4 shrink-0" />
+      <span className="flex-1 min-w-[200px]">Confirme ton adresse email pour être sûr de recevoir les notifications importantes de ton compte.</span>
+      <button
+        onClick={handleResend}
+        disabled={sending}
+        className="font-semibold hover:underline disabled:opacity-50 shrink-0"
+      >
+        {sending ? 'Envoi...' : 'Renvoyer le lien'}
+      </button>
+    </div>
+  );
+}
+
 export default function AppShell() {
   const { profile, effectiveOwnerId, effectiveProfile, signOut } = useAuth();
   const navigate = useNavigate();
@@ -408,6 +441,7 @@ export default function AppShell() {
 
       <main className="flex-1 md:ml-64 pt-16 md:pt-0">
         <div className="p-4 md:p-8 max-w-6xl mx-auto">
+          {effectiveProfile?.email_verified === false && <EmailVerificationBanner />}
           <Outlet />
         </div>
       </main>

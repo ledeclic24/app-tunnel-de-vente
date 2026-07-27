@@ -1,15 +1,33 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Download, Lock, Mail, AlertTriangle, CheckCircle2, RefreshCw } from 'lucide-react';
+import { Download, Lock, Mail, AlertTriangle, CheckCircle2, RefreshCw, Clock, XCircle, Undo2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { fetchLeadsForUser, resendLeadEmail } from '../../lib/funnelsApi';
+import { fetchLeadsForUser, resendLeadEmail, setLeadRefunded } from '../../lib/funnelsApi';
 import { getPlan } from '../../lib/plans';
+import { formatPrice } from '../../lib/currency';
 import { useToast } from '../../components/app/Toast';
 import GradientBanner from '../../components/ui/GradientBanner';
 
+// Un lead payé peut avoir n'importe quelle devise (selon le moyen de
+// paiement utilisé) — on regroupe donc le total par devise plutôt que de
+// tout additionner en un seul nombre qui n'aurait pas de sens.
+function computeRevenueByCurrency(leads) {
+  const totals = new Map();
+  for (const lead of leads) {
+    if (lead.payment_status !== 'paid' || !lead.paid_amount || lead.refunded_at) continue;
+    const currency = lead.paid_currency || 'XOF';
+    const amount = Number(lead.paid_amount) || 0;
+    totals.set(currency, (totals.get(currency) || 0) + amount);
+  }
+  return Array.from(totals.entries());
+}
+
 function exportToCsv(leads) {
-  const header = ['Nom', 'Email', 'Tunnel', 'Date'];
-  const rows = leads.map((l) => [l.name || '', l.email, l.funnelName, new Date(l.created_at).toLocaleString('fr-FR')]);
+  const header = ['Nom', 'Email', 'Tunnel', 'Date', 'Statut paiement', 'Montant payé', 'Devise'];
+  const rows = leads.map((l) => [
+    l.name || '', l.email, l.funnelName, new Date(l.created_at).toLocaleString('fr-FR'),
+    l.payment_status || '', l.paid_amount || '', l.paid_currency || '',
+  ]);
   const csv = [header, ...rows].map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n');
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
@@ -25,6 +43,7 @@ export default function LeadsPage() {
   const toast = useToast();
   const [leads, setLeads] = useState(null);
   const [resendingId, setResendingId] = useState(null);
+  const [refundingId, setRefundingId] = useState(null);
   const plan = getPlan(effectiveProfile?.plan);
 
   useEffect(() => {
@@ -48,6 +67,22 @@ export default function LeadsPage() {
     }
   };
 
+  const handleToggleRefund = async (lead) => {
+    const nextRefunded = !lead.refunded_at;
+    setRefundingId(lead.id);
+    try {
+      await setLeadRefunded(lead.id, nextRefunded);
+      setLeads((prev) => prev.map((l) => (l.id === lead.id
+        ? { ...l, refunded_at: nextRefunded ? new Date().toISOString() : null }
+        : l)));
+      toast.success(nextRefunded ? 'Marqué comme remboursé.' : 'Remboursement annulé.');
+    } catch (err) {
+      toast.error(err.message || "Impossible d'enregistrer ce remboursement.");
+    } finally {
+      setRefundingId(null);
+    }
+  };
+
   if (leads === null) {
     return (
       <div className="flex justify-center py-24">
@@ -59,13 +94,22 @@ export default function LeadsPage() {
   const visibleLimit = plan.leadsHistoryLimit ?? Infinity;
   const visibleLeads = leads.slice(0, visibleLimit === Infinity ? leads.length : visibleLimit);
   const hiddenCount = leads.length - visibleLeads.length;
+  const revenueByCurrency = computeRevenueByCurrency(leads);
+  // Exclut les leads remboursés, comme le total du revenu juste à côté —
+  // sinon "2 ventes payées : 5 000 FCFA" semblerait incohérent si l'une
+  // des deux a été remboursée entre-temps.
+  const paidCount = leads.filter((l) => l.payment_status === 'paid' && !l.refunded_at).length;
 
   return (
     <div>
       <GradientBanner
         icon={Mail}
         title="Tes leads"
-        description={`${leads.length} prospect(s) capturé(s) au total.`}
+        description={
+          revenueByCurrency.length > 0
+            ? `${leads.length} prospect(s) capturé(s) — ${paidCount} vente(s) payée(s) : ${revenueByCurrency.map(([currency, total]) => formatPrice(total, currency)).join(' + ')}`
+            : `${leads.length} prospect(s) capturé(s) au total.`
+        }
         actions={
           plan.leadsExport ? (
             <button
@@ -100,6 +144,7 @@ export default function LeadsPage() {
                   <th className="px-6 py-4 font-medium">Email</th>
                   <th className="px-6 py-4 font-medium">Tunnel</th>
                   <th className="px-6 py-4 font-medium">Date</th>
+                  <th className="px-6 py-4 font-medium">Paiement</th>
                   <th className="px-6 py-4 font-medium">Contenu envoyé</th>
                 </tr>
               </thead>
@@ -112,6 +157,49 @@ export default function LeadsPage() {
                     <td className="px-6 py-4 text-surface/80">{lead.email}</td>
                     <td className="px-6 py-4 text-surface/60">{lead.funnelName}</td>
                     <td className="px-6 py-4 text-surface/40">{new Date(lead.created_at).toLocaleDateString('fr-FR')}</td>
+                    <td className="px-6 py-4">
+                      {lead.payment_status === 'paid' && lead.refunded_at && (
+                        <div className="flex items-center gap-2">
+                          <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-surface/40 line-through">
+                            <CheckCircle2 className="w-3.5 h-3.5" /> Payé{lead.paid_amount ? ` — ${formatPrice(Number(lead.paid_amount), lead.paid_currency)}` : ''}
+                          </span>
+                          <button
+                            onClick={() => handleToggleRefund(lead)}
+                            disabled={refundingId === lead.id}
+                            title="Annuler le marquage remboursé"
+                            className="text-xs font-semibold text-surface/50 hover:text-accent disabled:opacity-50"
+                          >
+                            Remboursé
+                          </button>
+                        </div>
+                      )}
+                      {lead.payment_status === 'paid' && !lead.refunded_at && (
+                        <div className="flex items-center gap-2 group">
+                          <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-500">
+                            <CheckCircle2 className="w-3.5 h-3.5" /> Payé{lead.paid_amount ? ` — ${formatPrice(Number(lead.paid_amount), lead.paid_currency)}` : ''}
+                          </span>
+                          <button
+                            onClick={() => handleToggleRefund(lead)}
+                            disabled={refundingId === lead.id}
+                            title="Marquer comme remboursé (pour ta propre comptabilité)"
+                            className="opacity-0 group-hover:opacity-100 text-surface/30 hover:text-orange-500 transition-opacity disabled:opacity-50"
+                          >
+                            <Undo2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      )}
+                      {lead.payment_status === 'pending' && (
+                        <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-orange-500">
+                          <Clock className="w-3.5 h-3.5" /> En attente
+                        </span>
+                      )}
+                      {lead.payment_status === 'failed' && (
+                        <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-red-400">
+                          <XCircle className="w-3.5 h-3.5" /> Échoué
+                        </span>
+                      )}
+                      {!lead.payment_status && <span className="text-surface/30 text-xs">—</span>}
+                    </td>
                     <td className="px-6 py-4">
                       {lead.email_status === 'sent' && (
                         <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-500">

@@ -50,4 +50,12 @@ export async function updatePassword(newPassword) {
   await apiPost('/auth/update-password', { newPassword });
 }
 
+export async function verifyEmail(token) {
+  await apiPost('/auth/verify-email', { token });
+}
+
+export async function resendVerificationEmail() {
+  await apiPost('/auth/resend-verification');
+}
+
 export { ApiError };

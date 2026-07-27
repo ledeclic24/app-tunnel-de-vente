@@ -82,10 +82,15 @@ function PaymentMethodsTab() {
       );
       resetForm();
       load();
-    } catch {
-      setError(provider === 'moneroo'
+    } catch (err) {
+      // Le backend vérifie désormais la clé secrète auprès de Moneroo avant
+      // d'enregistrer (voir PaymentMethodsService.verifyMonerooSecretKey) et
+      // renvoie un message précis ("Clé secrète invalide...") — on l'affiche
+      // tel quel plutôt qu'un message générique, pour que le vendeur sache
+      // exactement quoi corriger au lieu de deviner.
+      setError(err.message || (provider === 'moneroo'
         ? 'Impossible de connecter ce compte Moneroo. Vérifie ta clé secrète et ton secret de webhook.'
-        : "Impossible d'ajouter ce moyen de paiement. Vérifie que le lien est une URL valide (https://...).");
+        : "Impossible d'ajouter ce moyen de paiement. Vérifie que le lien est une URL valide (https://...)."));
     } finally {
       setSaving(false);
     }
@@ -201,7 +206,14 @@ function PaymentMethodsTab() {
           ) : (
             <>
               <p className="text-xs text-surface/50">
-                Récupère ces informations dans ton dashboard Moneroo (Paramètres → API). L'argent des paiements va directement sur ton compte Moneroo, TonTunnel ne le touche jamais.
+                Récupère ces informations dans ton dashboard Moneroo (Paramètres → API — pas encore de compte Moneroo ?{' '}
+                <a href="https://docs.moneroo.io/introduction/authentication" target="_blank" rel="noreferrer" className="text-accent hover:underline inline-flex items-center gap-0.5">
+                  voir comment faire <ExternalLink className="w-3 h-3" />
+                </a>
+                ). L'argent des paiements va directement sur ton compte Moneroo, TonTunnel ne le touche jamais.
+              </p>
+              <p className="text-xs text-surface/50 bg-primary/5 border border-surface/10 rounded-lg px-3 py-2">
+                Une fois enregistré, une URL de webhook unique apparaîtra ci-dessous : colle-la dans ton dashboard Moneroo (Paramètres → Webhooks). Sans cette étape, Moneroo ne peut jamais confirmer tes paiements à TonTunnel — tes ventes resteraient bloquées en attente.
               </p>
               <div className="flex flex-col sm:flex-row gap-3">
                 <input

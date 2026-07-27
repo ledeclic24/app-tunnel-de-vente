@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, ExternalLink, Pencil, Trash2, Rocket, Mail, Eye, Layers, CheckCircle2, Circle, LayoutDashboard } from 'lucide-react';
+import { Plus, ExternalLink, Pencil, Trash2, Rocket, Mail, Eye, Layers, CheckCircle2, Circle, LayoutDashboard, Wallet } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { fetchUserFunnels, deleteFunnel, fetchLeadsForUser, fetchFunnelStepsAnalytics } from '../../lib/funnelsApi';
 import { getPlan } from '../../lib/plans';
+import { formatPrice } from '../../lib/currency';
 import { useConfirm } from '../../components/app/ConfirmDialog';
 import GradientBanner from '../../components/ui/GradientBanner';
 
@@ -96,6 +97,7 @@ export default function DashboardPage() {
   const [funnels, setFunnels] = useState(null);
   const [leads7d, setLeads7d] = useState(0);
   const [totalViews, setTotalViews] = useState(0);
+  const [revenue30d, setRevenue30d] = useState([]);
   const [error, setError] = useState('');
   const confirm = useConfirm();
 
@@ -114,8 +116,21 @@ export default function DashboardPage() {
       ]);
 
       const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+      const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
       setLeads7d(leadsData.filter((l) => new Date(l.created_at).getTime() >= sevenDaysAgo).length);
       setTotalViews(viewsPerFunnel.flat().reduce((sum, step) => sum + (step.views || 0), 0));
+
+      // Regroupé par devise (plutôt qu'un seul total) : un vendeur pourrait
+      // en théorie avoir des ventes dans plusieurs devises selon ses moyens
+      // de paiement, additionner directement n'aurait aucun sens.
+      const revenueTotals = new Map();
+      for (const l of leadsData) {
+        if (l.payment_status !== 'paid' || !l.paid_amount || l.refunded_at) continue;
+        if (new Date(l.created_at).getTime() < thirtyDaysAgo) continue;
+        const currency = l.paid_currency || 'XOF';
+        revenueTotals.set(currency, (revenueTotals.get(currency) || 0) + (Number(l.paid_amount) || 0));
+      }
+      setRevenue30d(Array.from(revenueTotals.entries()));
     } catch (err) {
       setError("Impossible de charger tes tunnels.");
     }
@@ -157,8 +172,14 @@ export default function DashboardPage() {
       />
 
       {funnels && (
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-          <KpiCard icon={Mail} label="Leads (7 derniers jours)" value={leads7d} highlight />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <KpiCard
+            icon={Wallet}
+            label="Revenu (30 derniers jours)"
+            value={revenue30d.length > 0 ? revenue30d.map(([currency, total]) => formatPrice(total, currency)).join(' + ') : formatPrice(0, effectiveProfile?.currency || 'XOF')}
+            highlight
+          />
+          <KpiCard icon={Mail} label="Leads (7 derniers jours)" value={leads7d} />
           <KpiCard icon={Eye} label="Vues totales" value={totalViews} />
           <KpiCard icon={Layers} label="Tunnels actifs" value={`${publishedCount} / ${funnels.length}`} />
         </div>

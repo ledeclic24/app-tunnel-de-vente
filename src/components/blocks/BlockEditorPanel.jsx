@@ -311,6 +311,11 @@ function BlockFields({ type, content, set, userId, blockId, onGenerateImage, ima
                     <label className="block text-xs text-surface/50 mb-1.5">
                       Moyens de paiement (optionnel — sans lien, le bouton avance simplement à l'étape suivante)
                     </label>
+                    {(plan.paymentLinks || []).some((l) => l.provider !== 'moneroo') && (
+                      <p className="text-xs text-orange-500 bg-orange-500/10 border border-orange-500/20 rounded-lg px-3 py-2 mb-2">
+                        ⚠️ Un lien de paiement externe (Wave, Orange Money, lien manuel...) ne livre jamais automatiquement le produit : TonTunnel ne peut pas savoir qu'un client a payé sur un site externe. Pour ces ventes-là, pense à vérifier ton compte de paiement toi-même et à livrer le produit manuellement.
+                      </p>
+                    )}
                     {savedPaymentMethods?.length > 0 && (
                       <div className="flex flex-wrap gap-1.5 mb-2">
                         {savedPaymentMethods.map((m) => {

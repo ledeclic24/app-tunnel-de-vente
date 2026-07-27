@@ -46,6 +46,11 @@ function normalizeLead(l) {
     email_status: l.emailStatus,
     email_error: l.emailError,
     payment_status: l.paymentStatus,
+    paid_amount: l.paidAmount,
+    paid_currency: l.paidCurrency,
+    order_bump_taken: l.orderBumpTaken,
+    order_bump_amount: l.orderBumpAmount,
+    refunded_at: l.refundedAt,
   };
 }
 
@@ -251,6 +256,14 @@ export async function fetchLeadsForUser(_userId) {
 export async function resendLeadEmail(leadId) {
   const { sent } = await apiPost(`/leads/${leadId}/resend-email`);
   return sent;
+}
+
+// Purement déclaratif pour la comptabilité du vendeur — Moneroo ne
+// notifie jamais TonTunnel d'un remboursement (l'argent ne transite
+// jamais par nous), ceci enregistre juste ce que le vendeur a constaté
+// de son côté.
+export async function setLeadRefunded(leadId, refunded) {
+  await apiPatch(`/leads/${leadId}/refund`, { refunded });
 }
 
 export async function fetchFunnelStepsAnalytics(funnelId) {

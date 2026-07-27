@@ -20,6 +20,7 @@ function normalizeUser(apiUser) {
     plan_expires_at: apiUser.planExpiresAt,
     created_at: apiUser.createdAt,
     currency: apiUser.currency,
+    email_verified: apiUser.emailVerified,
   };
 }
 
@@ -142,6 +143,28 @@ export function AuthProvider({ children }) {
     }
   };
 
+  // Confirme l'adresse email via le token reçu par lien (voir
+  // VerifyEmailPage.jsx) — rafraîchit le profil pour que la bannière
+  // "email non vérifié" disparaisse immédiatement.
+  const verifyEmail = async (token) => {
+    try {
+      await authApi.verifyEmail(token);
+      await refreshProfile();
+      return { error: null };
+    } catch (err) {
+      return { error: mapAuthError(err) };
+    }
+  };
+
+  const resendVerificationEmail = async () => {
+    try {
+      await authApi.resendVerificationEmail();
+      return { error: null };
+    } catch (err) {
+      return { error: mapAuthError(err) };
+    }
+  };
+
   const deleteAccount = async () => {
     try {
       await deleteOwnAccount();
@@ -158,6 +181,7 @@ export function AuthProvider({ children }) {
       user, profile, loading, effectiveOwnerId, effectiveProfile,
       signUp, signIn, signOut, refreshProfile, resetPassword, updatePassword,
       confirmPasswordReset, updateProfile, deleteAccount,
+      verifyEmail, resendVerificationEmail,
     }}>
       {children}
     </AuthContext.Provider>

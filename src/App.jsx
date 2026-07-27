@@ -17,6 +17,7 @@ import LoginPage from './pages/auth/LoginPage';
 import SignupPage from './pages/auth/SignupPage';
 import ForgotPasswordPage from './pages/auth/ForgotPasswordPage';
 import ResetPasswordPage from './pages/auth/ResetPasswordPage';
+import VerifyEmailPage from './pages/auth/VerifyEmailPage';
 import PublishedFunnelPage from './pages/public/PublishedFunnelPage';
 import LegalPage from './pages/marketing/LegalPage';
 
@@ -124,6 +125,7 @@ function App() {
             <Route path="/inscription" element={<SignupPage />} />
             <Route path="/mot-de-passe-oublie" element={<ForgotPasswordPage />} />
             <Route path="/reinitialiser-mot-de-passe" element={<ResetPasswordPage />} />
+            <Route path="/verifier-email" element={<VerifyEmailPage />} />
 
             <Route path="/mentions-legales" element={<LegalPage doc="mentions-legales" />} />
             <Route path="/cgu" element={<LegalPage doc="cgu" />} />
