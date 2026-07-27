@@ -26,8 +26,8 @@ async function pollUntilDone(ids) {
   throw new Error('server_error');
 }
 
-export async function generateImages({ prompt, size, n, style, imageType, background }) {
-  const { images: pending } = await apiPost('/images/generate', { prompt, size, n, style, imageType, background });
+export async function generateImages({ prompt, size, n, style, imageType, background, referenceImageUrl }) {
+  const { images: pending } = await apiPost('/images/generate', { prompt, size, n, style, imageType, background, referenceImageUrl });
   return pollUntilDone(pending.map((img) => img.id));
 }
 

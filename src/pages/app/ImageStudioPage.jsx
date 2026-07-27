@@ -1,11 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import JSZip from 'jszip';
-import { ImageIcon, Lock, Sparkles, Copy, Check, Wand2, Download, Trash2, RefreshCw, X, ChevronLeft, ChevronRight, MoreVertical } from 'lucide-react';
+import { ImageIcon, Lock, Sparkles, Copy, Check, Wand2, Download, Trash2, RefreshCw, X, ChevronLeft, ChevronRight, MoreVertical, ImagePlus, Loader2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { getPlan } from '../../lib/plans';
 import { generateImages, fetchImages, deleteImage, downloadImage, fetchImageBlob } from '../../lib/imagesApi';
 import { fetchCreditsBalance } from '../../lib/creditsApi';
+import { uploadImage } from '../../lib/storage';
 import { useConfirm } from '../../components/app/ConfirmDialog';
 import { useToast } from '../../components/app/Toast';
 import GradientBanner from '../../components/ui/GradientBanner';
@@ -268,6 +269,9 @@ export default function ImageStudioPage() {
   const [bulkBusy, setBulkBusy] = useState(false);
   const [error, setError] = useState('');
   const [lightboxIndex, setLightboxIndex] = useState(null);
+  const [referenceImageUrl, setReferenceImageUrl] = useState('');
+  const [referenceUploading, setReferenceUploading] = useState(false);
+  const referenceFileRef = useRef(null);
   const confirm = useConfirm();
   const toast = useToast();
 
@@ -309,8 +313,8 @@ export default function ImageStudioPage() {
 
   const atLimit = credits !== null && credits.balance <= 0;
 
-  const runGeneration = async ({ prompt: p, size: s, n, style: st, imageType: it, background: bg }) => {
-    const results = await generateImages({ prompt: p, size: s, n, style: st || undefined, imageType: it || undefined, background: bg || undefined });
+  const runGeneration = async ({ prompt: p, size: s, n, style: st, imageType: it, background: bg, referenceImageUrl: ref }) => {
+    const results = await generateImages({ prompt: p, size: s, n, style: st || undefined, imageType: it || undefined, background: bg || undefined, referenceImageUrl: ref || undefined });
     setImages((prev) => [...results, ...prev]);
     // Chaque génération déduit des crédits IA — sans ça, le solde affiché
     // restait figé jusqu'au prochain rechargement de page. `setUsage` était
@@ -331,6 +335,7 @@ export default function ImageStudioPage() {
       await runGeneration({
         prompt: prompt.trim(), size, n: count, style, imageType,
         background: transparent ? 'transparent' : undefined,
+        referenceImageUrl: referenceImageUrl || undefined,
       });
     } catch (err) {
       setError(ERROR_MESSAGES[err.message] || ERROR_MESSAGES.server_error);
@@ -452,6 +457,53 @@ export default function ImageStudioPage() {
             rows={3}
             placeholder="Ex : arrière-plan chaleureux pour une offre de coaching bien-être, tons pastel, ambiance sereine"
             className="w-full bg-primary/5 border border-surface/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-accent transition-colors text-surface"
+          />
+        </div>
+
+        <div>
+          <label className="block text-xs font-semibold text-surface/70 uppercase tracking-wider mb-2">Visuel de référence (facultatif)</label>
+          <p className="text-xs text-surface/50 mb-2">Le générateur s'en inspire (composition, style) et l'adapte à ta description ci-dessus.</p>
+          {referenceImageUrl ? (
+            <div className="relative inline-block">
+              <img src={referenceImageUrl} alt="Référence" className="h-24 w-24 object-cover rounded-xl border border-surface/10" />
+              <button
+                type="button"
+                onClick={() => setReferenceImageUrl('')}
+                className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-surface/80 text-background flex items-center justify-center"
+                aria-label="Retirer le visuel de référence"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => referenceFileRef.current?.click()}
+              disabled={referenceUploading}
+              className="flex items-center gap-2 px-4 py-3 rounded-xl border border-dashed border-surface/20 text-sm text-surface/60 hover:border-accent hover:text-accent transition-colors disabled:opacity-50"
+            >
+              {referenceUploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ImagePlus className="w-4 h-4" />}
+              {referenceUploading ? 'Envoi...' : 'Choisir une image'}
+            </button>
+          )}
+          <input
+            ref={referenceFileRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={async (e) => {
+              const file = e.target.files?.[0];
+              e.target.value = '';
+              if (!file) return;
+              setReferenceUploading(true);
+              try {
+                const url = await uploadImage(effectiveProfile?.id, file);
+                setReferenceImageUrl(url);
+              } catch (err) {
+                toast.error(err.message || "L'image n'a pas pu être importée.");
+              }
+              setReferenceUploading(false);
+            }}
           />
         </div>
 
