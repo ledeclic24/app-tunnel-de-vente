@@ -2,6 +2,7 @@ import React from 'react';
 import { Check, X, Loader2 } from 'lucide-react';
 import { getEditableProps, getContentEditableProps, getSectionBackground, cx } from '../../lib/blockStyle';
 import { parsePriceAmount } from '../../lib/checkoutApi';
+import { formatPrice } from '../../lib/currency';
 import SlotList, { SlotReadOnly } from './SlotList';
 import EditableItemImage from './EditableItemImage';
 import FloatingOrbs from './FloatingOrbs';
@@ -12,7 +13,7 @@ import FloatingOrbs from './FloatingOrbs';
 // L'order bump (offre complémentaire optionnelle, jamais cochée par
 // défaut) s'affiche ici, juste avant la redirection : c'est le seul moment
 // où l'acheteur est déjà engagé dans l'achat sans avoir encore payé.
-function MonerooCheckoutModal({ planName, orderBump, onClose, onSubmit }) {
+function MonerooCheckoutModal({ planName, orderBump, currency, onClose, onSubmit }) {
   const [name, setName] = React.useState('');
   const [email, setEmail] = React.useState('');
   const [bumpChecked, setBumpChecked] = React.useState(false);
@@ -65,7 +66,7 @@ function MonerooCheckoutModal({ planName, orderBump, onClose, onSubmit }) {
               <span className="text-sm">
                 <span className="font-semibold block">{orderBump.heading || 'Ajouter une offre complémentaire'}</span>
                 {orderBump.description && <span className="block text-surface/60 text-xs mt-0.5">{orderBump.description}</span>}
-                <span className="block text-accent font-semibold mt-1">+ {orderBump.price}</span>
+                <span className="block text-accent font-semibold mt-1">+ {formatPrice(parsePriceAmount(orderBump.price), currency)}</span>
               </span>
             </label>
           )}
@@ -123,7 +124,7 @@ function isSlotsValid(slots, itemCount) {
   return fieldSlots.length === itemCount;
 }
 
-export default function PricingBlock({ content, blockId, onAdvance, onMonerooCheckout, editMode, selectedElement, onSelectElement, onContentChange, userId, defaultBg }) {
+export default function PricingBlock({ content, blockId, onAdvance, onMonerooCheckout, editMode, selectedElement, onSelectElement, onContentChange, userId, defaultBg, currency }) {
   const { heading, plans = [], layout, comparisonRows, slots } = content;
   const isComparison = layout === 'comparison' && (comparisonRows || []).length > 0;
   const gridClass = GRID_COLS_CLASS[Math.min(plans.length, 3)] || '';
@@ -131,6 +132,11 @@ export default function PricingBlock({ content, blockId, onAdvance, onMonerooChe
     getEditableProps({ elementKey, kind, styles: content.styles, editMode, selectedElement, onSelectElement, label });
   const bg = getSectionBackground(content.styles, defaultBg || 'white');
   const [checkoutTarget, setCheckoutTarget] = React.useState(null);
+  // Le prix/prix barré affichent leur version formatée avec la devise du
+  // compte (ex. "17 900 GHS") — sauf le champ qu'on est en train d'éditer,
+  // qui repasse en texte brut le temps de la frappe (sinon la valeur tapée
+  // serait immédiatement écrasée par la version formatée à chaque rendu).
+  const [focusedPriceKey, setFocusedPriceKey] = React.useState(null);
 
   const headingProps = editable('heading', 'text', 'Titre');
   const headingEditable = getContentEditableProps({ editMode, onContentChange, content, field: 'heading' });
@@ -150,6 +156,18 @@ export default function PricingBlock({ content, blockId, onAdvance, onMonerooChe
     onBlur: (e) => editMode && onCommit(e.currentTarget.textContent ?? ''),
     onKeyDown: (e) => { if (e.key === 'Enter') { e.preventDefault(); e.currentTarget.blur(); } },
   });
+  // Variante de singleLine pour les champs prix : bascule en texte brut
+  // (éditable) au focus, revient au texte formaté (devise du compte) une
+  // fois qu'on en sort.
+  const priceField = (key, onCommit) => {
+    const base = singleLine(onCommit);
+    return {
+      ...base,
+      onFocus: () => editMode && setFocusedPriceKey(key),
+      onBlur: (e) => { base.onBlur(e); setFocusedPriceKey((cur) => (cur === key ? null : cur)); },
+    };
+  };
+  const priceDisplay = (key, raw) => (focusedPriceKey === key ? raw : formatPrice(parsePriceAmount(raw), currency));
 
   const renderItem = (i) => {
     const plan = plans[i];
@@ -181,12 +199,14 @@ export default function PricingBlock({ content, blockId, onAdvance, onMonerooChe
         )}
         <h3 className="font-sans text-xl mb-2 outline-none" {...singleLine((v) => updatePlan(i, { name: v }))}>{plan.name}</h3>
         {plan.originalPrice && (
-          <span className="block text-sm line-through mb-0.5 text-background/50" {...singleLine((v) => updatePlan(i, { originalPrice: v }))}>
-            {plan.originalPrice}
+          <span className="block text-sm line-through mb-0.5 text-background/50" {...priceField(`${i}-originalPrice`, (v) => updatePlan(i, { originalPrice: v }))}>
+            {editMode ? priceDisplay(`${i}-originalPrice`, plan.originalPrice) : formatPrice(parsePriceAmount(plan.originalPrice), currency)}
           </span>
         )}
         <div className="flex items-baseline gap-1 mb-6">
-          <span className="text-4xl font-bold outline-none" {...singleLine((v) => updatePlan(i, { price: v }))}>{plan.price}</span>
+          <span className="text-4xl font-bold outline-none" {...priceField(`${i}-price`, (v) => updatePlan(i, { price: v }))}>
+            {editMode ? priceDisplay(`${i}-price`, plan.price) : formatPrice(parsePriceAmount(plan.price), currency)}
+          </span>
           <span className="text-background/60 text-sm outline-none" {...singleLine((v) => updatePlan(i, { period: v }))}>{plan.period}</span>
         </div>
         {(plan.paymentLinks || []).length > 0 ? (
@@ -294,6 +314,7 @@ export default function PricingBlock({ content, blockId, onAdvance, onMonerooChe
         <MonerooCheckoutModal
           planName={checkoutTarget.plan.name}
           orderBump={content.orderBump}
+          currency={currency}
           onClose={() => setCheckoutTarget(null)}
           onSubmit={async ({ name, email, orderBumpTaken }) => {
             // Le montant réel est recalculé côté serveur à partir du prix

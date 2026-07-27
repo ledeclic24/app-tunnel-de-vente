@@ -5,6 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 import { getPlan } from '../../lib/plans';
 import { fetchOrgMembers, inviteOrgMember, removeOrgMember } from '../../lib/growthApi';
 import { fetchPaymentMethods, createPaymentMethod, deletePaymentMethod } from '../../lib/paymentMethodsApi';
+import { CURRENCY_OPTIONS } from '../../lib/currency';
 import { API_URL } from '../../lib/apiClient';
 import { useConfirm } from '../../components/app/ConfirmDialog';
 import BillingPage from './BillingPage';
@@ -35,17 +36,26 @@ function CopyableWebhookUrl({ url }) {
 }
 
 function PaymentMethodsTab() {
+  const { effectiveProfile } = useAuth();
   const [methods, setMethods] = useState(null);
   const [provider, setProvider] = useState('external_link');
   const [label, setLabel] = useState('');
   const [url, setUrl] = useState('');
   const [secretKey, setSecretKey] = useState('');
   const [webhookSecret, setWebhookSecret] = useState('');
-  const [currency, setCurrency] = useState('XOF');
+  // Pré-rempli avec la devise du compte (voir AccountPage.jsx) — celle
+  // envoyée à Moneroo pour ce moyen de paiement reste modifiable
+  // indépendamment (intégration technique déjà existante), on n'en change
+  // que la valeur par défaut à la création.
+  const [currency, setCurrency] = useState(effectiveProfile?.currency || 'XOF');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [removingId, setRemovingId] = useState(null);
   const confirm = useConfirm();
+
+  useEffect(() => {
+    if (effectiveProfile?.currency) setCurrency(effectiveProfile.currency);
+  }, [effectiveProfile?.currency]);
 
   const load = useCallback(() => {
     fetchPaymentMethods().then(setMethods).catch(() => setMethods([]));
@@ -211,11 +221,9 @@ function PaymentMethodsTab() {
                   className={fieldClass}
                 />
                 <select value={currency} onChange={(e) => setCurrency(e.target.value)} className={`${fieldClass} flex-none sm:w-28`}>
-                  <option value="XOF">XOF</option>
-                  <option value="USD">USD</option>
-                  <option value="EUR">EUR</option>
-                  <option value="GHS">GHS</option>
-                  <option value="NGN">NGN</option>
+                  {CURRENCY_OPTIONS.map((c) => (
+                    <option key={c.code} value={c.code}>{c.code}</option>
+                  ))}
                 </select>
               </div>
             </>

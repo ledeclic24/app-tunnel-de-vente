@@ -4,6 +4,7 @@ import { Check, Loader2 } from 'lucide-react';
 import { fetchPublishedSnapshot, insertLead, incrementStepView, fetchLeadStatus } from '../../lib/funnelsApi';
 import { createMonerooCheckout } from '../../lib/checkoutApi';
 import { brandStyleVars } from '../../lib/colorUtils';
+import { resolveStickyFooterPrice } from '../../lib/currency';
 import BlockRenderer from '../../components/blocks/BlockRenderer';
 import CountdownBar from '../../components/public/CountdownBar';
 import PurchaseNotification from '../../components/public/PurchaseNotification';
@@ -250,6 +251,7 @@ export default function PublishedFunnelPage({ funnelSlugOverride } = {}) {
             onSubmitLead={handleSubmitLead}
             onMonerooCheckout={handleMonerooCheckout}
             defaultBg={i % 2 === 0 ? 'primary' : 'primary-alt'}
+            currency={funnel.currency || 'XOF'}
             siblingSteps={steps}
             onNavigateToStep={handleNavigateToStep}
             currentStepSlug={currentStep?.slug}
@@ -262,7 +264,18 @@ export default function PublishedFunnelPage({ funnelSlugOverride } = {}) {
         </footer>
       )}
       <PurchaseNotification config={chrome.purchaseNotification} liftForFooter={Boolean(chrome.stickyFooterCta?.enabled)} />
-      <StickyFooterCta config={chrome.stickyFooterCta} onNavigateToStep={handleNavigateToStep} onAdvance={handleAdvance} />
+      <StickyFooterCta
+        config={{
+          ...chrome.stickyFooterCta,
+          price: resolveStickyFooterPrice(
+            chrome.stickyFooterCta,
+            steps.flatMap((s) => s.blocks || []),
+            funnel.currency || 'XOF',
+          ),
+        }}
+        onNavigateToStep={handleNavigateToStep}
+        onAdvance={handleAdvance}
+      />
       <ExitIntentPopup config={chrome.exitIntent} onNavigateToStep={handleNavigateToStep} onAdvance={handleAdvance} />
       {paymentStatus && (
         <PaymentConfirmationOverlay status={paymentStatus} onDismiss={() => setPaymentStatus(null)} />

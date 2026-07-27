@@ -22,6 +22,7 @@ import { useAuth } from '../../context/AuthContext';
 import { getPlan } from '../../lib/plans';
 import { brandStyleVars } from '../../lib/colorUtils';
 import { computeHealthScore } from '../../lib/healthScore';
+import { resolveStickyFooterPrice } from '../../lib/currency';
 import { fetchReusableBlocks, saveReusableBlock, deleteReusableBlock, incrementReusableBlockUsage } from '../../lib/growthApi';
 import { useConfirm } from '../../components/app/ConfirmDialog';
 import { useToast } from '../../components/app/Toast';
@@ -40,10 +41,42 @@ import StickyFooterCta from '../../components/public/StickyFooterCta';
 
 const HISTORY_LIMIT = 20;
 
-function BlockCard({
+// Objets figés (hors composant) : useSensor() les mémoïse par référence en
+// interne, donc leur recréer en ligne à chaque rendu produisait un nouveau
+// tableau de sensors à chaque frappe — DndContext le republie dans son
+// contexte, ce qui forçait TOUS les useSortable() (donc tous les BlockCard)
+// à se re-rendre à chaque caractère tapé, contournant leur React.memo.
+const POINTER_ACTIVATION_CONSTRAINT = { activationConstraint: { distance: 5 } };
+const KEYBOARD_COORDINATE_GETTER = { coordinateGetter: sortableKeyboardCoordinates };
+
+const AI_ERROR_MESSAGES = {
+  plan_required: "L'édition par IA nécessite le plan Pro ou Entreprise.",
+  limit_reached: 'Tu as atteint ta limite de générations IA ce mois-ci.',
+  insufficient_credits: 'Crédits IA insuffisants. Achète un pack ou passe au plan supérieur depuis la page Facturation.',
+  invalid_input: 'Précise un peu plus ta demande.',
+  ai_error: "L'IA n'a pas pu répondre pour le moment. Réessaie dans quelques instants.",
+  parse_error: 'La modification a échoué. Réessaie avec une formulation différente.',
+  block_locked: 'Déverrouille ce bloc avant de le régénérer.',
+  server_error: 'Une erreur est survenue. Réessaie.',
+};
+
+// Messages dédiés au quota d'images (distinct du quota IA/texte ci-dessus) :
+// un utilisateur avec du quota IA restant mais plus de quota image ne doit
+// pas voir un message trompeur sur la limite de génération de texte.
+const IMAGE_ERROR_MESSAGES = {
+  plan_required: "La génération d'images nécessite le plan Pro ou Entreprise.",
+  limit_reached: "Tu as atteint ta limite de générations d'images ce mois-ci.",
+  insufficient_credits: 'Crédits IA insuffisants. Achète un pack ou passe au plan supérieur depuis la page Facturation.',
+  invalid_input: "Ce type de bloc ne supporte pas la génération d'image.",
+  ai_error: "Le générateur d'images n'a pas pu répondre. Réessaie dans quelques instants.",
+  parse_error: 'La génération a échoué. Réessaie.',
+  server_error: 'Une erreur est survenue. Réessaie.',
+};
+
+const BlockCard = React.memo(function BlockCard({
   block, onDelete, onDuplicate, isExpanded, onToggle, onChange, userId, selectedElement, onSelectElement,
   dragHandleProps, onSaveToLibrary, canUseLibrary, onToggleLock, onRegenerate, canRegenerate, isRegenerating,
-  onGenerateImage, isGeneratingImage, defaultBg, siblingSteps,
+  onGenerateImage, isGeneratingImage, defaultBg, siblingSteps, currency,
 }) {
   const def = BLOCK_TYPES.find((b) => b.type === block.type);
   const Icon = def?.icon;
@@ -73,7 +106,7 @@ function BlockCard({
         <div className="flex items-center gap-1 shrink-0">
           {canRegenerate && !locked && (
             <button
-              onClick={onRegenerate}
+              onClick={() => onRegenerate(block)}
               disabled={isRegenerating}
               className="p-1.5 rounded-lg text-surface/40 hover:text-accent disabled:opacity-50"
               aria-label="Régénérer ce bloc avec l'IA"
@@ -87,28 +120,28 @@ function BlockCard({
             </button>
           )}
           <button
-            onClick={onToggleLock}
+            onClick={() => onToggleLock(block)}
             className={`p-1.5 rounded-lg ${locked ? 'text-accent hover:text-accent/70' : 'text-surface/40 hover:text-surface'}`}
             aria-label={locked ? 'Déverrouiller ce bloc' : 'Verrouiller ce bloc'}
             title={locked ? "Déverrouiller (l'IA pourra à nouveau le modifier)" : "Verrouiller (protège ce bloc des régénérations IA)"}
           >
             {locked ? <Lock className="w-4 h-4" /> : <Unlock className="w-4 h-4" />}
           </button>
-          <button onClick={onToggle} className={`p-1.5 rounded-lg ${isExpanded ? 'text-accent' : 'text-surface/40 hover:text-surface'}`}>
+          <button onClick={() => onToggle(block.id)} className={`p-1.5 rounded-lg ${isExpanded ? 'text-accent' : 'text-surface/40 hover:text-surface'}`}>
             <Pencil className="w-4 h-4" />
           </button>
-          <button onClick={onDuplicate} className="p-1.5 rounded-lg text-surface/40 hover:text-surface" aria-label="Dupliquer">
+          <button onClick={() => onDuplicate(block)} className="p-1.5 rounded-lg text-surface/40 hover:text-surface" aria-label="Dupliquer">
             <Copy className="w-4 h-4" />
           </button>
           <button
-            onClick={onSaveToLibrary}
+            onClick={() => onSaveToLibrary(block)}
             className={`p-1.5 rounded-lg ${canUseLibrary ? 'text-surface/40 hover:text-accent' : 'text-surface/20 hover:text-surface/40'}`}
             aria-label="Enregistrer dans ma bibliothèque"
             title={canUseLibrary ? 'Enregistrer dans ma bibliothèque' : 'Bibliothèque réservée aux plans payants'}
           >
             <BookmarkPlus className="w-4 h-4" />
           </button>
-          <button onClick={onDelete} className="p-1.5 rounded-lg text-surface/40 hover:text-red-500">
+          <button onClick={() => onDelete(block)} className="p-1.5 rounded-lg text-surface/40 hover:text-red-500">
             <Trash2 className="w-4 h-4" />
           </button>
         </div>
@@ -120,10 +153,11 @@ function BlockCard({
           onAdvance={() => {}}
           editMode
           selectedElement={selectedElement}
-          onSelectElement={onSelectElement}
-          onContentChange={onChange}
+          onSelectElement={(elementKey, kind, label) => onSelectElement(block.id, elementKey, kind, label)}
+          onContentChange={(content) => onChange(block, content)}
           userId={userId}
           defaultBg={defaultBg}
+          currency={currency}
           siblingSteps={siblingSteps}
           onGenerateImage={onGenerateImage}
           isGeneratingImage={isGeneratingImage}
@@ -134,7 +168,7 @@ function BlockCard({
         <div className="border-t border-surface/10 p-5 bg-surface/[0.02]">
           <BlockEditorPanel
             block={block}
-            onChange={onChange}
+            onChange={(content) => onChange(block, content)}
             userId={userId}
             onGenerateImage={onGenerateImage}
             imageGenerating={isGeneratingImage}
@@ -144,9 +178,9 @@ function BlockCard({
       )}
     </div>
   );
-}
+});
 
-function SortableBlockCard(props) {
+const SortableBlockCard = React.memo(function SortableBlockCard(props) {
   const { block } = props;
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: block.id });
   const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 };
@@ -155,7 +189,7 @@ function SortableBlockCard(props) {
       <BlockCard {...props} dragHandleProps={{ ...attributes, ...listeners }} />
     </div>
   );
-}
+});
 
 function SortableStepChip({ step, isSelected, onSelect, onDelete }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: step.id });
@@ -230,6 +264,16 @@ export default function FunnelEditorPage() {
   // Un timer d'enregistrement par bloc (pas un seul partagé) : éditer le
   // bloc A ne doit jamais annuler une sauvegarde en attente du bloc B.
   const blockSaveTimers = useRef({});
+  // Permet aux callbacks passés à chaque BlockCard (onDelete, onChange...)
+  // d'être stables (useCallback, référence figée) sans pour autant lire un
+  // `blocks` figé au moment de leur création — sinon soit les callbacks
+  // changent de référence à chaque frappe (ce qui annule le React.memo des
+  // BlockCard et force le re-rendu de TOUS les blocs sur chaque caractère
+  // tapé), soit ils agissent sur une liste de blocs obsolète.
+  const blocksRef = useRef(blocks);
+  useEffect(() => {
+    blocksRef.current = blocks;
+  }, [blocks]);
 
   const loadAllBlocks = useCallback(async (stepList) => {
     const entries = await Promise.all(stepList.map(async (s) => [s.id, await fetchBlocks(s.id)]));
@@ -264,30 +308,6 @@ export default function FunnelEditorPage() {
   }, [funnelId, loadAllBlocks]);
 
   useEffect(() => { loadAll(); }, [loadAll]);
-
-  const AI_ERROR_MESSAGES = {
-    plan_required: "L'édition par IA nécessite le plan Pro ou Entreprise.",
-    limit_reached: 'Tu as atteint ta limite de générations IA ce mois-ci.',
-    insufficient_credits: 'Crédits IA insuffisants. Achète un pack ou passe au plan supérieur depuis la page Facturation.',
-    invalid_input: 'Précise un peu plus ta demande.',
-    ai_error: "L'IA n'a pas pu répondre pour le moment. Réessaie dans quelques instants.",
-    parse_error: 'La modification a échoué. Réessaie avec une formulation différente.',
-    block_locked: 'Déverrouille ce bloc avant de le régénérer.',
-    server_error: 'Une erreur est survenue. Réessaie.',
-  };
-
-  // Messages dédiés au quota d'images (distinct du quota IA/texte ci-dessus)
-  // : un utilisateur avec du quota IA restant mais plus de quota image ne
-  // doit pas voir un message trompeur sur la limite de génération de texte.
-  const IMAGE_ERROR_MESSAGES = {
-    plan_required: "La génération d'images nécessite le plan Pro ou Entreprise.",
-    limit_reached: "Tu as atteint ta limite de générations d'images ce mois-ci.",
-    insufficient_credits: 'Crédits IA insuffisants. Achète un pack ou passe au plan supérieur depuis la page Facturation.',
-    invalid_input: "Ce type de bloc ne supporte pas la génération d'image.",
-    ai_error: "Le générateur d'images n'a pas pu répondre. Réessaie dans quelques instants.",
-    parse_error: 'La génération a échoué. Réessaie.',
-    server_error: 'Une erreur est survenue. Réessaie.',
-  };
 
   const handleAiSend = async (e) => {
     e.preventDefault();
@@ -394,8 +414,8 @@ export default function FunnelEditorPage() {
   };
 
   const stepSensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+    useSensor(PointerSensor, POINTER_ACTIVATION_CONSTRAINT),
+    useSensor(KeyboardSensor, KEYBOARD_COORDINATE_GETTER),
   );
 
   const handleStepDragEnd = async (event) => {
@@ -414,8 +434,8 @@ export default function FunnelEditorPage() {
   };
 
   const blockSensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+    useSensor(PointerSensor, POINTER_ACTIVATION_CONSTRAINT),
+    useSensor(KeyboardSensor, KEYBOARD_COORDINATE_GETTER),
   );
 
   const handleBlockDragEnd = async (event) => {
@@ -451,71 +471,83 @@ export default function FunnelEditorPage() {
     }
   };
 
-  const handleDeleteBlock = async (block) => {
+  const handleDeleteBlock = useCallback(async (block) => {
     if (!(await confirm('Supprimer ce bloc ?'))) return;
     try {
       await deleteBlock(block.id);
-      const next = blocks.filter((b) => b.id !== block.id);
+      const next = blocksRef.current.filter((b) => b.id !== block.id);
       applyBlocks(next);
       pushHistory(next);
       setSelection((sel) => (sel?.blockId === block.id ? null : sel));
     } catch {
       setActionError('La suppression du bloc a échoué. Réessaie.');
     }
-  };
+  }, [confirm, applyBlocks, pushHistory]);
 
-  const handleDuplicateBlock = async (block) => {
+  const handleDuplicateBlock = useCallback(async (block) => {
     try {
-      const copy = await addBlock(selectedStepId, block.type, { ...block.content }, blocks.length);
-      const next = [...blocks, copy];
+      const copy = await addBlock(selectedStepId, block.type, { ...block.content }, blocksRef.current.length);
+      const next = [...blocksRef.current, copy];
       applyBlocks(next);
       pushHistory(next);
     } catch {
       setActionError('La duplication a échoué. Réessaie.');
     }
-  };
+  }, [selectedStepId, applyBlocks, pushHistory]);
 
-  const handleToggleLock = async (block) => {
+  const handleToggleLock = useCallback(async (block) => {
+    const before = blocksRef.current;
     const nextLocked = !block.locked;
-    const next = blocks.map((b) => (b.id === block.id ? { ...b, locked: nextLocked } : b));
+    const next = before.map((b) => (b.id === block.id ? { ...b, locked: nextLocked } : b));
     applyBlocks(next);
     try {
       await toggleBlockLock(block.id, nextLocked);
     } catch {
-      applyBlocks(blocks);
+      applyBlocks(before);
       setActionError('Le verrouillage a échoué. Réessaie.');
     }
-  };
+  }, [applyBlocks]);
 
-  const handleRegenerateBlock = async (block) => {
+  const handleRegenerateBlock = useCallback(async (block) => {
     if (regeneratingBlockId) return;
     setRegeneratingBlockId(block.id);
     setActionError('');
     try {
       const updated = await regenerateBlockWithAI(block.id);
-      const next = blocks.map((b) => (b.id === block.id ? { ...b, content: updated.content } : b));
+      const next = blocksRef.current.map((b) => (b.id === block.id ? { ...b, content: updated.content } : b));
       applyBlocks(next);
       pushHistory(next);
     } catch (err) {
       setActionError(AI_ERROR_MESSAGES[err.message] || AI_ERROR_MESSAGES.server_error);
     }
     setRegeneratingBlockId(null);
-  };
+  }, [regeneratingBlockId, applyBlocks, pushHistory]);
 
-  const handleGenerateBlockImage = async (blockId, imageType) => {
+  const handleGenerateBlockImage = useCallback(async (blockId, imageType) => {
     if (imageGeneratingBlockId) return;
     setImageGeneratingBlockId(blockId);
     setActionError('');
     try {
       const updated = await generateBlockImageWithAI(blockId, imageType);
-      const next = blocks.map((b) => (b.id === blockId ? { ...b, content: updated.content } : b));
+      const next = blocksRef.current.map((b) => (b.id === blockId ? { ...b, content: updated.content } : b));
       applyBlocks(next);
       pushHistory(next);
     } catch (err) {
       setActionError(IMAGE_ERROR_MESSAGES[err.message] || IMAGE_ERROR_MESSAGES.server_error);
     }
     setImageGeneratingBlockId(null);
-  };
+  }, [imageGeneratingBlockId, applyBlocks, pushHistory]);
+
+  // Références stables (jamais recréées) passées telles quelles à chaque
+  // BlockCard — condition nécessaire pour que React.memo les laisse
+  // effectivement sauter le re-rendu des blocs non concernés par la frappe.
+  const handleToggleExpand = useCallback((blockId) => {
+    setExpandedBlockId((cur) => (cur === blockId ? null : blockId));
+  }, []);
+
+  const handleSelectElement = useCallback((blockId, elementKey, kind, label) => {
+    setSelection({ blockId, elementKey, kind, label });
+  }, []);
 
   const handleImproveElement = async (elementKey) => {
     if (improvingElementKey || !selection) return;
@@ -538,8 +570,8 @@ export default function FunnelEditorPage() {
   // d'un bloc (titre, prix...) déclenchait une vraie requête PATCH
   // immédiate : saisie hachée, lettre par lettre, avec des requêtes qui
   // s'empilaient au lieu de se remplacer.
-  const handleBlockChange = (block, newContent) => {
-    const next = blocks.map((b) => (b.id === block.id ? { ...b, content: newContent } : b));
+  const handleBlockChange = useCallback((block, newContent) => {
+    const next = blocksRef.current.map((b) => (b.id === block.id ? { ...b, content: newContent } : b));
     applyBlocks(next);
 
     if (blockSaveTimers.current[block.id]) {
@@ -560,11 +592,11 @@ export default function FunnelEditorPage() {
       if (contentHistoryTimer.current) clearTimeout(contentHistoryTimer.current);
       contentHistoryTimer.current = setTimeout(() => pushHistory(next), 600);
     }, 600);
-  };
+  }, [applyBlocks, pushHistory]);
 
-  const handleElementStyleChange = async (block, newStyles) => {
-    await handleBlockChange(block, { ...block.content, styles: newStyles });
-  };
+  const handleElementStyleChange = useCallback(async (block, newStyles) => {
+    handleBlockChange(block, { ...block.content, styles: newStyles });
+  }, [handleBlockChange]);
 
   const handleSaveBrand = async (brand) => {
     try {
@@ -585,14 +617,30 @@ export default function FunnelEditorPage() {
     }
   };
 
-  const handleSaveChrome = async (chrome) => {
-    try {
-      await updateStep(selectedStepId, { chrome });
-      setSteps((prev) => prev.map((s) => (s.id === selectedStepId ? { ...s, chrome } : s)));
-    } catch {
-      setActionError('L\'enregistrement des réglages de page a échoué. Réessaie.');
+  // Même correctif que pour les blocs (voir handleBlockChange) : l'aperçu et
+  // les champs se mettaient à jour seulement APRÈS la réponse réseau
+  // (await updateStep avant setSteps), donc chaque caractère tapé dans les
+  // réglages de page (notification d'achat, pied de page collant, capture
+  // à l'intention de sortie) attendait un aller-retour réseau complet avant
+  // d'apparaître — d'où la saisie hachée, lettre par lettre.
+  const chromeSaveTimers = useRef({});
+
+  const handleSaveChrome = useCallback((chrome) => {
+    const stepId = selectedStepId;
+    setSteps((prev) => prev.map((s) => (s.id === stepId ? { ...s, chrome } : s)));
+
+    if (chromeSaveTimers.current[stepId]) {
+      clearTimeout(chromeSaveTimers.current[stepId]);
     }
-  };
+    chromeSaveTimers.current[stepId] = setTimeout(async () => {
+      delete chromeSaveTimers.current[stepId];
+      try {
+        await updateStep(stepId, { chrome });
+      } catch {
+        setActionError('L\'enregistrement des réglages de page a échoué. Réessaie.');
+      }
+    }, 600);
+  }, [selectedStepId]);
 
   const reconcileToSnapshot = useCallback(async (snapshot) => {
     const currentIds = new Set(blocks.map((b) => b.id));
@@ -703,7 +751,7 @@ export default function FunnelEditorPage() {
     }
   };
 
-  const handleSaveToLibrary = async (block) => {
+  const handleSaveToLibrary = useCallback(async (block) => {
     if (!plan.blockLibrary) {
       navigate('/app/billing');
       return;
@@ -717,9 +765,50 @@ export default function FunnelEditorPage() {
     } catch {
       setActionError("L'enregistrement dans la bibliothèque a échoué.");
     }
-  };
+  }, [plan.blockLibrary, navigate, effectiveOwnerId]);
 
-  const { score, checks } = useMemo(() => computeHealthScore(steps, blocksByStepId), [steps, blocksByStepId]);
+  // blocksByStepId ET steps changent tous deux de référence à chaque frappe
+  // (voir applyBlocks pour l'édition de bloc, handleSaveChrome pour les
+  // réglages de page) ; recalculer le score de santé (qui parcourt tous les
+  // blocs de toutes les pages) de façon synchrone sur chaque caractère tapé
+  // est un travail réel et inutile pendant la saisie. On ne recalcule donc
+  // que 500ms après la dernière modification, sans retarder l'aperçu ni
+  // l'enregistrement.
+  const [healthSnapshot, setHealthSnapshot] = useState({ steps, blocksByStepId });
+  useEffect(() => {
+    const t = setTimeout(() => setHealthSnapshot({ steps, blocksByStepId }), 500);
+    return () => clearTimeout(t);
+  }, [steps, blocksByStepId]);
+  const { score, checks } = useMemo(
+    () => computeHealthScore(healthSnapshot.steps, healthSnapshot.blocksByStepId),
+    [healthSnapshot],
+  );
+
+  // dnd-kit's useSortable() (utilisé par chaque bloc) s'abonne au tableau
+  // `items` de SortableContext via un contexte React : lui passer un
+  // nouveau tableau à chaque frappe (blocks.map(...) recréé à chaque rendu)
+  // force TOUS les blocs à se re-rendre, même ceux inchangés, court-
+  // circuitant leur React.memo. On ne fait donc changer sa référence que
+  // lorsque la liste d'ids elle-même change (ajout/suppression/réordre),
+  // pas à chaque modification de contenu.
+  const blockIdsKey = blocks.map((b) => b.id).join('|');
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const blockIds = useMemo(() => (blockIdsKey ? blockIdsKey.split('|') : []), [blockIdsKey]);
+
+  // Même piège que blockIds ci-dessus, avec un déclencheur différent : taper
+  // dans les réglages de page (PageSettingsPanel, voir handleSaveChrome) met
+  // `steps` à jour à chaque frappe (pour un aperçu instantané) — mais
+  // `steps` sert aussi de siblingSteps pour CHAQUE bloc (VideoNavBlock,
+  // sélecteur de page dans BlockEditorPanel...). Sans ce découplage, chaque
+  // caractère tapé dans les réglages de page change la référence de
+  // siblingSteps pour tous les blocs, contourne leur React.memo, et
+  // re-rend toute la liste de blocs à chaque frappe — d'où le ralentissement
+  // visible. Ces composants ne lisent que id/name/slug (jamais chrome), donc
+  // on ne fait changer la référence que lorsque CES champs changent.
+  const siblingStepsKey = steps.map((s) => `${s.id}:${s.name}:${s.slug}`).join('|');
+  const buildSiblingSteps = () => steps.map((s) => ({ id: s.id, name: s.name, slug: s.slug, stepType: s.stepType, position: s.position }));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const siblingSteps = useMemo(buildSiblingSteps, [siblingStepsKey]);
 
   const canUndo = historyState.index > 0;
   const canRedo = historyState.index < historyState.stack.length - 1;
@@ -862,7 +951,14 @@ export default function FunnelEditorPage() {
 
       {showPageSettings && (
         <div className="mb-6 max-w-2xl">
-          <PageSettingsPanel step={steps.find((s) => s.id === selectedStepId)} steps={steps} plan={plan} onSave={handleSaveChrome} />
+          <PageSettingsPanel
+            step={steps.find((s) => s.id === selectedStepId)}
+            steps={steps}
+            plan={plan}
+            onSave={handleSaveChrome}
+            blocksByStepId={blocksByStepId}
+            currency={effectiveProfile?.currency || 'XOF'}
+          />
         </div>
       )}
 
@@ -940,30 +1036,31 @@ export default function FunnelEditorPage() {
         onDrop={(e) => e.preventDefault()}
       >
         <DndContext sensors={blockSensors} collisionDetection={closestCenter} onDragEnd={handleBlockDragEnd}>
-          <SortableContext items={blocks.map((b) => b.id)} strategy={verticalListSortingStrategy}>
+          <SortableContext items={blockIds} strategy={verticalListSortingStrategy}>
             <div className="space-y-4">
               {blocks.map((block, blockIndex) => (
                 <SortableBlockCard
                   key={block.id}
                   block={block}
                   defaultBg={blockIndex % 2 === 0 ? 'primary' : 'primary-alt'}
-                  siblingSteps={steps}
-                  onDelete={() => handleDeleteBlock(block)}
-                  onDuplicate={() => handleDuplicateBlock(block)}
+                  siblingSteps={siblingSteps}
+                  onDelete={handleDeleteBlock}
+                  onDuplicate={handleDuplicateBlock}
                   isExpanded={expandedBlockId === block.id}
-                  onToggle={() => setExpandedBlockId(expandedBlockId === block.id ? null : block.id)}
-                  onChange={(content) => handleBlockChange(block, content)}
+                  onToggle={handleToggleExpand}
+                  onChange={handleBlockChange}
                   userId={effectiveOwnerId}
                   selectedElement={selection?.blockId === block.id ? selection.elementKey : null}
-                  onSelectElement={(elementKey, kind, label) => setSelection({ blockId: block.id, elementKey, kind, label })}
-                  onSaveToLibrary={() => handleSaveToLibrary(block)}
+                  onSelectElement={handleSelectElement}
+                  onSaveToLibrary={handleSaveToLibrary}
                   canUseLibrary={plan.blockLibrary}
-                  onToggleLock={() => handleToggleLock(block)}
-                  onRegenerate={() => handleRegenerateBlock(block)}
+                  onToggleLock={handleToggleLock}
+                  onRegenerate={handleRegenerateBlock}
                   canRegenerate={plan.aiAccess}
                   isRegenerating={regeneratingBlockId === block.id}
                   onGenerateImage={plan.aiAccess ? handleGenerateBlockImage : undefined}
                   isGeneratingImage={imageGeneratingBlockId === block.id}
+                  currency={effectiveProfile?.currency || 'XOF'}
                 />
               ))}
             </div>
@@ -1054,7 +1151,18 @@ export default function FunnelEditorPage() {
       </div>
 
       <PurchaseNotification config={currentStepChrome.purchaseNotification} liftForFooter={Boolean(currentStepChrome.stickyFooterCta?.enabled)} />
-      <StickyFooterCta config={currentStepChrome.stickyFooterCta} onNavigateToStep={() => {}} onAdvance={() => {}} />
+      <StickyFooterCta
+        config={{
+          ...currentStepChrome.stickyFooterCta,
+          price: resolveStickyFooterPrice(
+            currentStepChrome.stickyFooterCta,
+            Object.values(blocksByStepId).flat(),
+            effectiveProfile?.currency || 'XOF',
+          ),
+        }}
+        onNavigateToStep={() => {}}
+        onAdvance={() => {}}
+      />
       {/* ExitIntentPopup n'est délibérément PAS rendu ici : il écoute le
           mouseleave du curseur vers le haut de la fenêtre, exactement ce que
           fait un créateur en visant la barre d'outils pendant qu'il édite —

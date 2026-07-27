@@ -155,6 +155,7 @@ export async function fetchPublishedSnapshot(slug) {
     name: data.name,
     slug: data.slug,
     brand: data.brand || {},
+    currency: data.currency || 'XOF',
     show_branding: data.showBranding,
     seo_title: data.seoTitle,
     seo_description: data.seoDescription,

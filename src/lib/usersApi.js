@@ -1,7 +1,7 @@
 import { apiPatch, apiDelete } from './apiClient';
 
-export async function updateOwnProfile(fullName) {
-  const { user } = await apiPatch('/users/me', { fullName });
+export async function updateOwnProfile({ fullName, currency }) {
+  const { user } = await apiPatch('/users/me', { fullName, currency });
   return user;
 }
 

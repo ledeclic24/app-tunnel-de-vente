@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { LogOut, Trash2, User } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { getPlan } from '../../lib/plans';
+import { CURRENCY_OPTIONS } from '../../lib/currency';
 import PasswordInput from '../../components/auth/PasswordInput';
 import GradientBanner from '../../components/ui/GradientBanner';
 
@@ -12,6 +13,7 @@ export default function AccountPage() {
   const { user, profile, effectiveProfile, signOut, updateProfile, updatePassword, deleteAccount } = useAuth();
   const navigate = useNavigate();
   const [fullName, setFullName] = useState(profile?.full_name || '');
+  const [currency, setCurrency] = useState(profile?.currency || 'XOF');
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [profileError, setProfileError] = useState('');
@@ -27,7 +29,7 @@ export default function AccountPage() {
     e.preventDefault();
     setSaving(true);
     setProfileError('');
-    const { error } = await updateProfile(fullName);
+    const { error } = await updateProfile(fullName, currency);
     setSaving(false);
     if (error) {
       setProfileError("Impossible d'enregistrer. Réessaie.");
@@ -99,6 +101,22 @@ export default function AccountPage() {
             onChange={(e) => setFullName(e.target.value)}
             className="w-full bg-primary/5 border border-surface/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-accent transition-colors text-surface"
           />
+        </div>
+        <div>
+          <label htmlFor="account-currency" className="block text-xs font-semibold text-surface/70 uppercase tracking-wider mb-1">Devise</label>
+          <select
+            id="account-currency"
+            value={currency}
+            onChange={(e) => setCurrency(e.target.value)}
+            className="w-full bg-primary/5 border border-surface/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-accent transition-colors text-surface"
+          >
+            {CURRENCY_OPTIONS.map((c) => (
+              <option key={c.code} value={c.code}>{c.label}</option>
+            ))}
+          </select>
+          <p className="text-xs text-surface/40 mt-1">
+            Utilisée pour afficher le prix de tes offres partout dans tes tunnels (bloc Tarifs, pied de page collant...).
+          </p>
         </div>
         <div>
           <label htmlFor="account-plan" className="block text-xs font-semibold text-surface/70 uppercase tracking-wider mb-1">Plan</label>

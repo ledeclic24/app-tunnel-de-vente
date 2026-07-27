@@ -19,6 +19,7 @@ function normalizeUser(apiUser) {
     is_admin: apiUser.isAdmin,
     plan_expires_at: apiUser.planExpiresAt,
     created_at: apiUser.createdAt,
+    currency: apiUser.currency,
   };
 }
 
@@ -131,9 +132,9 @@ export function AuthProvider({ children }) {
     }
   };
 
-  const updateProfile = async (fullName) => {
+  const updateProfile = async (fullName, currency) => {
     try {
-      const apiUser = await updateOwnProfile(fullName);
+      const apiUser = await updateOwnProfile({ fullName, currency });
       setProfile(normalizeUser(apiUser));
       return { error: null };
     } catch (err) {

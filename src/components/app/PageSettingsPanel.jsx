@@ -1,5 +1,6 @@
 import React from 'react';
 import { Lock } from 'lucide-react';
+import { resolveStickyFooterPrice } from '../../lib/currency';
 
 const inputClass = "w-full bg-primary/5 border border-surface/10 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-accent transition-colors text-surface";
 const labelClass = "block text-xs font-semibold text-surface/70 uppercase tracking-wider mb-1";
@@ -27,7 +28,7 @@ function Toggle({ label, checked, onChange, children }) {
 // Réglages d'habillage de page à position fixe (barre de countdown,
 // notification d'achat, pied de page collant) — un réglage par étape,
 // jamais un bloc de contenu (voir PublishedFunnelPage.jsx pour le rendu).
-export default function PageSettingsPanel({ step, steps, plan, onSave }) {
+export default function PageSettingsPanel({ step, steps, plan, onSave, blocksByStepId, currency }) {
   if (!step) return null;
 
   if (!plan.pageChrome) {
@@ -47,6 +48,29 @@ export default function PageSettingsPanel({ step, steps, plan, onSave }) {
   const purchaseNotification = chrome.purchaseNotification || {};
   const stickyFooterCta = chrome.stickyFooterCta || {};
   const exitIntent = chrome.exitIntent || {};
+
+  // Toutes les offres (bloc Tarifs) du tunnel entier, pas seulement de cette
+  // page — le pied de page collant peut très bien promouvoir l'offre d'une
+  // autre étape. Le prix affiché n'est jamais retapé : il est toujours
+  // résolu depuis l'offre choisie ici (voir resolveStickyFooterPrice).
+  const offerOptions = [];
+  for (const s of steps || []) {
+    for (const block of blocksByStepId?.[s.id] || []) {
+      if (block.type !== 'pricing') continue;
+      (block.content?.plans || []).forEach((p, planIndex) => {
+        offerOptions.push({
+          blockId: block.id,
+          planIndex,
+          label: `${s.name} — ${p.name || `Offre ${planIndex + 1}`}`,
+        });
+      });
+    }
+  }
+  const allBlocks = Object.values(blocksByStepId || {}).flat();
+  const stickyFooterSelected = stickyFooterCta.priceBlockId
+    ? `${stickyFooterCta.priceBlockId}:${stickyFooterCta.planIndex}`
+    : '';
+  const stickyFooterResolvedPrice = resolveStickyFooterPrice(stickyFooterCta, allBlocks, currency);
 
   return (
     <div className="bg-background border border-surface/10 rounded-[2rem] p-4 md:p-6 space-y-4">
@@ -94,13 +118,38 @@ export default function PageSettingsPanel({ step, steps, plan, onSave }) {
         checked={Boolean(stickyFooterCta.enabled)}
         onChange={(enabled) => setChrome({ stickyFooterCta: { ...stickyFooterCta, enabled } })}
       >
-        <div className="flex gap-2">
-          <input
-            className={inputClass}
-            placeholder="Prix affiché (ex : 19 000 FCFA)"
-            value={stickyFooterCta.price || ''}
-            onChange={(e) => setChrome({ stickyFooterCta: { ...stickyFooterCta, price: e.target.value } })}
-          />
+        <div>
+          <label className={labelClass}>Offre affichée (le prix vient directement du bloc Tarifs, toujours à jour)</label>
+          {offerOptions.length === 0 ? (
+            <p className="text-xs text-surface/50 bg-surface/5 rounded-xl px-4 py-2.5">
+              Ajoute d'abord un bloc Tarifs à ce tunnel pour pouvoir afficher un prix ici.
+            </p>
+          ) : (
+            <>
+              <select
+                className={inputClass}
+                value={stickyFooterSelected}
+                onChange={(e) => {
+                  const [blockId, planIndexStr] = e.target.value.split(':');
+                  setChrome({
+                    stickyFooterCta: blockId
+                      ? { ...stickyFooterCta, priceBlockId: blockId, planIndex: Number(planIndexStr) }
+                      : { ...stickyFooterCta, priceBlockId: null, planIndex: null },
+                  });
+                }}
+              >
+                <option value="">Aucune (n'affiche pas de prix)</option>
+                {offerOptions.map((o) => (
+                  <option key={`${o.blockId}:${o.planIndex}`} value={`${o.blockId}:${o.planIndex}`}>{o.label}</option>
+                ))}
+              </select>
+              {stickyFooterResolvedPrice && (
+                <p className="text-xs text-surface/40 mt-1">Prix affiché : {stickyFooterResolvedPrice}</p>
+              )}
+            </>
+          )}
+        </div>
+        <div>
           <input
             className={inputClass}
             placeholder="Texte du bouton"
