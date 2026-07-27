@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import JSZip from 'jszip';
-import { ImageIcon, Lock, Sparkles, Copy, Check, Wand2, Download, Trash2, RefreshCw } from 'lucide-react';
+import { ImageIcon, Lock, Sparkles, Copy, Check, Wand2, Download, Trash2, RefreshCw, X, ChevronLeft, ChevronRight, MoreVertical } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { getPlan } from '../../lib/plans';
 import { generateImages, fetchImages, deleteImage, downloadImage, fetchImageBlob } from '../../lib/imagesApi';
@@ -63,7 +63,7 @@ function IconButton({ onClick, children, className = '' }) {
   );
 }
 
-function ImageCard({ image, onDelete, onRegenerate, regenerating, onDownload, downloading, selected, onToggleSelect }) {
+function ImageCard({ image, onOpen, onDelete, onRegenerate, regenerating, onDownload, downloading, selected, onToggleSelect }) {
   const [copied, setCopied] = useState(false);
 
   return (
@@ -73,14 +73,21 @@ function ImageCard({ image, onDelete, onRegenerate, regenerating, onDownload, do
           type="checkbox"
           checked={selected}
           onChange={() => onToggleSelect(image.id)}
+          onClick={(e) => e.stopPropagation()}
           className="absolute top-3 left-3 z-10 w-4 h-4 rounded cursor-pointer accent-accent"
           aria-label="Sélectionner ce visuel"
         />
       )}
-      <img src={image.url} alt="Visuel généré" className="w-full h-full object-cover" />
+      <img
+        src={image.url}
+        alt="Visuel généré"
+        onClick={onOpen}
+        className="w-full h-full object-cover cursor-zoom-in"
+      />
       <div className="absolute top-3 right-3 flex flex-col items-end gap-1.5 opacity-0 group-hover/img:opacity-100 transition-opacity">
         <IconButton
-          onClick={() => {
+          onClick={(e) => {
+            e.stopPropagation();
             navigator.clipboard.writeText(image.url);
             setCopied(true);
             setTimeout(() => setCopied(false), 1500);
@@ -91,17 +98,152 @@ function ImageCard({ image, onDelete, onRegenerate, regenerating, onDownload, do
         </IconButton>
         {image.id && (
           <>
-            <IconButton onClick={() => onDownload(image)} className={downloading ? 'opacity-50 pointer-events-none' : ''}>
+            <IconButton onClick={(e) => { e.stopPropagation(); onDownload(image); }} className={downloading ? 'opacity-50 pointer-events-none' : ''}>
               <Download className="w-3.5 h-3.5" /> {downloading ? 'Téléchargement...' : 'Télécharger'}
             </IconButton>
-            <IconButton onClick={() => onRegenerate(image)} className={regenerating ? 'opacity-50 pointer-events-none' : ''}>
+            <IconButton onClick={(e) => { e.stopPropagation(); onRegenerate(image); }} className={regenerating ? 'opacity-50 pointer-events-none' : ''}>
               <RefreshCw className="w-3.5 h-3.5" /> {regenerating ? 'Génération...' : 'Régénérer'}
             </IconButton>
-            <IconButton onClick={() => onDelete(image)}>
+            <IconButton onClick={(e) => { e.stopPropagation(); onDelete(image); }}>
               <Trash2 className="w-3.5 h-3.5" /> Supprimer
             </IconButton>
           </>
         )}
+      </div>
+    </div>
+  );
+}
+
+// Agrandissement plein écran au clic sur une image : navigation précédent/
+// suivant par flèches, balayage tactile (swipe), et un menu "..." reprenant
+// les mêmes actions que la carte (copier/télécharger/régénérer/supprimer)
+// pour ne pas dupliquer de logique métier.
+function Lightbox({ images, index, onClose, onNavigate, onDelete, onRegenerate, regenerating, onDownload, downloading }) {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const touchStartX = useRef(null);
+  const image = images[index];
+
+  useEffect(() => {
+    const onKeyDown = (e) => {
+      if (e.key === 'Escape') onClose();
+      else if (e.key === 'ArrowLeft') onNavigate(-1);
+      else if (e.key === 'ArrowRight') onNavigate(1);
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [onClose, onNavigate]);
+
+  useEffect(() => { setMenuOpen(false); }, [index]);
+
+  if (!image) return null;
+
+  const handleTouchStart = (e) => { touchStartX.current = e.touches[0].clientX; };
+  const handleTouchEnd = (e) => {
+    if (touchStartX.current == null) return;
+    const delta = e.changedTouches[0].clientX - touchStartX.current;
+    touchStartX.current = null;
+    if (Math.abs(delta) < 50) return;
+    onNavigate(delta > 0 ? -1 : 1);
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center"
+      onClick={onClose}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+    >
+      <button
+        type="button"
+        onClick={onClose}
+        className="absolute top-4 left-4 z-10 w-9 h-9 rounded-full bg-white/10 text-white flex items-center justify-center hover:bg-white/20"
+        aria-label="Fermer"
+      >
+        <X className="w-5 h-5" />
+      </button>
+
+      <div className="absolute top-4 right-4 z-10">
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); setMenuOpen((v) => !v); }}
+          className="w-9 h-9 rounded-full bg-white/10 text-white flex items-center justify-center hover:bg-white/20"
+          aria-label="Options"
+        >
+          <MoreVertical className="w-5 h-5" />
+        </button>
+        {menuOpen && (
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="absolute top-11 right-0 w-52 bg-background border border-surface/10 rounded-2xl shadow-xl overflow-hidden py-1.5"
+          >
+            <button
+              type="button"
+              onClick={() => {
+                navigator.clipboard.writeText(image.url);
+                setCopied(true);
+                setTimeout(() => setCopied(false), 1500);
+              }}
+              className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-surface hover:bg-primary/5"
+            >
+              {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />} {copied ? 'Copié' : "Copier l'URL"}
+            </button>
+            <button
+              type="button"
+              onClick={() => onDownload(image)}
+              disabled={downloading}
+              className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-surface hover:bg-primary/5 disabled:opacity-50"
+            >
+              <Download className="w-4 h-4" /> {downloading ? 'Téléchargement...' : 'Télécharger'}
+            </button>
+            <button
+              type="button"
+              onClick={() => onRegenerate(image)}
+              disabled={regenerating}
+              className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-surface hover:bg-primary/5 disabled:opacity-50"
+            >
+              <RefreshCw className="w-4 h-4" /> {regenerating ? 'Génération...' : 'Régénérer'}
+            </button>
+            <button
+              type="button"
+              onClick={() => onDelete(image)}
+              className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-red-500 hover:bg-red-500/5"
+            >
+              <Trash2 className="w-4 h-4" /> Supprimer
+            </button>
+          </div>
+        )}
+      </div>
+
+      {index > 0 && (
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); onNavigate(-1); }}
+          className="absolute left-2 md:left-6 z-10 w-10 h-10 rounded-full bg-white/10 text-white flex items-center justify-center hover:bg-white/20"
+          aria-label="Image précédente"
+        >
+          <ChevronLeft className="w-6 h-6" />
+        </button>
+      )}
+      {index < images.length - 1 && (
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); onNavigate(1); }}
+          className="absolute right-2 md:right-6 z-10 w-10 h-10 rounded-full bg-white/10 text-white flex items-center justify-center hover:bg-white/20"
+          aria-label="Image suivante"
+        >
+          <ChevronRight className="w-6 h-6" />
+        </button>
+      )}
+
+      <img
+        src={image.url}
+        alt="Visuel généré"
+        onClick={(e) => e.stopPropagation()}
+        className="max-w-[92vw] max-h-[85vh] object-contain rounded-lg select-none"
+      />
+      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white/50 text-xs">
+        {index + 1} / {images.length}
       </div>
     </div>
   );
@@ -125,6 +267,7 @@ export default function ImageStudioPage() {
   const [selectedIds, setSelectedIds] = useState(() => new Set());
   const [bulkBusy, setBulkBusy] = useState(false);
   const [error, setError] = useState('');
+  const [lightboxIndex, setLightboxIndex] = useState(null);
   const confirm = useConfirm();
   const toast = useToast();
 
@@ -169,7 +312,13 @@ export default function ImageStudioPage() {
   const runGeneration = async ({ prompt: p, size: s, n, style: st, imageType: it, background: bg }) => {
     const results = await generateImages({ prompt: p, size: s, n, style: st || undefined, imageType: it || undefined, background: bg || undefined });
     setImages((prev) => [...results, ...prev]);
-    setUsage((u) => (u === null ? null : u + results.length));
+    // Chaque génération déduit des crédits IA — sans ça, le solde affiché
+    // restait figé jusqu'au prochain rechargement de page. `setUsage` était
+    // appelé ici sans qu'aucun état `usage` n'existe dans ce composant : une
+    // ReferenceError silencieuse à CHAQUE génération réussie, rattrapée par
+    // le catch appelant et affichée comme "Une erreur est survenue" — la
+    // vraie cause de l'erreur générique vue même quand l'image était prête.
+    fetchCreditsBalance().then(setCredits).catch(() => {});
     return results;
   };
 
@@ -220,9 +369,18 @@ export default function ImageStudioPage() {
       await deleteImage(image.id);
       setImages((prev) => prev.filter((i) => i.id !== image.id));
       setSelectedIds((prev) => { const next = new Set(prev); next.delete(image.id); return next; });
+      setLightboxIndex(null);
     } catch {
       toast.error("La suppression a échoué. Réessaie.");
     }
+  };
+
+  const navigateLightbox = (delta) => {
+    setLightboxIndex((prev) => {
+      if (prev === null) return prev;
+      const next = prev + delta;
+      return next >= 0 && next < images.length ? next : prev;
+    });
   };
 
   const toggleSelect = (id) => {
@@ -395,6 +553,7 @@ export default function ImageStudioPage() {
             <ImageCard
               key={image.id || image.url + i}
               image={image}
+              onOpen={() => setLightboxIndex(i)}
               onDelete={handleDelete}
               onRegenerate={handleRegenerate}
               regenerating={regeneratingId === image.id}
@@ -405,6 +564,20 @@ export default function ImageStudioPage() {
             />
           ))}
         </div>
+      )}
+
+      {lightboxIndex !== null && (
+        <Lightbox
+          images={images}
+          index={lightboxIndex}
+          onClose={() => setLightboxIndex(null)}
+          onNavigate={navigateLightbox}
+          onDelete={handleDelete}
+          onRegenerate={handleRegenerate}
+          regenerating={regeneratingId === images[lightboxIndex]?.id}
+          onDownload={handleDownload}
+          downloading={downloadingId === images[lightboxIndex]?.id}
+        />
       )}
     </div>
   );

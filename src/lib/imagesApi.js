@@ -2,9 +2,33 @@ import { apiGet, apiPost, apiDelete, getAccessToken } from './apiClient';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
+// Le modèle d'image (gpt-image-2) prend ~50-60s — bien au-delà de ce qu'une
+// connexion mobile/proxy tient de façon fiable sur une seule requête HTTP
+// (source des erreurs génériques observées malgré une génération réussie
+// côté serveur). Le backend renvoie donc des lignes 'pending' immédiatement
+// (voir POST /images/generate) ; on les attend ici en interrogeant
+// GET /images à intervalle régulier — chaque requête de polling est courte,
+// jamais concernée par ce problème.
+const POLL_INTERVAL_MS = 2500;
+const POLL_TIMEOUT_MS = 180000;
+
+async function pollUntilDone(ids) {
+  const deadline = Date.now() + POLL_TIMEOUT_MS;
+  while (Date.now() < deadline) {
+    const all = await fetchImages();
+    const matched = ids.map((id) => all.find((img) => img.id === id)).filter(Boolean);
+    if (matched.length === ids.length && matched.every((img) => img.status !== 'pending')) {
+      if (matched.some((img) => img.status === 'failed')) throw new Error('ai_error');
+      return matched;
+    }
+    await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
+  }
+  throw new Error('server_error');
+}
+
 export async function generateImages({ prompt, size, n, style, imageType, background }) {
-  const { images } = await apiPost('/images/generate', { prompt, size, n, style, imageType, background });
-  return images;
+  const { images: pending } = await apiPost('/images/generate', { prompt, size, n, style, imageType, background });
+  return pollUntilDone(pending.map((img) => img.id));
 }
 
 export async function fetchImageUsageThisMonth() {
