@@ -1,6 +1,7 @@
-import React, { useEffect, useState, useCallback } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
-import { fetchPublishedSnapshot, insertLead, incrementStepView } from '../../lib/funnelsApi';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
+import { useParams, useNavigate, useSearchParams, Link } from 'react-router-dom';
+import { Check, Loader2 } from 'lucide-react';
+import { fetchPublishedSnapshot, insertLead, incrementStepView, fetchLeadStatus } from '../../lib/funnelsApi';
 import { createMonerooCheckout } from '../../lib/checkoutApi';
 import { brandStyleVars } from '../../lib/colorUtils';
 import BlockRenderer from '../../components/blocks/BlockRenderer';
@@ -45,6 +46,50 @@ function useAdPixels(brand) {
   }, [brand?.metaPixelId, brand?.googleAnalyticsId]);
 }
 
+// Interroge le statut d'un lead au retour de Moneroo (voir ?vk_lead=... dans
+// l'URL de retour, ajouté côté backend) et affiche une vraie confirmation
+// une fois le paiement validé — jusqu'ici le client revenait simplement sur
+// la page de paiement, sans qu'aucune suite ne soit déclenchée. Le webhook
+// peut arriver après la redirection du navigateur, jamais avant, d'où le
+// court sondage plutôt qu'une seule vérification.
+const PAYMENT_POLL_INTERVAL_MS = 2000;
+const PAYMENT_POLL_MAX_ATTEMPTS = 20; // ~40s
+
+function PaymentConfirmationOverlay({ status, onDismiss }) {
+  if (status === 'checking') {
+    return (
+      <div className="fixed inset-0 z-50 bg-background/95 flex flex-col items-center justify-center gap-4 p-6 text-center">
+        <Loader2 className="w-8 h-8 text-accent animate-spin" />
+        <p className="text-surface font-semibold">Vérification de ton paiement...</p>
+        <p className="text-surface/50 text-sm max-w-xs">Ça ne prend que quelques secondes.</p>
+      </div>
+    );
+  }
+  if (status === 'paid') {
+    return (
+      <div className="fixed inset-0 z-50 bg-background/95 flex flex-col items-center justify-center gap-4 p-6 text-center">
+        <div className="w-14 h-14 rounded-full bg-accent/15 flex items-center justify-center">
+          <Check className="w-7 h-7 text-accent" />
+        </div>
+        <p className="text-surface font-semibold text-lg">Paiement confirmé, merci !</p>
+      </div>
+    );
+  }
+  return (
+    <div className="fixed inset-0 z-50 bg-background/95 flex flex-col items-center justify-center gap-4 p-6 text-center">
+      <p className="text-surface font-semibold text-lg">Ton paiement est en cours de traitement</p>
+      <p className="text-surface/60 text-sm max-w-xs mb-2">Tu recevras un e-mail de confirmation dès qu'il sera validé.</p>
+      <button
+        type="button"
+        onClick={onDismiss}
+        className="px-5 py-2.5 rounded-full bg-accent text-background text-sm font-semibold"
+      >
+        Continuer
+      </button>
+    </div>
+  );
+}
+
 export default function PublishedFunnelPage({ funnelSlugOverride } = {}) {
   const { funnelSlug: paramSlug, stepSlug } = useParams();
   const funnelSlug = funnelSlugOverride || paramSlug;
@@ -52,11 +97,14 @@ export default function PublishedFunnelPage({ funnelSlugOverride } = {}) {
   // navigation interne doit rester à la racine du domaine.
   const basePath = funnelSlugOverride ? '' : `/f/${funnelSlug}`;
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [funnel, setFunnel] = useState(null);
   const [steps, setSteps] = useState([]);
   const [blocks, setBlocks] = useState([]);
   const [notFound, setNotFound] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [paymentStatus, setPaymentStatus] = useState(null);
+  const pollingRef = useRef(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -96,6 +144,53 @@ export default function PublishedFunnelPage({ funnelSlugOverride } = {}) {
     const next = steps[idx + 1];
     if (next) navigate(`${basePath}/${next.slug}`);
   };
+
+  // Retour de Moneroo : ?vk_lead=<id> identifie le lead dont on doit
+  // confirmer le paiement avant de continuer. Nettoie le paramètre dès le
+  // départ (jamais re-décentché sur un simple rechargement de page), sonde
+  // le statut réel côté serveur, puis avance automatiquement à l'étape
+  // suivante si elle existe (sinon reste sur place avec la confirmation).
+  useEffect(() => {
+    const leadId = searchParams.get('vk_lead');
+    if (!leadId || pollingRef.current || !funnel) return;
+    pollingRef.current = true;
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      next.delete('vk_lead');
+      return next;
+    }, { replace: true });
+    setPaymentStatus('checking');
+
+    let attempts = 0;
+    const poll = async () => {
+      attempts += 1;
+      try {
+        const { paymentStatus: status } = await fetchLeadStatus(leadId);
+        if (status === 'paid') {
+          setPaymentStatus('paid');
+          setTimeout(() => {
+            setPaymentStatus(null);
+            handleAdvance();
+          }, 1800);
+          return;
+        }
+        if (status === 'failed') {
+          setPaymentStatus(null);
+          return;
+        }
+      } catch {
+        // Requête ratée une fois : on continue le sondage plutôt que
+        // d'abandonner sur un simple aléa réseau.
+      }
+      if (attempts >= PAYMENT_POLL_MAX_ATTEMPTS) {
+        setPaymentStatus('timeout');
+        return;
+      }
+      setTimeout(poll, PAYMENT_POLL_INTERVAL_MS);
+    };
+    poll();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [funnel]);
 
   const handleNavigateToStep = (slug) => {
     if (steps.some((s) => s.slug === slug)) navigate(`${basePath}/${slug}`);
@@ -170,6 +265,9 @@ export default function PublishedFunnelPage({ funnelSlugOverride } = {}) {
       <PurchaseNotification config={chrome.purchaseNotification} liftForFooter={Boolean(chrome.stickyFooterCta?.enabled)} />
       <StickyFooterCta config={chrome.stickyFooterCta} onNavigateToStep={handleNavigateToStep} onAdvance={handleAdvance} />
       <ExitIntentPopup config={chrome.exitIntent} onNavigateToStep={handleNavigateToStep} onAdvance={handleAdvance} />
+      {paymentStatus && (
+        <PaymentConfirmationOverlay status={paymentStatus} onDismiss={() => setPaymentStatus(null)} />
+      )}
     </div>
   );
 }

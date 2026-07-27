@@ -235,6 +235,13 @@ export async function incrementStepView(stepId) {
   await apiPost(`/steps/${stepId}/view`);
 }
 
+// Utilisé au retour de Moneroo (voir PublishedFunnelPage.jsx) pour afficher
+// une vraie confirmation seulement une fois le paiement réellement validé
+// par le webhook, jamais en se fiant seul au simple retour de navigation.
+export async function fetchLeadStatus(leadId) {
+  return apiGet(`/leads/${leadId}/status`);
+}
+
 export async function fetchLeadsForUser(_userId) {
   const rows = await apiGet('/leads/mine');
   return rows.map(normalizeLead);
