@@ -45,7 +45,7 @@ const COMPONENTS = {
 
 export default function BlockRenderer({
   block, onAdvance, onSubmitLead, onMonerooCheckout, editMode, selectedElement, onSelectElement, onContentChange, userId, defaultBg,
-  siblingSteps, onNavigateToStep, currentStepSlug, onGenerateImage, isGeneratingImage, currency,
+  siblingSteps, onNavigateToStep, currentStepSlug, onGenerateImage, isGeneratingImage, currency, discountPercent,
 }) {
   const Component = COMPONENTS[block.type];
   // Reçu depuis FunnelEditorPage lié à un blockId générique ; on le relie ici
@@ -89,6 +89,7 @@ export default function BlockRenderer({
           userId={userId}
           defaultBg={defaultBg}
           currency={currency}
+          discountPercent={discountPercent}
           siblingSteps={siblingSteps}
           onNavigateToStep={onNavigateToStep}
           currentStepSlug={currentStepSlug}

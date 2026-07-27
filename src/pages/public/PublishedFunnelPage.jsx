@@ -5,6 +5,7 @@ import { fetchPublishedSnapshot, insertLead, incrementStepView, fetchLeadStatus 
 import { createMonerooCheckout } from '../../lib/checkoutApi';
 import { brandStyleVars } from '../../lib/colorUtils';
 import { resolveStickyFooterPrice } from '../../lib/currency';
+import { getExitIntentState } from '../../lib/exitIntentDiscount';
 import BlockRenderer from '../../components/blocks/BlockRenderer';
 import CountdownBar from '../../components/public/CountdownBar';
 import PurchaseNotification from '../../components/public/PurchaseNotification';
@@ -106,6 +107,14 @@ export default function PublishedFunnelPage({ funnelSlugOverride } = {}) {
   const [loading, setLoading] = useState(true);
   const [paymentStatus, setPaymentStatus] = useState(null);
   const pollingRef = useRef(false);
+  // Incrémenté par ExitIntentPopup dès que la réduction est verrouillée
+  // (voir markExitIntentShown) — force cette page à relire l'état stocké et
+  // mettre à jour le prix affiché sans attendre un changement d'étape.
+  const [, setDiscountVersion] = useState(0);
+  const exitIntentState = getExitIntentState(funnel?.id);
+  const activeDiscountPercent = exitIntentState?.discountStepId
+    ? exitIntentState.discountPercent
+    : null;
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -211,6 +220,9 @@ export default function PublishedFunnelPage({ funnelSlugOverride } = {}) {
       customerEmail,
       customerName,
       orderBumpTaken,
+      // Le pourcentage n'est jamais envoyé : le serveur relit lui-même
+      // celui configuré sur cette étape (voir resolveCheckoutAmount).
+      exitIntentStepId: exitIntentState?.discountStepId || undefined,
       returnUrl: window.location.href,
     });
     window.location.href = checkoutUrl;
@@ -252,6 +264,7 @@ export default function PublishedFunnelPage({ funnelSlugOverride } = {}) {
             onMonerooCheckout={handleMonerooCheckout}
             defaultBg={i % 2 === 0 ? 'primary' : 'primary-alt'}
             currency={funnel.currency || 'XOF'}
+            discountPercent={activeDiscountPercent}
             siblingSteps={steps}
             onNavigateToStep={handleNavigateToStep}
             currentStepSlug={currentStep?.slug}
@@ -276,7 +289,14 @@ export default function PublishedFunnelPage({ funnelSlugOverride } = {}) {
         onNavigateToStep={handleNavigateToStep}
         onAdvance={handleAdvance}
       />
-      <ExitIntentPopup config={chrome.exitIntent} onNavigateToStep={handleNavigateToStep} onAdvance={handleAdvance} />
+      <ExitIntentPopup
+        config={chrome.exitIntent}
+        funnelId={funnel.id}
+        stepId={currentStep?.id}
+        onNavigateToStep={handleNavigateToStep}
+        onAdvance={handleAdvance}
+        onDiscountApplied={() => setDiscountVersion((v) => v + 1)}
+      />
       {paymentStatus && (
         <PaymentConfirmationOverlay status={paymentStatus} onDismiss={() => setPaymentStatus(null)} />
       )}

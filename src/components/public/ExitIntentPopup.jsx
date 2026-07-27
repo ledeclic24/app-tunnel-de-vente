@@ -1,27 +1,36 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { X, ArrowRight } from 'lucide-react';
+import { getExitIntentState, markExitIntentShown } from '../../lib/exitIntentDiscount';
 
 // Capture à l'intention de sortie — se déclenche quand le curseur quitte la
 // fenêtre par le haut (mouseleave avec clientY <= 0), le seul signal fiable
 // d'intention de sortie côté desktop. Uniquement sur pointeur fin (souris) :
 // l'événement n'a pas d'équivalent fiable au toucher, donc désactivé sur
 // mobile plutôt que de se déclencher de façon erratique. Ne se montre
-// qu'une fois par visite, jamais de façon répétée.
-export default function ExitIntentPopup({ config, onNavigateToStep, onAdvance }) {
+// qu'une fois par visiteur — mémorisé dans localStorage (funnelId), donc
+// ça survit un rechargement de page ou un retour ultérieur, pas seulement
+// la session React en cours. La réduction éventuelle (config.
+// discountPercent) est verrouillée au même moment, pour la même raison :
+// jamais réappliquée à une nouvelle tentative de sortie.
+export default function ExitIntentPopup({ config, funnelId, stepId, onNavigateToStep, onAdvance, onDiscountApplied }) {
   const [visible, setVisible] = useState(false);
-  const shownRef = useRef(false);
 
   useEffect(() => {
     if (!config?.enabled) return undefined;
+    if (getExitIntentState(funnelId)?.shown) return undefined;
     if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) return undefined;
     const handleMouseLeave = (e) => {
-      if (shownRef.current || e.clientY > 0) return;
-      shownRef.current = true;
+      if (e.clientY > 0) return;
+      markExitIntentShown(funnelId, {
+        discountStepId: config.discountPercent ? stepId : null,
+        discountPercent: config.discountPercent || null,
+      });
+      onDiscountApplied?.();
       setVisible(true);
     };
     document.addEventListener('mouseleave', handleMouseLeave);
     return () => document.removeEventListener('mouseleave', handleMouseLeave);
-  }, [config?.enabled]);
+  }, [config?.enabled, config?.discountPercent, funnelId, stepId, onDiscountApplied]);
 
   if (!config?.enabled || !visible) return null;
 

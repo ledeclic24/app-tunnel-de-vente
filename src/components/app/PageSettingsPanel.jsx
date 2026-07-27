@@ -199,6 +199,25 @@ export default function PageSettingsPanel({ step, steps, plan, onSave, blocksByS
           />
         </div>
         <div>
+          <label className={labelClass}>Pourcentage de réduction (optionnel)</label>
+          <input
+            className={inputClass}
+            type="number"
+            min="1"
+            max="99"
+            placeholder="Ex : 20"
+            value={exitIntent.discountPercent || ''}
+            onChange={(e) => {
+              const raw = e.target.value;
+              const n = raw === '' ? null : Math.min(99, Math.max(1, Number(raw)));
+              setChrome({ exitIntent: { ...exitIntent, discountPercent: n } });
+            }}
+          />
+          <p className="text-xs text-surface/40 mt-1">
+            Si renseigné, ce pourcentage est réellement appliqué au prix payé (pas seulement annoncé) dès que le visiteur clique sur le bouton ci-dessous — une seule fois par visiteur, même s'il quitte et revient plusieurs fois.
+          </p>
+        </div>
+        <div>
           <label className={labelClass}>Texte du bouton</label>
           <input
             className={inputClass}

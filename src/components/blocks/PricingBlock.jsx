@@ -3,6 +3,7 @@ import { Check, X, Loader2 } from 'lucide-react';
 import { getEditableProps, getContentEditableProps, getSectionBackground, cx } from '../../lib/blockStyle';
 import { parsePriceAmount } from '../../lib/checkoutApi';
 import { formatPrice } from '../../lib/currency';
+import { applyDiscount } from '../../lib/exitIntentDiscount';
 import SlotList, { SlotReadOnly } from './SlotList';
 import EditableItemImage from './EditableItemImage';
 import FloatingOrbs from './FloatingOrbs';
@@ -124,7 +125,7 @@ function isSlotsValid(slots, itemCount) {
   return fieldSlots.length === itemCount;
 }
 
-export default function PricingBlock({ content, blockId, onAdvance, onMonerooCheckout, editMode, selectedElement, onSelectElement, onContentChange, userId, defaultBg, currency }) {
+export default function PricingBlock({ content, blockId, onAdvance, onMonerooCheckout, editMode, selectedElement, onSelectElement, onContentChange, userId, defaultBg, currency, discountPercent }) {
   const { heading, plans = [], layout, comparisonRows, slots } = content;
   const isComparison = layout === 'comparison' && (comparisonRows || []).length > 0;
   const gridClass = GRID_COLS_CLASS[Math.min(plans.length, 3)] || '';
@@ -209,6 +210,11 @@ export default function PricingBlock({ content, blockId, onAdvance, onMonerooChe
           </span>
           <span className="text-background/60 text-sm outline-none" {...singleLine((v) => updatePlan(i, { period: v }))}>{plan.period}</span>
         </div>
+        {!editMode && discountPercent > 0 && (
+          <p className="text-xs font-semibold text-accent -mt-4 mb-6">
+            🎉 Réduction de {discountPercent}% appliquée : {formatPrice(applyDiscount(parsePriceAmount(plan.price), discountPercent), currency)}
+          </p>
+        )}
         {(plan.paymentLinks || []).length > 0 ? (
           <div className="space-y-2 mb-6">
             {plan.paymentLinks.map((link, j) => {
