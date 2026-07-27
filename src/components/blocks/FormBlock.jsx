@@ -41,8 +41,8 @@ export default function FormBlock({ content, onSubmitLead, onAdvance, editMode, 
   };
 
   return (
-    <section className={cx('px-6 py-16 md:px-16 md:py-24 max-w-lg mx-auto', bg.sectionClassName)}>
-      <div className="bg-block-card border border-accent/20 rounded-xl p-8 shadow-sm text-center">
+    <section className={cx('px-6 py-16 md:px-16 md:py-24 max-w-5xl mx-auto', bg.sectionClassName)}>
+      <div className="bg-block-card border border-accent/20 rounded-xl p-8 shadow-sm text-center max-w-lg mx-auto">
         {submitted ? (
           <div className="flex flex-col items-center gap-3 py-4">
             <CheckCircle2 className="w-10 h-10 text-accent" />

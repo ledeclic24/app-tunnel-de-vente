@@ -200,17 +200,16 @@ export default function PublishedFunnelPage({ funnelSlugOverride } = {}) {
     await insertLead({ funnelId: funnel.id, stepId: currentStep.id, name, email });
   };
 
-  const handleMonerooCheckout = async ({ paymentMethodId, planName, amount, customerEmail, customerName, orderBumpTaken, orderBumpAmount }) => {
+  const handleMonerooCheckout = async ({ paymentMethodId, blockId, planIndex, customerEmail, customerName, orderBumpTaken }) => {
     const { checkoutUrl } = await createMonerooCheckout({
       funnelId: funnel.id,
       stepId: currentStep.id,
       paymentMethodId,
-      planName,
-      amount,
+      blockId,
+      planIndex,
       customerEmail,
       customerName,
       orderBumpTaken,
-      orderBumpAmount,
       returnUrl: window.location.href,
     });
     window.location.href = checkoutUrl;

@@ -123,7 +123,7 @@ function isSlotsValid(slots, itemCount) {
   return fieldSlots.length === itemCount;
 }
 
-export default function PricingBlock({ content, onAdvance, onMonerooCheckout, editMode, selectedElement, onSelectElement, onContentChange, userId, defaultBg }) {
+export default function PricingBlock({ content, blockId, onAdvance, onMonerooCheckout, editMode, selectedElement, onSelectElement, onContentChange, userId, defaultBg }) {
   const { heading, plans = [], layout, comparisonRows, slots } = content;
   const isComparison = layout === 'comparison' && (comparisonRows || []).length > 0;
   const gridClass = GRID_COLS_CLASS[Math.min(plans.length, 3)] || '';
@@ -201,7 +201,7 @@ export default function PricingBlock({ content, onAdvance, onMonerooCheckout, ed
                   <button
                     key={j}
                     type="button"
-                    onClick={editMode ? buttonProps.onClick : () => setCheckoutTarget({ plan, link })}
+                    onClick={editMode ? buttonProps.onClick : () => setCheckoutTarget({ plan, link, planIndex: i })}
                     style={j === 0 ? buttonProps.style : undefined}
                     className={sharedClassName}
                   >
@@ -295,16 +295,18 @@ export default function PricingBlock({ content, onAdvance, onMonerooCheckout, ed
           planName={checkoutTarget.plan.name}
           orderBump={content.orderBump}
           onClose={() => setCheckoutTarget(null)}
-          onSubmit={async ({ name, email, orderBumpTaken, orderBumpAmount }) => {
-            const baseAmount = parsePriceAmount(checkoutTarget.plan.price);
+          onSubmit={async ({ name, email, orderBumpTaken }) => {
+            // Le montant réel est recalculé côté serveur à partir du prix
+            // stocké dans CE bloc (blockId + planIndex) — jamais envoyé
+            // depuis ici, pour qu'un appel direct à l'API ne puisse pas
+            // payer un montant différent de celui affiché sur la page.
             await onMonerooCheckout?.({
               paymentMethodId: checkoutTarget.link.paymentMethodId,
-              planName: checkoutTarget.plan.name,
-              amount: baseAmount + (orderBumpTaken ? orderBumpAmount : 0),
+              blockId,
+              planIndex: checkoutTarget.planIndex,
               customerEmail: email,
               customerName: name,
               orderBumpTaken,
-              orderBumpAmount,
             });
           }}
         />

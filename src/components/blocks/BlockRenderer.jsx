@@ -78,6 +78,7 @@ export default function BlockRenderer({
       >
         <Component
           content={block.content}
+          blockId={block.id}
           onAdvance={onAdvance}
           onSubmitLead={onSubmitLead}
           onMonerooCheckout={onMonerooCheckout}
