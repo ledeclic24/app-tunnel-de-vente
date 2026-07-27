@@ -227,6 +227,9 @@ export default function FunnelEditorPage() {
   const toast = useToast();
 
   const contentHistoryTimer = useRef(null);
+  // Un timer d'enregistrement par bloc (pas un seul partagé) : éditer le
+  // bloc A ne doit jamais annuler une sauvegarde en attente du bloc B.
+  const blockSaveTimers = useRef({});
 
   const loadAllBlocks = useCallback(async (stepList) => {
     const entries = await Promise.all(stepList.map(async (s) => [s.id, await fetchBlocks(s.id)]));
@@ -529,21 +532,34 @@ export default function FunnelEditorPage() {
     setImprovingElementKey(null);
   };
 
-  const handleBlockChange = async (block, newContent) => {
+  // L'aperçu se met à jour tout de suite (applyBlocks, synchrone) — seul
+  // l'ENREGISTREMENT réseau est différé de 600ms après la dernière frappe.
+  // Avant ce correctif, chaque caractère tapé dans le panneau de réglages
+  // d'un bloc (titre, prix...) déclenchait une vraie requête PATCH
+  // immédiate : saisie hachée, lettre par lettre, avec des requêtes qui
+  // s'empilaient au lieu de se remplacer.
+  const handleBlockChange = (block, newContent) => {
     const next = blocks.map((b) => (b.id === block.id ? { ...b, content: newContent } : b));
     applyBlocks(next);
-    try {
-      await updateBlock(block.id, newContent);
-    } catch (err) {
-      setActionError(
-        err.status === 413
-          ? 'Ce bloc est trop volumineux pour être enregistré (trop de contenu). Réduis le texte ou le nombre d\'éléments.'
-          : "L'enregistrement du bloc a échoué. Réessaie.",
-      );
-      return;
+
+    if (blockSaveTimers.current[block.id]) {
+      clearTimeout(blockSaveTimers.current[block.id]);
     }
-    if (contentHistoryTimer.current) clearTimeout(contentHistoryTimer.current);
-    contentHistoryTimer.current = setTimeout(() => pushHistory(next), 600);
+    blockSaveTimers.current[block.id] = setTimeout(async () => {
+      delete blockSaveTimers.current[block.id];
+      try {
+        await updateBlock(block.id, newContent);
+      } catch (err) {
+        setActionError(
+          err.status === 413
+            ? 'Ce bloc est trop volumineux pour être enregistré (trop de contenu). Réduis le texte ou le nombre d\'éléments.'
+            : "L'enregistrement du bloc a échoué. Réessaie.",
+        );
+        return;
+      }
+      if (contentHistoryTimer.current) clearTimeout(contentHistoryTimer.current);
+      contentHistoryTimer.current = setTimeout(() => pushHistory(next), 600);
+    }, 600);
   };
 
   const handleElementStyleChange = async (block, newStyles) => {

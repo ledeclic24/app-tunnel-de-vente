@@ -227,7 +227,61 @@ export default function FunnelSettingsPanel({ funnel, plan, onSave }) {
 
   return (
     <div className="bg-background border border-surface/10 rounded-[2rem] p-6 md:p-8 space-y-8">
+      {/* En premier, volontairement : c'est le réglage le plus directement
+          commercial (quoi livrer après un achat/lead), pas un détail
+          technique — ne devrait pas se trouver après SEO/planification pour
+          être trouvé. */}
       <div className="space-y-5">
+        <div className="flex items-center gap-2">
+          <Mail className="w-4 h-4 text-surface/40" />
+          <h3 className="font-sans font-semibold text-surface">Livraison automatique</h3>
+        </div>
+        <p className="text-sm text-surface/60">
+          Quand quelqu'un remplit un formulaire ou termine un paiement intégré sur ce tunnel, il reçoit automatiquement un email — l'ebook choisi ci-dessous, tes instructions écrites plus bas, ou les deux à la fois.
+        </p>
+        {ebooks === null ? (
+          <p className="text-sm text-surface/40">Chargement de tes ebooks...</p>
+        ) : ebooks.length === 0 ? (
+          <p className="text-sm text-surface/50">
+            Tu n'as pas encore d'ebook. <Link to="/app/ebooks" className="text-accent hover:underline">Crée-en un</Link> pour pouvoir le livrer automatiquement ici.
+          </p>
+        ) : (
+          <div>
+            <label className={labelClass}>Ebook à envoyer par email</label>
+            <select
+              className={inputClass}
+              value={draft.deliverable_ebook_id}
+              onChange={(e) => set({ deliverable_ebook_id: e.target.value })}
+            >
+              <option value="">Aucun</option>
+              {ebooks.map((eb) => (
+                <option key={eb.id} value={eb.id}>{eb.title}</option>
+              ))}
+            </select>
+          </div>
+        )}
+        <div>
+          <label className={labelClass}>Instructions après achat (optionnel)</label>
+          <textarea
+            className={inputClass}
+            rows={4}
+            placeholder={"Ex : Rejoins notre groupe WhatsApp ici : ...\nTon accès sera activé sous 24h.\nUne question ? Réponds directement à cet email."}
+            value={draft.post_purchase_instructions}
+            onChange={(e) => set({ post_purchase_instructions: e.target.value })}
+          />
+          <p className="text-xs text-surface/40 mt-1">
+            Envoyées par email juste après l'achat — en plus de l'ebook si les deux sont renseignés, ou seules sinon. Si ni ebook ni instructions ne sont renseignés, le client ne reçoit aucun email après son achat.
+          </p>
+        </div>
+      </div>
+
+      <div className="space-y-3 pt-6 border-t border-surface/10">
+        <p className="text-xs text-surface/50">
+          Le prix de chaque offre se règle directement sur le bloc "Tarifs" du tunnel — clique dessus dans l'aperçu pour l'ouvrir.
+        </p>
+      </div>
+
+      <div className="space-y-5 pt-6 border-t border-surface/10">
         <div>
           <h3 className="font-sans font-semibold text-surface">SEO & partage</h3>
           <p className="text-sm text-surface/60 mt-1">Ce qui s'affiche dans l'onglet du navigateur et lors d'un partage sur les réseaux sociaux ou WhatsApp.</p>
@@ -291,50 +345,6 @@ export default function FunnelSettingsPanel({ funnel, plan, onSave }) {
             </div>
           </>
         )}
-      </div>
-
-      <div className="space-y-5 pt-6 border-t border-surface/10">
-        <div className="flex items-center gap-2">
-          <Mail className="w-4 h-4 text-surface/40" />
-          <h3 className="font-sans font-semibold text-surface">Livraison automatique</h3>
-        </div>
-        <p className="text-sm text-surface/60">
-          Quand quelqu'un remplit un formulaire ou termine un paiement intégré sur ce tunnel, il reçoit automatiquement un email — l'ebook choisi ci-dessous, tes instructions écrites plus bas, ou les deux à la fois.
-        </p>
-        {ebooks === null ? (
-          <p className="text-sm text-surface/40">Chargement de tes ebooks...</p>
-        ) : ebooks.length === 0 ? (
-          <p className="text-sm text-surface/50">
-            Tu n'as pas encore d'ebook. <Link to="/app/ebooks" className="text-accent hover:underline">Crée-en un</Link> pour pouvoir le livrer automatiquement ici.
-          </p>
-        ) : (
-          <div>
-            <label className={labelClass}>Ebook à envoyer par email</label>
-            <select
-              className={inputClass}
-              value={draft.deliverable_ebook_id}
-              onChange={(e) => set({ deliverable_ebook_id: e.target.value })}
-            >
-              <option value="">Aucun</option>
-              {ebooks.map((eb) => (
-                <option key={eb.id} value={eb.id}>{eb.title}</option>
-              ))}
-            </select>
-          </div>
-        )}
-        <div>
-          <label className={labelClass}>Instructions après achat (optionnel)</label>
-          <textarea
-            className={inputClass}
-            rows={4}
-            placeholder={"Ex : Rejoins notre groupe WhatsApp ici : ...\nTon accès sera activé sous 24h.\nUne question ? Réponds directement à cet email."}
-            value={draft.post_purchase_instructions}
-            onChange={(e) => set({ post_purchase_instructions: e.target.value })}
-          />
-          <p className="text-xs text-surface/40 mt-1">
-            Envoyées par email juste après l'achat — en plus de l'ebook si les deux sont renseignés, ou seules sinon. Si ni ebook ni instructions ne sont renseignés, le client ne reçoit aucun email après son achat.
-          </p>
-        </div>
       </div>
 
       <div className="space-y-3 pt-6 border-t border-surface/10">
