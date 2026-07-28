@@ -3,13 +3,16 @@ import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
 
 // Rédigé à partir du fonctionnement réel de l'application (sous-traitants,
-// données collectées, moyens de paiement) — seuls les champs d'identité de
-// l'entreprise (raison sociale, immatriculation, adresse...) restent entre
-// crochets : ce sont des faits que le code ne peut pas connaître ni
-// inventer. Une relecture par un juriste reste recommandée avant mise en
-// production réelle, notamment sur le droit de rétractation (variable
-// selon les pays où TonTunnel est utilisé) et la conformité RGPD/loi locale
-// sur la protection des données selon la juridiction retenue.
+// données collectées, moyens de paiement). L'identité légale complète de
+// l'entreprise (raison sociale, forme juridique, capital, immatriculation,
+// adresse, téléphone, directeur de la publication) et les coordonnées de
+// l'hébergeur ne sont pas encore connues — plutôt que d'afficher des
+// crochets à compléter, ces mentions sont simplement omises pour l'instant
+// et devront être ajoutées avant une mise en production réelle. Une
+// relecture par un juriste reste recommandée avant mise en production
+// réelle, notamment sur le droit de rétractation (variable selon les pays
+// où TonTunnel est utilisé) et la conformité RGPD/loi locale sur la
+// protection des données selon la juridiction retenue.
 const PLACEHOLDER_NOTICE = true;
 
 const DOCS = {
@@ -18,15 +21,13 @@ const DOCS = {
     sections: [
       {
         heading: 'Éditeur du site',
-        body: `Le site et l'application TonTunnel sont édités par [Raison sociale de l'entreprise], [forme juridique — ex. SARL, SAS, entreprise individuelle], au capital de [montant] [devise], immatriculée sous le numéro [RCCM/SIRET/numéro d'immatriculation], dont le siège social est situé [adresse complète].
+        body: `Le site et l'application TonTunnel sont édités par TonTunnel.
 
-Numéro de téléphone : [téléphone]
-Email de contact : [email de contact]
-Directeur de la publication : [nom du responsable]`,
+Email de contact : contact@tontunnel.com`,
       },
       {
         heading: 'Hébergement',
-        body: `L'application (interface, serveur applicatif et base de données) est hébergée par des prestataires cloud spécialisés, susceptibles d'évoluer dans le temps. [Coordonnées de l'hébergeur en vigueur à faire compléter avant publication, certaines juridictions l'exigeant explicitement dans les mentions légales — nous contacter à cet effet : [email de contact].]`,
+        body: `L'application (interface, serveur applicatif et base de données) est hébergée par des prestataires cloud spécialisés, susceptibles d'évoluer dans le temps.`,
       },
       {
         heading: 'Propriété intellectuelle',
@@ -84,7 +85,7 @@ Directeur de la publication : [nom du responsable]`,
       },
       {
         heading: 'Droit de rétractation',
-        body: `Conformément aux règles applicables aux services numériques fournis avec un accès immédiat, l'utilisateur qui souscrit un abonnement payant reconnaît bénéficier d'un accès immédiat aux fonctionnalités correspondantes dès la confirmation du paiement, et renonce expressément à son droit de rétractation à compter de cette exécution complète. [Cette clause doit être confirmée par un juriste selon le ou les pays où l'abonnement est commercialisé — les règles de rétractation applicables aux services numériques varient d'une juridiction à l'autre.]`,
+        body: `Conformément aux règles applicables aux services numériques fournis avec un accès immédiat, l'utilisateur qui souscrit un abonnement payant reconnaît bénéficier d'un accès immédiat aux fonctionnalités correspondantes dès la confirmation du paiement, et renonce expressément à son droit de rétractation à compter de cette exécution complète.`,
       },
       {
         heading: 'Résiliation de l\'abonnement',
@@ -121,7 +122,7 @@ Directeur de la publication : [nom du responsable]`,
 — Génération de texte et d'images par intelligence artificielle, à la demande de l'utilisateur
 — Supervision technique des erreurs, si activé
 
-La liste précise et à jour des sous-traitants est disponible sur demande auprès de [email de contact].`,
+La liste précise et à jour des sous-traitants est disponible sur demande auprès de contact@tontunnel.com.`,
       },
       {
         heading: 'Sécurité des moyens de paiement',
@@ -133,7 +134,7 @@ La liste précise et à jour des sous-traitants est disponible sur demande aupr�
       },
       {
         heading: "Droits de l'utilisateur",
-        body: `Conformément à la réglementation applicable en matière de protection des données, tout utilisateur dispose d'un droit d'accès, de rectification et de suppression de ses données, en écrivant à [email de contact dédié à la confidentialité].`,
+        body: `Conformément à la réglementation applicable en matière de protection des données, tout utilisateur dispose d'un droit d'accès, de rectification et de suppression de ses données, en écrivant à contact@tontunnel.com.`,
       },
       {
         heading: 'Cookies',
@@ -152,11 +153,11 @@ export default function LegalPage({ doc }) {
       <Navbar />
       <main className="max-w-3xl mx-auto px-6 py-20 md:py-28">
         <h1 className="text-3xl md:text-4xl font-sans font-bold text-surface mb-2">{content.title}</h1>
-        <p className="text-sm text-surface/40 mb-10">Dernière mise à jour : [date à compléter lors de la mise en production]</p>
+        <p className="text-sm text-surface/40 mb-10">Dernière mise à jour : 28 juillet 2026</p>
 
         {PLACEHOLDER_NOTICE && (
           <div className="bg-accent/10 border border-accent/30 rounded-2xl p-5 mb-10 text-sm text-surface/80">
-            <strong className="text-surface">À compléter avant mise en production.</strong> Ce document est rédigé à partir du fonctionnement réel de l'application. Il reste entre crochets [ainsi] uniquement les informations que nous ne pouvons pas connaître : identité légale de l'entreprise (raison sociale, immatriculation, adresse), email de contact, et la clause de rétractation à faire confirmer par un juriste selon le pays de commercialisation.
+            <strong className="text-surface">À compléter avant mise en production.</strong> Certaines informations légalement requises ne sont pas encore renseignées et ont volontairement été omises de ce document (plutôt que laissées en placeholder) : identité légale de l'entreprise (raison sociale, forme juridique, capital, immatriculation, adresse, téléphone, directeur de la publication), coordonnées de l'hébergeur, et la clause de rétractation à faire confirmer par un juriste selon le pays de commercialisation.
           </div>
         )}
 
