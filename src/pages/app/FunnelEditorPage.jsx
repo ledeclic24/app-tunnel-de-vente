@@ -26,6 +26,7 @@ import { resolveStickyFooterPrice } from '../../lib/currency';
 import { fetchReusableBlocks, saveReusableBlock, deleteReusableBlock, incrementReusableBlockUsage } from '../../lib/growthApi';
 import { useConfirm } from '../../components/app/ConfirmDialog';
 import { useToast } from '../../components/app/Toast';
+import RechargeCreditsButton from '../../components/app/RechargeCreditsButton';
 import { editFunnelWithAI, regenerateBlockWithAI, generateBlockImageWithAI, regenerateSignatureVisualWithAI, improveElementWithAI } from '../../lib/aiApi';
 import BlockRenderer from '../../components/blocks/BlockRenderer';
 import BlockEditorPanel from '../../components/blocks/BlockEditorPanel';
@@ -246,6 +247,7 @@ export default function FunnelEditorPage() {
   ]);
   const [aiInput, setAiInput] = useState('');
   const [aiGenerating, setAiGenerating] = useState(false);
+  const [aiErrorCode, setAiErrorCode] = useState('');
   const [regeneratingBlockId, setRegeneratingBlockId] = useState(null);
   const [imageGeneratingBlockId, setImageGeneratingBlockId] = useState(null);
   const [signatureVisualGeneratingBlockId, setSignatureVisualGeneratingBlockId] = useState(null);
@@ -256,6 +258,7 @@ export default function FunnelEditorPage() {
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [actionError, setActionError] = useState('');
+  const [actionErrorCode, setActionErrorCode] = useState('');
   const [libraryBlocks, setLibraryBlocks] = useState([]);
   const [libraryLoading, setLibraryLoading] = useState(false);
   const [libraryError, setLibraryError] = useState('');
@@ -319,12 +322,14 @@ export default function FunnelEditorPage() {
     setAiInput('');
     setAiMessages((prev) => [...prev, { role: 'user', text: instruction }]);
     setAiGenerating(true);
+    setAiErrorCode('');
     try {
       await editFunnelWithAI(funnelId, instruction);
       await loadAll();
       setAiMessages((prev) => [...prev, { role: 'assistant', text: 'Modifications appliquées — regarde le résultat ci-dessous.' }]);
     } catch (err) {
       setAiMessages((prev) => [...prev, { role: 'assistant', text: AI_ERROR_MESSAGES[err.message] || AI_ERROR_MESSAGES.server_error }]);
+      setAiErrorCode(err.message);
     }
     setAiGenerating(false);
   };
@@ -519,6 +524,7 @@ export default function FunnelEditorPage() {
     if (regeneratingBlockId) return;
     setRegeneratingBlockId(block.id);
     setActionError('');
+    setActionErrorCode('');
     try {
       const updated = await regenerateBlockWithAI(block.id);
       const next = blocksRef.current.map((b) => (b.id === block.id ? { ...b, content: updated.content } : b));
@@ -526,6 +532,7 @@ export default function FunnelEditorPage() {
       pushHistory(next);
     } catch (err) {
       setActionError(AI_ERROR_MESSAGES[err.message] || AI_ERROR_MESSAGES.server_error);
+      setActionErrorCode(err.message);
     }
     setRegeneratingBlockId(null);
   }, [regeneratingBlockId, applyBlocks, pushHistory]);
@@ -534,6 +541,7 @@ export default function FunnelEditorPage() {
     if (imageGeneratingBlockId) return;
     setImageGeneratingBlockId(blockId);
     setActionError('');
+    setActionErrorCode('');
     try {
       const updated = await generateBlockImageWithAI(blockId, imageType);
       const next = blocksRef.current.map((b) => (b.id === blockId ? { ...b, content: updated.content } : b));
@@ -541,6 +549,7 @@ export default function FunnelEditorPage() {
       pushHistory(next);
     } catch (err) {
       setActionError(IMAGE_ERROR_MESSAGES[err.message] || IMAGE_ERROR_MESSAGES.server_error);
+      setActionErrorCode(err.message);
     }
     setImageGeneratingBlockId(null);
   }, [imageGeneratingBlockId, applyBlocks, pushHistory]);
@@ -549,6 +558,7 @@ export default function FunnelEditorPage() {
     if (signatureVisualGeneratingBlockId) return;
     setSignatureVisualGeneratingBlockId(blockId);
     setActionError('');
+    setActionErrorCode('');
     try {
       const updated = await regenerateSignatureVisualWithAI(blockId);
       const next = blocksRef.current.map((b) => (b.id === blockId ? { ...b, content: updated.content } : b));
@@ -556,6 +566,7 @@ export default function FunnelEditorPage() {
       pushHistory(next);
     } catch (err) {
       setActionError(AI_ERROR_MESSAGES[err.message] || AI_ERROR_MESSAGES.server_error);
+      setActionErrorCode(err.message);
     }
     setSignatureVisualGeneratingBlockId(null);
   }, [signatureVisualGeneratingBlockId, applyBlocks, pushHistory]);
@@ -575,6 +586,7 @@ export default function FunnelEditorPage() {
     if (improvingElementKey || !selection) return;
     setImprovingElementKey(elementKey);
     setActionError('');
+    setActionErrorCode('');
     try {
       const updated = await improveElementWithAI(selection.blockId, elementKey);
       const next = blocks.map((b) => (b.id === selection.blockId ? { ...b, content: updated.content } : b));
@@ -582,6 +594,7 @@ export default function FunnelEditorPage() {
       pushHistory(next);
     } catch (err) {
       setActionError(AI_ERROR_MESSAGES[err.message] || AI_ERROR_MESSAGES.server_error);
+      setActionErrorCode(err.message);
     }
     setImprovingElementKey(null);
   };
@@ -954,7 +967,10 @@ export default function FunnelEditorPage() {
 
       {actionError && (
         <div className="mb-6 flex items-center justify-between gap-3 bg-red-500/10 border border-red-500/20 text-red-500 text-sm rounded-2xl px-4 py-3">
-          <span>{actionError}</span>
+          <div className="flex items-center gap-3">
+            <span>{actionError}</span>
+            {actionErrorCode === 'insufficient_credits' && <RechargeCreditsButton />}
+          </div>
           <button onClick={() => setActionError('')} className="shrink-0 hover:opacity-70"><X className="w-4 h-4" /></button>
         </div>
       )}
@@ -1003,6 +1019,11 @@ export default function FunnelEditorPage() {
                 <div className="bg-surface/[0.03] border border-surface/10 rounded-2xl rounded-bl-sm px-4 py-2.5 text-sm text-surface/60 inline-flex items-center gap-2">
                   <span className="w-3.5 h-3.5 border-2 border-surface/20 border-t-accent rounded-full animate-spin" /> Modification en cours…
                 </div>
+              </div>
+            )}
+            {aiErrorCode === 'insufficient_credits' && (
+              <div className="flex justify-start">
+                <RechargeCreditsButton />
               </div>
             )}
           </div>

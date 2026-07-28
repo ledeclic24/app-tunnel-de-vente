@@ -10,6 +10,7 @@ import { uploadImage } from '../../lib/storage';
 import { useConfirm } from '../../components/app/ConfirmDialog';
 import { useToast } from '../../components/app/Toast';
 import GradientBanner from '../../components/ui/GradientBanner';
+import RechargeCreditsButton from '../../components/app/RechargeCreditsButton';
 
 const COMING_SOON = false;
 
@@ -268,6 +269,7 @@ export default function ImageStudioPage() {
   const [selectedIds, setSelectedIds] = useState(() => new Set());
   const [bulkBusy, setBulkBusy] = useState(false);
   const [error, setError] = useState('');
+  const [errorCode, setErrorCode] = useState('');
   const [lightboxIndex, setLightboxIndex] = useState(null);
   const [referenceImageUrl, setReferenceImageUrl] = useState('');
   const [referenceUploading, setReferenceUploading] = useState(false);
@@ -331,14 +333,19 @@ export default function ImageStudioPage() {
     if (!prompt.trim() || generating || atLimit) return;
     setGenerating(true);
     setError('');
+    setErrorCode('');
     try {
-      await runGeneration({
+      const results = await runGeneration({
         prompt: prompt.trim(), size, n: count, style, imageType,
         background: transparent ? 'transparent' : undefined,
         referenceImageUrl: referenceImageUrl || undefined,
       });
+      toast.success(results.length > 1 ? `${results.length} images générées avec succès.` : 'Image générée avec succès.');
     } catch (err) {
-      setError(ERROR_MESSAGES[err.message] || ERROR_MESSAGES.server_error);
+      const message = ERROR_MESSAGES[err.message] || ERROR_MESSAGES.server_error;
+      setError(message);
+      setErrorCode(err.message);
+      toast.error(message);
     }
     setGenerating(false);
   };
@@ -347,13 +354,18 @@ export default function ImageStudioPage() {
     if (regeneratingId) return;
     setRegeneratingId(image.id);
     setError('');
+    setErrorCode('');
     try {
       await runGeneration({
         prompt: image.prompt, size: image.size || '1024x1024', n: 1,
         style: image.style, imageType: image.imageType, background: image.background,
       });
+      toast.success('Image générée avec succès.');
     } catch (err) {
-      setError(ERROR_MESSAGES[err.message] || ERROR_MESSAGES.server_error);
+      const message = ERROR_MESSAGES[err.message] || ERROR_MESSAGES.server_error;
+      setError(message);
+      setErrorCode(err.message);
+      toast.error(message);
     }
     setRegeneratingId(null);
   };
@@ -573,8 +585,18 @@ export default function ImageStudioPage() {
           Fond transparent (détouré, pour poser le visuel sur un fond de couleur)
         </label>
 
-        {error && <p className="text-sm text-red-500">{error}</p>}
-        {atLimit && <p className="text-sm text-red-500">{ERROR_MESSAGES.limit_reached}</p>}
+        {error && (
+          <div className="text-sm text-red-500">
+            <p>{error}</p>
+            {errorCode === 'insufficient_credits' && <RechargeCreditsButton className="mt-2" />}
+          </div>
+        )}
+        {atLimit && (
+          <div className="text-sm text-red-500">
+            <p>{ERROR_MESSAGES.limit_reached}</p>
+            <RechargeCreditsButton className="mt-2" />
+          </div>
+        )}
         <button
           type="submit"
           disabled={!prompt.trim() || generating || atLimit}

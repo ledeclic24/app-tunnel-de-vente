@@ -21,6 +21,7 @@ import ImageUploadField from '../../components/blocks/ImageUploadField';
 import { useConfirm } from '../../components/app/ConfirmDialog';
 import DownloadMenu from '../../components/app/DownloadMenu';
 import { stripMarkdown } from '../../lib/markdownLite';
+import RechargeCreditsButton from '../../components/app/RechargeCreditsButton';
 
 const ERROR_MESSAGES = {
   plan_required: "Le générateur d'ebook nécessite le plan Pro ou Entreprise.",
@@ -176,6 +177,15 @@ export default function EbookEditorPage() {
   const confirm = useConfirm();
   const [generatingId, setGeneratingId] = useState(null);
   const [error, setError] = useState('');
+  const [errorCode, setErrorCode] = useState('');
+  // Factorise les ~15 sites d'appel setError(MESSAGES[err.message] || ...)
+  // de ce fichier : pose aussi le CODE d'erreur brut, pour savoir si
+  // l'erreur affichée est spécifiquement "insufficient_credits" et montrer
+  // le bouton de recharge en conséquence.
+  const fail = (err, MESSAGES = ERROR_MESSAGES) => {
+    setError(MESSAGES[err.message] || MESSAGES.server_error);
+    setErrorCode(err.message);
+  };
   const [showSettings, setShowSettings] = useState(false);
   const [showAddChapter, setShowAddChapter] = useState(false);
   const [newTitle, setNewTitle] = useState('');
@@ -213,7 +223,7 @@ export default function EbookEditorPage() {
       const updated = await generateChapterContent(chapterId, guidance);
       setChapters((prev) => prev.map((c) => (c.id === chapterId ? updated : c)));
     } catch (err) {
-      setError(ERROR_MESSAGES[err.message] || ERROR_MESSAGES.server_error);
+      fail(err);
     }
     setGeneratingId(null);
   };
@@ -225,7 +235,7 @@ export default function EbookEditorPage() {
       const updated = await generateChapterImage(chapterId);
       setChapters((prev) => prev.map((c) => (c.id === chapterId ? updated : c)));
     } catch (err) {
-      setError(IMAGE_ERROR_MESSAGES[err.message] || IMAGE_ERROR_MESSAGES.server_error);
+      fail(err, IMAGE_ERROR_MESSAGES);
     }
     setGeneratingImageId(null);
   };
@@ -235,7 +245,7 @@ export default function EbookEditorPage() {
       const updated = await updateChapter(chapterId, patch);
       setChapters((prev) => prev.map((c) => (c.id === chapterId ? updated : c)));
     } catch (err) {
-      setError(ERROR_MESSAGES[err.message] || ERROR_MESSAGES.server_error);
+      fail(err);
     }
   };
 
@@ -245,7 +255,7 @@ export default function EbookEditorPage() {
       await deleteChapter(chapterId);
       setChapters((prev) => prev.filter((c) => c.id !== chapterId));
     } catch (err) {
-      setError(ERROR_MESSAGES[err.message] || ERROR_MESSAGES.server_error);
+      fail(err);
     }
   };
 
@@ -257,7 +267,7 @@ export default function EbookEditorPage() {
       setChapters((prev) => [...prev, chapter]);
       setNewTitle(''); setNewDescription(''); setShowAddChapter(false);
     } catch (err) {
-      setError(ERROR_MESSAGES[err.message] || ERROR_MESSAGES.server_error);
+      fail(err);
     }
   };
 
@@ -271,7 +281,7 @@ export default function EbookEditorPage() {
         const updated = await generateChapterContent(chapter.id);
         setChapters((prev) => prev.map((c) => (c.id === chapter.id ? updated : c)));
       } catch (err) {
-        setError(ERROR_MESSAGES[err.message] || ERROR_MESSAGES.server_error);
+        fail(err);
         break;
       }
     }
@@ -297,7 +307,7 @@ export default function EbookEditorPage() {
         const updated = await generateChapterContent(chapter.id);
         setChapters((prev) => prev.map((c) => (c.id === chapter.id ? updated : c)));
       } catch (err) {
-        setError(ERROR_MESSAGES[err.message] || ERROR_MESSAGES.server_error);
+        fail(err);
         break;
       }
     }
@@ -314,7 +324,7 @@ export default function EbookEditorPage() {
       setChapters((prev) => prev.map((c) => updated.find((u) => u.id === c.id) || c));
       setSelectedIds(new Set());
     } catch (err) {
-      setError(ERROR_MESSAGES[err.message] || ERROR_MESSAGES.server_error);
+      fail(err);
     }
     setBulkBusy(false);
   };
@@ -328,7 +338,7 @@ export default function EbookEditorPage() {
       setChapters(remaining);
       setSelectedIds(new Set());
     } catch (err) {
-      setError(ERROR_MESSAGES[err.message] || ERROR_MESSAGES.server_error);
+      fail(err);
     }
     setBulkBusy(false);
   };
@@ -343,7 +353,7 @@ export default function EbookEditorPage() {
       setShowGenerateMore(false);
       setMoreGuidance('');
     } catch (err) {
-      setError(ERROR_MESSAGES[err.message] || ERROR_MESSAGES.server_error);
+      fail(err);
     }
     setBulkBusy(false);
   };
@@ -374,7 +384,7 @@ export default function EbookEditorPage() {
       await reorderChapters(next.map((c) => c.id));
     } catch (err) {
       setChapters(previous);
-      setError(ERROR_MESSAGES[err.message] || ERROR_MESSAGES.server_error);
+      fail(err);
     }
   };
 
@@ -383,7 +393,7 @@ export default function EbookEditorPage() {
       const updated = await updateEbook(ebookId, patch);
       setEbook(updated);
     } catch (err) {
-      setError(ERROR_MESSAGES[err.message] || ERROR_MESSAGES.server_error);
+      fail(err);
     }
   };
 
@@ -394,7 +404,7 @@ export default function EbookEditorPage() {
       const updated = await generateCover(ebookId);
       setEbook(updated);
     } catch (err) {
-      setError(IMAGE_ERROR_MESSAGES[err.message] || IMAGE_ERROR_MESSAGES.server_error);
+      fail(err, IMAGE_ERROR_MESSAGES);
     }
     setCoverGenerating(false);
   };
@@ -423,7 +433,7 @@ export default function EbookEditorPage() {
         const updated = await generateChapterContent(chapter.id);
         setChapters((prev) => prev.map((c) => (c.id === chapter.id ? updated : c)));
       } catch (err) {
-        setError(ERROR_MESSAGES[err.message] || ERROR_MESSAGES.server_error);
+        fail(err);
         break;
       }
     }
@@ -601,7 +611,12 @@ export default function EbookEditorPage() {
         </button>
       )}
 
-      {error && <p className="text-sm text-red-500 mb-4">{error}</p>}
+      {error && (
+        <div className="text-sm text-red-500 mb-4">
+          <p>{error}</p>
+          {errorCode === 'insufficient_credits' && <RechargeCreditsButton className="mt-2" />}
+        </div>
+      )}
 
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2 text-xs font-semibold text-surface/50 uppercase tracking-wider">

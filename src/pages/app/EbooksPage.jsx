@@ -10,6 +10,7 @@ import DownloadMenu from '../../components/app/DownloadMenu';
 import { useConfirm } from '../../components/app/ConfirmDialog';
 import { useToast } from '../../components/app/Toast';
 import GradientBanner from '../../components/ui/GradientBanner';
+import RechargeCreditsButton from '../../components/app/RechargeCreditsButton';
 
 const ERROR_MESSAGES = {
   plan_required: "Le générateur d'ebook nécessite le plan Pro ou Entreprise.",
@@ -78,6 +79,7 @@ export default function EbooksPage() {
   const [generatingCover, setGeneratingCover] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState('');
+  const [errorCode, setErrorCode] = useState('');
   const [selectedIds, setSelectedIds] = useState(() => new Set());
   const [bulkBusy, setBulkBusy] = useState(false);
   const confirm = useConfirm();
@@ -103,6 +105,7 @@ export default function EbooksPage() {
     if (!title.trim() || generatingCover) return;
     setGeneratingCover(true);
     setError('');
+    setErrorCode('');
     try {
       const [image] = await generateImages({
         prompt: `Couverture d'ebook : "${title.trim()}".${description.trim() ? ` Sujet : ${description.trim().slice(0, 200)}` : ''}`,
@@ -112,8 +115,12 @@ export default function EbooksPage() {
       });
       setCoverUrl(image.url);
       setCoverIsGenerated(true);
+      toast.success('Couverture générée avec succès.');
     } catch (err) {
-      setError(ERROR_MESSAGES[err.message] || ERROR_MESSAGES.server_error);
+      const message = ERROR_MESSAGES[err.message] || ERROR_MESSAGES.server_error;
+      setError(message);
+      setErrorCode(err.message);
+      toast.error(message);
     }
     setGeneratingCover(false);
   };
@@ -123,6 +130,7 @@ export default function EbooksPage() {
     if (!title.trim() || !description.trim() || generating) return;
     setGenerating(true);
     setError('');
+    setErrorCode('');
     try {
       const { ebook } = await generateOutline({
         title: title.trim(),
@@ -142,9 +150,13 @@ export default function EbooksPage() {
         coverImageUrl: coverUrl || undefined,
         coverIsGenerated: coverUrl ? coverIsGenerated : undefined,
       });
+      toast.success('Ebook généré avec succès.');
       navigate(`/app/ebooks/${ebook.id}`);
     } catch (err) {
-      setError(ERROR_MESSAGES[err.message] || ERROR_MESSAGES.server_error);
+      const message = ERROR_MESSAGES[err.message] || ERROR_MESSAGES.server_error;
+      setError(message);
+      setErrorCode(err.message);
+      toast.error(message);
     }
     setGenerating(false);
   };
@@ -404,7 +416,12 @@ export default function EbooksPage() {
           <p className="text-xs text-surface/40">
             Le sommaire est toujours proposé en français ; seul le contenu rédigé suit la langue choisie ci-dessus.
           </p>
-          {error && <p className="text-sm text-red-500">{error}</p>}
+          {error && (
+            <div className="text-sm text-red-500">
+              <p>{error}</p>
+              {errorCode === 'insufficient_credits' && <RechargeCreditsButton className="mt-2" />}
+            </div>
+          )}
           <button
             type="submit"
             disabled={!title.trim() || !description.trim() || generating}

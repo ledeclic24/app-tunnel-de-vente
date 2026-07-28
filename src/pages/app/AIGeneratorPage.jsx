@@ -8,6 +8,8 @@ import { generateTunnelWithAI } from '../../lib/aiApi';
 import { fetchCreditsBalance } from '../../lib/creditsApi';
 import { createFunnelFromAI } from '../../lib/funnelsApi';
 import MultiImageUpload from '../../components/app/MultiImageUpload';
+import { useToast } from '../../components/app/Toast';
+import RechargeCreditsButton from '../../components/app/RechargeCreditsButton';
 
 const ERROR_MESSAGES = {
   plan_required: "La génération par IA nécessite le plan Pro ou Entreprise.",
@@ -61,8 +63,10 @@ export default function AIGeneratorPage() {
   const [input, setInput] = useState('');
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState('');
+  const [errorCode, setErrorCode] = useState('');
   const [saving, setSaving] = useState(false);
   const scrollRef = useRef(null);
+  const toast = useToast();
 
   useEffect(() => {
     if (effectiveOwnerId && plan.aiAccess) fetchCreditsBalance().then(setCredits).catch(() => {});
@@ -121,6 +125,7 @@ export default function AIGeneratorPage() {
   const runGeneration = async (nextBrief) => {
     setGenerating(true);
     setError('');
+    setErrorCode('');
     try {
       const generatedFunnel = await generateTunnelWithAI({
         description: nextBrief,
@@ -142,9 +147,13 @@ export default function AIGeneratorPage() {
           text: `C'est fait — ${stepCount} étape${stepCount > 1 ? 's' : ''} générée${stepCount > 1 ? 's' : ''}${effectivePrice ? `, avec le prix ${effectivePrice} repris tel quel` : ''}. Vous pouvez ouvrir le tunnel pour le voir, ou m'écrire ce que vous voulez ajuster (ex. « rends le titre plus percutant »).`,
         },
       ]);
+      toast.success('Tunnel généré avec succès.');
     } catch (err) {
-      setError(ERROR_MESSAGES[err.message] || ERROR_MESSAGES.server_error);
-      setMessages((prev) => [...prev, { role: 'assistant', text: "Je n'ai pas réussi à générer le tunnel. " + (ERROR_MESSAGES[err.message] || ERROR_MESSAGES.server_error) }]);
+      const message = ERROR_MESSAGES[err.message] || ERROR_MESSAGES.server_error;
+      setError(message);
+      setErrorCode(err.message);
+      setMessages((prev) => [...prev, { role: 'assistant', text: "Je n'ai pas réussi à générer le tunnel. " + message }]);
+      toast.error(message);
     }
     setGenerating(false);
   };
@@ -212,31 +221,6 @@ export default function AIGeneratorPage() {
           placeholder="Ex : Lancement de mon ebook"
           className="w-full bg-primary/5 border border-surface/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-accent transition-colors text-surface"
         />
-      </div>
-
-      <div ref={scrollRef} className="bg-background border border-surface/10 rounded-[2rem] p-4 md:p-6 space-y-3 max-h-[420px] overflow-y-auto mb-4">
-        {messages.map((m, i) => <Bubble key={i} role={m.role}>{m.text}</Bubble>)}
-        {generating && (
-          <Bubble role="assistant">
-            <span className="inline-flex items-center gap-2 text-surface/60">
-              <span className="w-3.5 h-3.5 border-2 border-surface/20 border-t-accent rounded-full animate-spin" /> Génération en cours…
-            </span>
-          </Bubble>
-        )}
-        {draftFunnel && !generating && (
-          <div className="flex justify-start">
-            <button
-              onClick={handleOpenInEditor}
-              disabled={saving || !name.trim()}
-              className="magnetic-btn inline-flex items-center gap-2 bg-accent text-background px-4 py-2.5 rounded-full text-sm font-semibold disabled:opacity-50"
-            >
-              {saving ? 'Ouverture...' : 'Ouvrir dans l\'éditeur'} <ArrowRight className="w-3.5 h-3.5" />
-            </button>
-          </div>
-        )}
-        {draftFunnel && !name.trim() && !generating && (
-          <p className="text-xs text-red-500">Ajoutez un nom au tunnel ci-dessus pour pouvoir l'ouvrir dans l'éditeur.</p>
-        )}
       </div>
 
       <button
@@ -374,8 +358,18 @@ export default function AIGeneratorPage() {
         </div>
       )}
 
-      {error && <p className="text-sm text-red-500 mb-3">{error}</p>}
-      {atLimit && <p className="text-sm text-red-500 mb-3">{ERROR_MESSAGES.insufficient_credits}</p>}
+      {error && (
+        <div className="text-sm text-red-500 mb-3">
+          <p>{error}</p>
+          {errorCode === 'insufficient_credits' && <RechargeCreditsButton className="mt-2" />}
+        </div>
+      )}
+      {atLimit && (
+        <div className="text-sm text-red-500 mb-3">
+          <p>{ERROR_MESSAGES.insufficient_credits}</p>
+          <RechargeCreditsButton className="mt-2" />
+        </div>
+      )}
       {!name.trim() && <p className="text-xs text-surface/40 mb-3">Ajoutez un nom au tunnel ci-dessus avant de discuter avec le copilote.</p>}
       {name.trim() && priceMissing && (
         <p className="text-xs text-red-500 mb-3">
@@ -383,23 +377,54 @@ export default function AIGeneratorPage() {
         </p>
       )}
 
-      <form onSubmit={handleSend} className="flex items-center gap-3">
-        <input
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder={draftFunnel ? "Ex : rends le titre plus percutant" : "Ex : Je vends un ebook à 19 000 FCFA qui apprend aux débutants à cuisiner en 15 minutes..."}
-          disabled={generating || atLimit || !name.trim() || priceMissing}
-          className="flex-1 bg-background border border-surface/10 rounded-full px-5 py-3.5 text-sm focus:outline-none focus:border-accent transition-colors text-surface disabled:opacity-50"
-        />
-        <button
-          type="submit"
-          disabled={!input.trim() || generating || atLimit || !name.trim() || priceMissing}
-          className="magnetic-btn shrink-0 flex items-center justify-center gap-2 gradient-accent text-background w-12 h-12 rounded-full disabled:opacity-50"
-          aria-label="Envoyer"
-        >
-          <Wand2 className="w-4 h-4" />
-        </button>
-      </form>
+      {/* Fil de discussion et champ de saisie réunis dans une seule carte :
+          la barre de saisie est le composer de CE chat, pas un formulaire
+          séparé — rien (réglages, erreurs) ne doit plus s'intercaler entre
+          les deux. */}
+      <div className="bg-background border border-surface/10 rounded-[2rem] overflow-hidden mb-4">
+        <div ref={scrollRef} className="p-4 md:p-6 space-y-3 max-h-[420px] overflow-y-auto">
+          {messages.map((m, i) => <Bubble key={i} role={m.role}>{m.text}</Bubble>)}
+          {generating && (
+            <Bubble role="assistant">
+              <span className="inline-flex items-center gap-2 text-surface/60">
+                <span className="w-3.5 h-3.5 border-2 border-surface/20 border-t-accent rounded-full animate-spin" /> Génération en cours…
+              </span>
+            </Bubble>
+          )}
+          {draftFunnel && !generating && (
+            <div className="flex justify-start">
+              <button
+                onClick={handleOpenInEditor}
+                disabled={saving || !name.trim()}
+                className="magnetic-btn inline-flex items-center gap-2 bg-accent text-background px-4 py-2.5 rounded-full text-sm font-semibold disabled:opacity-50"
+              >
+                {saving ? 'Ouverture...' : 'Ouvrir dans l\'éditeur'} <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          )}
+          {draftFunnel && !name.trim() && !generating && (
+            <p className="text-xs text-red-500">Ajoutez un nom au tunnel ci-dessus pour pouvoir l'ouvrir dans l'éditeur.</p>
+          )}
+        </div>
+
+        <form onSubmit={handleSend} className="flex items-center gap-3 border-t border-surface/10 p-3 md:p-4">
+          <input
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder={draftFunnel ? "Ex : rends le titre plus percutant" : "Ex : Je vends un ebook à 19 000 FCFA qui apprend aux débutants à cuisiner en 15 minutes..."}
+            disabled={generating || atLimit || !name.trim() || priceMissing}
+            className="flex-1 bg-primary/5 border border-surface/10 rounded-full px-5 py-3.5 text-sm focus:outline-none focus:border-accent transition-colors text-surface disabled:opacity-50"
+          />
+          <button
+            type="submit"
+            disabled={!input.trim() || generating || atLimit || !name.trim() || priceMissing}
+            className="magnetic-btn shrink-0 flex items-center justify-center gap-2 gradient-accent text-background w-12 h-12 rounded-full disabled:opacity-50"
+            aria-label="Envoyer"
+          >
+            <Wand2 className="w-4 h-4" />
+          </button>
+        </form>
+      </div>
     </div>
   );
 }
