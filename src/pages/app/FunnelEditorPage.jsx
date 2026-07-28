@@ -375,9 +375,13 @@ export default function FunnelEditorPage() {
         ? await publishFunnel(funnelId)
         : await unpublishFunnel(funnelId);
       setFunnel((f) => ({ ...f, ...updated }));
-    } catch {
+    } catch (err) {
+      // Le backend refuse maintenant de publier une offre payante sans
+      // moyen de paiement rattaché, avec un message précis identifiant
+      // l'offre concernée (voir FunnelsService.publish) — on l'affiche tel
+      // quel plutôt qu'un message générique.
       setActionError(
-        needsPublish ? 'La publication a échoué. Réessaie.' : 'La dépublication a échoué. Réessaie.',
+        err.message || (needsPublish ? 'La publication a échoué. Réessaie.' : 'La dépublication a échoué. Réessaie.'),
       );
     }
   };

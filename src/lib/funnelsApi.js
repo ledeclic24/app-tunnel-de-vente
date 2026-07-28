@@ -153,8 +153,13 @@ export async function unpublishFunnel(funnelId) {
 // Utilisé exclusivement par PublishedFunnelPage.jsx (visiteurs publics) :
 // renvoie {id,name,slug,brand,show_branding,seo*,steps:[{...,blocks}]} déjà
 // figé au dernier "Publier" — jamais les tables live steps/blocks.
-export async function fetchPublishedSnapshot(slug) {
-  const data = await apiGet(`/funnels/public/${encodeURIComponent(slug)}`);
+// paidLeadId : preuve de paiement pour débloquer le contenu des étapes
+// protégées (voir gated ci-dessous) — le serveur, pas juste l'affichage,
+// vide le contenu de ces étapes sans une preuve valide (voir
+// FunnelsService.getPublicSnapshot).
+export async function fetchPublishedSnapshot(slug, paidLeadId) {
+  const query = paidLeadId ? `?paid=${encodeURIComponent(paidLeadId)}` : '';
+  const data = await apiGet(`/funnels/public/${encodeURIComponent(slug)}${query}`);
   return {
     id: data.id,
     name: data.name,
@@ -171,6 +176,7 @@ export async function fetchPublishedSnapshot(slug) {
       slug: s.slug,
       step_type: s.stepType,
       chrome: s.chrome || {},
+      gated: Boolean(s.gated),
       blocks: s.blocks || [],
     })),
   };

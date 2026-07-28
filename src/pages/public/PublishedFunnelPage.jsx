@@ -6,6 +6,7 @@ import { createMonerooCheckout } from '../../lib/checkoutApi';
 import { brandStyleVars } from '../../lib/colorUtils';
 import { resolveStickyFooterPrice } from '../../lib/currency';
 import { getExitIntentState } from '../../lib/exitIntentDiscount';
+import { getPaidProof, setPaidProof } from '../../lib/paymentProof';
 import BlockRenderer from '../../components/blocks/BlockRenderer';
 import CountdownBar from '../../components/public/CountdownBar';
 import PurchaseNotification from '../../components/public/PurchaseNotification';
@@ -119,7 +120,7 @@ export default function PublishedFunnelPage({ funnelSlugOverride } = {}) {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const snapshot = await fetchPublishedSnapshot(funnelSlug);
+      const snapshot = await fetchPublishedSnapshot(funnelSlug, getPaidProof(funnelSlug));
       const s = snapshot.steps;
       const currentStep = stepSlug ? s.find((st) => st.slug === stepSlug) : s[0];
       if (!currentStep) { setNotFound(true); setLoading(false); return; }
@@ -177,6 +178,10 @@ export default function PublishedFunnelPage({ funnelSlugOverride } = {}) {
       try {
         const { paymentStatus: status } = await fetchLeadStatus(leadId);
         if (status === 'paid') {
+          // Verrouillé AVANT handleAdvance() : la prochaine étape (souvent
+          // protégée, voir gated) doit pouvoir charger son contenu réel dès
+          // sa toute première requête, pas seulement après un second essai.
+          setPaidProof(funnelSlug, leadId);
           setPaymentStatus('paid');
           setTimeout(() => {
             setPaymentStatus(null);
@@ -242,6 +247,30 @@ export default function PublishedFunnelPage({ funnelSlugOverride } = {}) {
         <h1 className="text-2xl font-sans font-bold text-surface mb-2">Cette page n'existe pas</h1>
         <p className="text-surface/60 mb-6">Le tunnel demandé est introuvable ou n'est plus publié.</p>
         <Link to="/" className="text-accent font-semibold hover:underline">Retour à l'accueil</Link>
+      </div>
+    );
+  }
+
+  // Le serveur a déjà vidé le contenu de cette étape faute de preuve de
+  // paiement valide (voir FunnelsService.getPublicSnapshot) — ce n'est donc
+  // jamais contournable en lisant la réponse réseau, contrairement à un
+  // simple masquage côté client. On retrouve l'étape de paiement la plus
+  // proche en amont pour y renvoyer le visiteur.
+  if (currentStep?.gated && blocks.length === 0) {
+    const paymentStepIdx = steps.findIndex((s) => s.id === currentStep.id) - 1;
+    const paymentStep = paymentStepIdx >= 0 ? steps[paymentStepIdx] : null;
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center text-center p-6">
+        <h1 className="text-2xl font-sans font-bold text-surface mb-2">Cette page est réservée</h1>
+        <p className="text-surface/60 mb-6 max-w-sm">Elle n'est accessible qu'après un paiement confirmé.</p>
+        {paymentStep && (
+          <button
+            onClick={() => handleNavigateToStep(paymentStep.slug)}
+            className="magnetic-btn bg-accent text-background px-6 py-3 rounded-full text-sm font-semibold"
+          >
+            Retourner à l'offre
+          </button>
+        )}
       </div>
     );
   }
