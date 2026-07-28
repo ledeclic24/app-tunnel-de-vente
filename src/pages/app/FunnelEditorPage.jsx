@@ -26,7 +26,7 @@ import { resolveStickyFooterPrice } from '../../lib/currency';
 import { fetchReusableBlocks, saveReusableBlock, deleteReusableBlock, incrementReusableBlockUsage } from '../../lib/growthApi';
 import { useConfirm } from '../../components/app/ConfirmDialog';
 import { useToast } from '../../components/app/Toast';
-import { editFunnelWithAI, regenerateBlockWithAI, generateBlockImageWithAI, improveElementWithAI } from '../../lib/aiApi';
+import { editFunnelWithAI, regenerateBlockWithAI, generateBlockImageWithAI, regenerateSignatureVisualWithAI, improveElementWithAI } from '../../lib/aiApi';
 import BlockRenderer from '../../components/blocks/BlockRenderer';
 import BlockEditorPanel from '../../components/blocks/BlockEditorPanel';
 import ElementStylePanel from '../../components/blocks/ElementStylePanel';
@@ -76,7 +76,7 @@ const IMAGE_ERROR_MESSAGES = {
 const BlockCard = React.memo(function BlockCard({
   block, onDelete, onDuplicate, isExpanded, onToggle, onChange, userId, selectedElement, onSelectElement,
   dragHandleProps, onSaveToLibrary, canUseLibrary, onToggleLock, onRegenerate, canRegenerate, isRegenerating,
-  onGenerateImage, isGeneratingImage, defaultBg, siblingSteps, currency,
+  onGenerateImage, isGeneratingImage, onRegenerateSignatureVisual, isGeneratingSignatureVisual, defaultBg, siblingSteps, currency,
 }) {
   const def = BLOCK_TYPES.find((b) => b.type === block.type);
   const Icon = def?.icon;
@@ -161,6 +161,8 @@ const BlockCard = React.memo(function BlockCard({
           siblingSteps={siblingSteps}
           onGenerateImage={onGenerateImage}
           isGeneratingImage={isGeneratingImage}
+          onRegenerateSignatureVisual={onRegenerateSignatureVisual}
+          isGeneratingSignatureVisual={isGeneratingSignatureVisual}
         />
       </div>
 
@@ -246,6 +248,7 @@ export default function FunnelEditorPage() {
   const [aiGenerating, setAiGenerating] = useState(false);
   const [regeneratingBlockId, setRegeneratingBlockId] = useState(null);
   const [imageGeneratingBlockId, setImageGeneratingBlockId] = useState(null);
+  const [signatureVisualGeneratingBlockId, setSignatureVisualGeneratingBlockId] = useState(null);
   const [improvingElementKey, setImprovingElementKey] = useState(null);
   const [leadsCount, setLeadsCount] = useState(0);
   const [nameDraft, setNameDraft] = useState('');
@@ -541,6 +544,21 @@ export default function FunnelEditorPage() {
     }
     setImageGeneratingBlockId(null);
   }, [imageGeneratingBlockId, applyBlocks, pushHistory]);
+
+  const handleRegenerateSignatureVisual = useCallback(async (blockId) => {
+    if (signatureVisualGeneratingBlockId) return;
+    setSignatureVisualGeneratingBlockId(blockId);
+    setActionError('');
+    try {
+      const updated = await regenerateSignatureVisualWithAI(blockId);
+      const next = blocksRef.current.map((b) => (b.id === blockId ? { ...b, content: updated.content } : b));
+      applyBlocks(next);
+      pushHistory(next);
+    } catch (err) {
+      setActionError(AI_ERROR_MESSAGES[err.message] || AI_ERROR_MESSAGES.server_error);
+    }
+    setSignatureVisualGeneratingBlockId(null);
+  }, [signatureVisualGeneratingBlockId, applyBlocks, pushHistory]);
 
   // Références stables (jamais recréées) passées telles quelles à chaque
   // BlockCard — condition nécessaire pour que React.memo les laisse
@@ -1064,6 +1082,8 @@ export default function FunnelEditorPage() {
                   isRegenerating={regeneratingBlockId === block.id}
                   onGenerateImage={plan.aiAccess ? handleGenerateBlockImage : undefined}
                   isGeneratingImage={imageGeneratingBlockId === block.id}
+                  onRegenerateSignatureVisual={plan.aiAccess ? handleRegenerateSignatureVisual : undefined}
+                  isGeneratingSignatureVisual={signatureVisualGeneratingBlockId === block.id}
                   currency={effectiveProfile?.currency || 'XOF'}
                 />
               ))}

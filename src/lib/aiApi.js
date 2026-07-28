@@ -25,6 +25,11 @@ export async function generateBlockImageWithAI(blockId, imageType) {
   return block;
 }
 
+export async function regenerateSignatureVisualWithAI(blockId) {
+  const { block } = await apiPost(`/ai/blocks/${blockId}/regenerate-signature-visual`, {});
+  return block;
+}
+
 export async function fetchAIUsageThisMonth(_userId) {
   const { count } = await apiGet('/ai/usage');
   return count || 0;

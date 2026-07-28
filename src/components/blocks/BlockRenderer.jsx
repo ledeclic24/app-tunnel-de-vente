@@ -45,13 +45,14 @@ const COMPONENTS = {
 
 export default function BlockRenderer({
   block, onAdvance, onSubmitLead, onMonerooCheckout, editMode, selectedElement, onSelectElement, onContentChange, userId, defaultBg,
-  siblingSteps, onNavigateToStep, currentStepSlug, onGenerateImage, isGeneratingImage, currency, discountPercent,
+  siblingSteps, onNavigateToStep, currentStepSlug, onGenerateImage, isGeneratingImage, onRegenerateSignatureVisual, isGeneratingSignatureVisual, currency, discountPercent,
 }) {
   const Component = COMPONENTS[block.type];
   // Reçu depuis FunnelEditorPage lié à un blockId générique ; on le relie ici
   // à CE bloc précis pour que HeroBlock/ImageBlock puissent l'appeler
   // directement au clic sur l'image, sans connaître leur propre id.
   const generateImage = onGenerateImage ? (imageType) => onGenerateImage(block.id, imageType) : undefined;
+  const regenerateSignatureVisual = onRegenerateSignatureVisual ? () => onRegenerateSignatureVisual(block.id) : undefined;
   const reveal = useScrollReveal(editMode);
   if (!Component) return null;
   const sectionProps = getEditableProps({
@@ -95,6 +96,8 @@ export default function BlockRenderer({
           currentStepSlug={currentStepSlug}
           onGenerateImage={generateImage}
           imageGenerating={isGeneratingImage}
+          onRegenerateSignatureVisual={regenerateSignatureVisual}
+          signatureVisualGenerating={isGeneratingSignatureVisual}
         />
       </div>
     </>

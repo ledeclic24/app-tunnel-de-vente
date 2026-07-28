@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react';
 import {
-  ArrowRight, ImagePlus, Upload, Image as LibraryIcon, Wand2, Sparkles,
+  ArrowRight, ImagePlus, Upload, Image as LibraryIcon, Wand2, Sparkles, RefreshCw,
   TrendingUp, PiggyBank, GraduationCap, BookOpen, Dumbbell, HeartPulse,
   Brain, Rocket, Palette, Code, Camera, UtensilsCrossed, Briefcase, Home,
   Leaf, Target, Zap, Trophy, ShoppingBag, Users, Clock, Shield, Star,
@@ -30,13 +30,33 @@ export const HERO_SIGNATURE_ICONS = {
   languages: Languages, flower: Flower2,
 };
 
+// Rendu du visuel signature généré par IA (voir heroSignatureSvg dans le
+// schéma de génération, AiService/svg-sanitizer.util.ts) — SEUL endroit du
+// frontend qui utilise dangerouslySetInnerHTML pour du contenu produit par
+// l'IA : sûr uniquement parce que la chaîne a déjà été nettoyée côté
+// serveur à DEUX endroits (génération IA et sauvegarde de bloc, voir
+// BlocksService), jamais fait confiance telle quelle ailleurs. Le SVG généré
+// n'a volontairement pas de couleur codée en dur (consigne du prompt IA) :
+// il hérite de "currentColor" via la classe text-accent posée ici, exactement
+// comme les icônes Lucide ci-dessous.
+function SignatureVisualSvg({ svg, className }) {
+  return (
+    <div
+      className={`${className} [&>svg]:w-full [&>svg]:h-full`}
+      // eslint-disable-next-line react/no-danger -- voir commentaire ci-dessus
+      dangerouslySetInnerHTML={{ __html: svg }}
+    />
+  );
+}
+
 // Visuel de repli quand aucune image n'est fournie (auto-génération IA
 // indisponible, ou tunnel encore sans photo) : une composition en couches
 // (halos animés + cadre accent) plutôt qu'un espace vide ou un simple
 // pictogramme centré, pour garder autant de présence visuelle qu'une photo.
-// L'icône elle-même varie selon heroIcon (élément signature propre à
-// l'offre) au lieu d'un Sparkles identique partout.
-function HeroVisualPlaceholder({ variant, icon }) {
+// Le pictogramme lui-même est soit le visuel signature généré par IA pour
+// CETTE offre précise (signatureSvg), soit à défaut une icône Lucide
+// générique choisie selon heroIcon.
+function HeroVisualPlaceholder({ variant, icon, signatureSvg }) {
   const Icon = HERO_SIGNATURE_ICONS[icon] || Sparkles;
   if (variant === 'overlay') {
     return (
@@ -44,7 +64,7 @@ function HeroVisualPlaceholder({ variant, icon }) {
         <div className="ambient-pulse absolute -top-20 -right-20 w-72 h-72 rounded-full bg-accent/10 blur-3xl" />
         <div className="ambient-pulse absolute -bottom-24 -left-24 w-64 h-64 rounded-full bg-accent/10 blur-3xl" style={{ animationDelay: '2s' }} />
         <div className="signature-icon-float absolute bottom-10 right-10 neon-border w-20 h-20 rounded-2xl bg-background/5 backdrop-blur-sm flex items-center justify-center">
-          <Icon className="w-8 h-8 text-accent" />
+          {signatureSvg ? <SignatureVisualSvg svg={signatureSvg} className="w-8 h-8 text-accent" /> : <Icon className="w-8 h-8 text-accent" />}
         </div>
       </div>
     );
@@ -54,7 +74,7 @@ function HeroVisualPlaceholder({ variant, icon }) {
       <div className="ambient-pulse absolute w-56 h-56 rounded-full bg-accent/20 blur-3xl" />
       <div className="ambient-pulse absolute w-36 h-36 rounded-full bg-accent/30 blur-2xl" style={{ animationDelay: '1.5s' }} />
       <div className="signature-icon-float neon-border relative w-28 h-28 rounded-3xl bg-background/5 backdrop-blur-sm flex items-center justify-center">
-        <Icon className="w-9 h-9 text-accent" />
+        {signatureSvg ? <SignatureVisualSvg svg={signatureSvg} className="w-9 h-9 text-accent" /> : <Icon className="w-9 h-9 text-accent" />}
       </div>
     </div>
   );
@@ -84,8 +104,8 @@ function isSlotsValid(slots, hasTrustBadges) {
   return expected.every((f) => fieldSlots.includes(f)) && fieldSlots.length === expected.length;
 }
 
-export default function HeroBlock({ content, onAdvance, editMode, selectedElement, onSelectElement, onContentChange, userId, onGenerateImage, imageGenerating }) {
-  const { eyebrow, heading, subheading, imageUrl, ctaText, externalUrl, layout, trustBadges = [], slots, heroIcon } = content;
+export default function HeroBlock({ content, onAdvance, editMode, selectedElement, onSelectElement, onContentChange, userId, onGenerateImage, imageGenerating, onRegenerateSignatureVisual, signatureVisualGenerating }) {
+  const { eyebrow, heading, subheading, imageUrl, ctaText, externalUrl, layout, trustBadges = [], slots, heroIcon, heroSignatureSvg } = content;
   const isSplit = layout === 'split';
   // Hero est toujours sombre (bg-primary), quelle que soit sa position —
   // pas de calcul via getSectionBackground ici, donc un objet "bg" de
@@ -191,6 +211,19 @@ export default function HeroBlock({ content, onAdvance, editMode, selectedElemen
               <Wand2 className="w-4 h-4 shrink-0" /> {imageGenerating ? 'Génération...' : "Générer avec l'IA"}
             </button>
           )}
+          {onRegenerateSignatureVisual && (
+            <button
+              type="button"
+              // Distinct de "Générer avec l'IA" ci-dessus (qui vise la photo
+              // de fond) : régénère uniquement le pictogramme de repli affiché
+              // tant qu'aucune image n'est présente, voir HeroVisualPlaceholder.
+              onClick={() => { setShowMenu(false); onRegenerateSignatureVisual(); }}
+              disabled={signatureVisualGenerating}
+              className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-surface/80 hover:bg-primary/5 hover:text-accent text-left disabled:opacity-50"
+            >
+              <RefreshCw className={`w-4 h-4 shrink-0 ${signatureVisualGenerating ? 'animate-spin' : ''}`} /> {signatureVisualGenerating ? 'Génération...' : 'Régénérer le visuel signature'}
+            </button>
+          )}
         </div>
       )}
       {showTypeMenu && (
@@ -283,7 +316,7 @@ export default function HeroBlock({ content, onAdvance, editMode, selectedElemen
               />
             ) : (
               <>
-                <HeroVisualPlaceholder variant="split" icon={heroIcon} />
+                <HeroVisualPlaceholder variant="split" icon={heroIcon} signatureSvg={heroSignatureSvg} />
                 {editMode && (
                   <button type="button" onClick={handleImageClick} className="absolute inset-0 z-10 flex items-center justify-center text-background/50 text-sm bg-primary/40">
                     <ImagePlus className="w-5 h-5 mr-2" /> {uploading ? 'Import...' : 'Ajouter une image'}
@@ -335,7 +368,7 @@ export default function HeroBlock({ content, onAdvance, editMode, selectedElemen
         </div>
       ) : (
         <div className="absolute inset-0 group/img">
-          <HeroVisualPlaceholder variant="overlay" icon={heroIcon} />
+          <HeroVisualPlaceholder variant="overlay" icon={heroIcon} signatureSvg={heroSignatureSvg} />
           {editMode && (
             <button
               type="button"
