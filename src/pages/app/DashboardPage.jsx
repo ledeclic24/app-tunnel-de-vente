@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import {
   Plus, ExternalLink, Pencil, Trash2, Rocket, Mail, Eye, Layers, CheckCircle2, Circle, LayoutDashboard, Wallet,
-  MoreHorizontal, EyeOff, Copy, Store,
+  MoreHorizontal, EyeOff, Copy, Store, Search,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import {
@@ -21,6 +21,7 @@ import SortMenu from '../../components/app/SortMenu';
 import DateRangeFilter, { resolveDateRange, filterByDateRange } from '../../components/app/DateRangeFilter';
 import PublishTemplateModal from '../../components/app/PublishTemplateModal';
 import FunnelPreviewModal from '../../components/app/FunnelPreviewModal';
+import NouveautesBanner from '../../components/app/NouveautesBanner';
 
 const SORT_OPTIONS = [
   { value: 'created_desc', label: 'Création (récent)' },
@@ -268,12 +269,19 @@ export default function DashboardPage() {
   const [totalViews, setTotalViews] = useState(0);
   const [revenue30d, setRevenue30d] = useState([]);
   const [error, setError] = useState('');
-  const [sortBy, setSortBy] = useState('created_desc');
-  const [datePreset, setDatePreset] = useState('all');
-  const [customStart, setCustomStart] = useState('');
-  const [customEnd, setCustomEnd] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
+  // Filtres persistés dans l'URL (?q=&sort=&date=&from=&to=&category=&status=)
+  // plutôt qu'en simple état local : un lien copié ou un retour en arrière
+  // navigateur retrouve exactement la même vue, au lieu de tout réinitialiser
+  // silencieusement. Valeurs par défaut jamais écrites dans l'URL (gardée
+  // propre) — voir l'effet de synchronisation plus bas.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [search, setSearch] = useState(() => searchParams.get('q') || '');
+  const [sortBy, setSortBy] = useState(() => searchParams.get('sort') || 'created_desc');
+  const [datePreset, setDatePreset] = useState(() => searchParams.get('date') || 'all');
+  const [customStart, setCustomStart] = useState(() => searchParams.get('from') || '');
+  const [customEnd, setCustomEnd] = useState(() => searchParams.get('to') || '');
+  const [categoryFilter, setCategoryFilter] = useState(() => searchParams.get('category') || '');
+  const [statusFilter, setStatusFilter] = useState(() => searchParams.get('status') || 'all');
   const [busyId, setBusyId] = useState(null);
   const [busyAction, setBusyAction] = useState(null);
   const [templateModalFunnel, setTemplateModalFunnel] = useState(null);
@@ -329,6 +337,19 @@ export default function DashboardPage() {
     if (effectiveOwnerId) load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [effectiveOwnerId]);
+
+  useEffect(() => {
+    const next = {};
+    if (search.trim()) next.q = search.trim();
+    if (sortBy !== 'created_desc') next.sort = sortBy;
+    if (datePreset !== 'all') next.date = datePreset;
+    if (customStart) next.from = customStart;
+    if (customEnd) next.to = customEnd;
+    if (categoryFilter) next.category = categoryFilter;
+    if (statusFilter !== 'all') next.status = statusFilter;
+    setSearchParams(next, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search, sortBy, datePreset, customStart, customEnd, categoryFilter, statusFilter]);
 
   const handleDelete = async (funnel) => {
     if (!(await confirm(`Supprimer le tunnel "${funnel.name}" ? Cette action est irréversible.`))) return;
@@ -427,6 +448,10 @@ export default function DashboardPage() {
 
   const dateRange = resolveDateRange(datePreset, customStart, customEnd);
   let visibleFunnels = funnels || [];
+  if (search.trim()) {
+    const q = search.trim().toLowerCase();
+    visibleFunnels = visibleFunnels.filter((f) => f.name.toLowerCase().includes(q));
+  }
   if (categoryFilter) visibleFunnels = visibleFunnels.filter((f) => f.category === categoryFilter);
   if (statusFilter !== 'all') visibleFunnels = visibleFunnels.filter((f) => (statusFilter === 'published' ? f.is_published : !f.is_published));
   visibleFunnels = filterByDateRange(visibleFunnels, 'created_at', dateRange);
@@ -466,6 +491,7 @@ export default function DashboardPage() {
         </div>
       )}
 
+      <NouveautesBanner profileId={profile?.id} />
       <OnboardingChecklist funnels={funnels} profileId={profile?.id} />
 
       {error && <p className="text-sm text-red-500 mb-4">{error}</p>}
@@ -488,6 +514,15 @@ export default function DashboardPage() {
           <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
             <h2 className="font-sans font-semibold text-surface">Tes tunnels</h2>
             <div className="flex flex-wrap items-center gap-2">
+              <div className="relative">
+                <Search className="w-3.5 h-3.5 text-surface/30 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <input
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Rechercher un tunnel..."
+                  className="bg-surface/5 border border-transparent rounded-full pl-8 pr-3 py-1.5 text-xs focus:outline-none focus:border-accent/30 transition-colors text-surface w-40 focus:w-52"
+                />
+              </div>
               <div className="flex items-center gap-1 bg-surface/5 rounded-full p-1">
                 {STATUS_OPTIONS.map((o) => (
                   <button

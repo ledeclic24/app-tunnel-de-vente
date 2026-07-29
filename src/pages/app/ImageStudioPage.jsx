@@ -5,7 +5,7 @@ import { ImageIcon, Lock, Sparkles, Copy, Check, Wand2, Download, Trash2, Refres
 import { useAuth } from '../../context/AuthContext';
 import { getPlan } from '../../lib/plans';
 import { generateImages, fetchImages, deleteImage, downloadImage, fetchImageBlob } from '../../lib/imagesApi';
-import { fetchCreditsBalance } from '../../lib/creditsApi';
+import { fetchCreditsBalance, fetchCreditCosts } from '../../lib/creditsApi';
 import { uploadImage } from '../../lib/storage';
 import { useConfirm } from '../../components/app/ConfirmDialog';
 import { useToast } from '../../components/app/Toast';
@@ -263,6 +263,7 @@ export default function ImageStudioPage() {
   const [transparent, setTransparent] = useState(false);
   const [images, setImages] = useState([]);
   const [credits, setCredits] = useState(null);
+  const [costs, setCosts] = useState(null);
   const [generating, setGenerating] = useState(false);
   const [regeneratingId, setRegeneratingId] = useState(null);
   const [downloadingId, setDownloadingId] = useState(null);
@@ -280,6 +281,7 @@ export default function ImageStudioPage() {
   useEffect(() => {
     if (COMING_SOON || !plan.imageGeneration) return;
     fetchCreditsBalance().then(setCredits).catch(() => {});
+    fetchCreditCosts().then(setCosts).catch(() => {});
     // Bibliothèque persistée : sans ça, la galerie repartait vide à chaque
     // visite alors que les images survivent bien côté serveur.
     fetchImages().then(setImages).catch(() => {});
@@ -456,7 +458,7 @@ export default function ImageStudioPage() {
       <GradientBanner
         icon={ImageIcon}
         title="Génère des images pour tes tunnels"
-        description={credits !== null ? `${credits.balance} crédit${credits.balance > 1 ? 's' : ''} IA disponible${credits.balance > 1 ? 's' : ''}` : undefined}
+        description={credits !== null ? `${credits.balance} crédit${credits.balance > 1 ? 's' : ''} IA disponible${credits.balance > 1 ? 's' : ''}${costs ? ` · ${costs.IMAGE_GENERATION} crédit(s) par image générée` : ''}` : undefined}
         actions={credits !== null && <Link to="/app/billing" className="text-background/80 text-sm font-semibold hover:underline">En acheter plus</Link>}
       />
 

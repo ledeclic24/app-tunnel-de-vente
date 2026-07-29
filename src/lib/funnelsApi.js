@@ -322,3 +322,9 @@ export async function setLeadRefunded(leadId, refunded) {
 export async function fetchFunnelStepsAnalytics(funnelId) {
   return apiGet(`/funnels/${funnelId}/analytics`);
 }
+
+// Taux d'acceptation des étapes upsell/downsell du tunnel — tableau vide
+// si le tunnel n'en a aucune (voir LeadsService.upsellAnalytics).
+export async function fetchUpsellAnalytics(funnelId) {
+  return apiGet(`/funnels/${funnelId}/upsell-analytics`);
+}

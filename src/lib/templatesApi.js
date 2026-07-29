@@ -14,6 +14,7 @@ function normalizeTemplate(t) {
     status: t.status,
     rejection_reason: t.rejectionReason,
     usage_count: t.usageCount,
+    featured: !!t.featured,
     created_at: t.createdAt,
   };
 }
@@ -68,5 +69,15 @@ export async function fetchPendingTemplates() {
 
 export async function reviewTemplate(id, { status, rejectionReason }) {
   const row = await apiPatch(`/admin/templates/${id}`, { status, rejectionReason });
+  return normalizeTemplate(row);
+}
+
+export async function fetchApprovedTemplatesForAdmin() {
+  const rows = await apiGet('/admin/templates/approved');
+  return rows.map(normalizeTemplate);
+}
+
+export async function setTemplateFeatured(id, featured) {
+  const row = await apiPatch(`/admin/templates/${id}/featured`, { featured });
   return normalizeTemplate(row);
 }

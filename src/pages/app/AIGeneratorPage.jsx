@@ -5,7 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 import { getPlan } from '../../lib/plans';
 import { CATEGORIES } from '../../lib/funnelTemplates';
 import { generateTunnelWithAI } from '../../lib/aiApi';
-import { fetchCreditsBalance } from '../../lib/creditsApi';
+import { fetchCreditsBalance, fetchCreditCosts } from '../../lib/creditsApi';
 import { createFunnelFromAI } from '../../lib/funnelsApi';
 import MultiImageUpload from '../../components/app/MultiImageUpload';
 import { useToast } from '../../components/app/Toast';
@@ -55,6 +55,7 @@ export default function AIGeneratorPage() {
   const [showOptions, setShowOptions] = useState(false);
 
   const [credits, setCredits] = useState(null);
+  const [costs, setCosts] = useState(null);
   const [messages, setMessages] = useState([
     { role: 'assistant', text: 'Décrivez votre offre (ce que vous vendez, le public visé, ce qui la rend unique) et je construis un tunnel complet — textes, pages et couleurs inclus.' },
   ]);
@@ -70,6 +71,7 @@ export default function AIGeneratorPage() {
 
   useEffect(() => {
     if (effectiveOwnerId && plan.aiAccess) fetchCreditsBalance().then(setCredits).catch(() => {});
+    if (plan.aiAccess) fetchCreditCosts().then(setCosts).catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [effectiveOwnerId]);
 
@@ -208,6 +210,7 @@ export default function AIGeneratorPage() {
         <p className="text-xs text-surface/40 mb-6 font-mono">
           {credits.balance} crédit{credits.balance > 1 ? 's' : ''} IA disponible{credits.balance > 1 ? 's' : ''}
           {' · '}<Link to="/app/billing" className="underline hover:text-surface/70">en acheter plus</Link>
+          {costs && <> · Génération : {costs.TUNNEL_GENERATION} crédits, modification : {costs.TUNNEL_EDIT} crédits</>}
         </p>
       ) : (
         <div className="mb-6" />

@@ -27,6 +27,7 @@ import { fetchReusableBlocks, saveReusableBlock, deleteReusableBlock, incrementR
 import { useConfirm } from '../../components/app/ConfirmDialog';
 import { useToast } from '../../components/app/Toast';
 import RechargeCreditsButton from '../../components/app/RechargeCreditsButton';
+import { fetchCreditCosts } from '../../lib/creditsApi';
 import Spinner from '../../components/app/Spinner';
 import { useClickOutside } from '../../lib/useClickOutside';
 import { editFunnelWithAI, regenerateBlockWithAI, generateBlockImageWithAI, regenerateSignatureVisualWithAI, improveElementWithAI } from '../../lib/aiApi';
@@ -78,7 +79,7 @@ const IMAGE_ERROR_MESSAGES = {
 
 const BlockCard = React.memo(function BlockCard({
   block, onDelete, onDuplicate, isExpanded, onToggle, onChange, userId, selectedElement, onSelectElement,
-  dragHandleProps, onSaveToLibrary, canUseLibrary, onToggleLock, onRegenerate, canRegenerate, isRegenerating,
+  dragHandleProps, onSaveToLibrary, canUseLibrary, onToggleLock, onRegenerate, canRegenerate, isRegenerating, regenerateCost,
   onGenerateImage, isGeneratingImage, onRegenerateSignatureVisual, isGeneratingSignatureVisual, defaultBg, siblingSteps, currency,
 }) {
   const def = BLOCK_TYPES.find((b) => b.type === block.type);
@@ -113,7 +114,7 @@ const BlockCard = React.memo(function BlockCard({
               disabled={isRegenerating}
               className="p-1.5 rounded-lg text-surface/40 hover:text-accent disabled:opacity-50"
               aria-label="Régénérer ce bloc avec l'IA"
-              title="Régénérer ce bloc avec l'IA"
+              title={regenerateCost ? `Régénérer ce bloc avec l'IA (${regenerateCost} crédits)` : "Régénérer ce bloc avec l'IA"}
             >
               {isRegenerating ? (
                 <span className="block w-4 h-4 border-2 border-surface/20 border-t-accent rounded-full animate-spin" />
@@ -267,6 +268,12 @@ export default function FunnelEditorPage() {
   const [libraryBlocks, setLibraryBlocks] = useState([]);
   const [libraryLoading, setLibraryLoading] = useState(false);
   const [libraryError, setLibraryError] = useState('');
+  const [creditCosts, setCreditCosts] = useState(null);
+
+  useEffect(() => {
+    if (plan.aiAccess) fetchCreditCosts().then(setCreditCosts).catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const [historyState, setHistoryState] = useState({ stack: [], index: -1 });
   const confirm = useConfirm();
   const toast = useToast();
@@ -1193,6 +1200,7 @@ export default function FunnelEditorPage() {
                   onToggleLock={handleToggleLock}
                   onRegenerate={handleRegenerateBlock}
                   canRegenerate={plan.aiAccess}
+                  regenerateCost={creditCosts?.BLOCK_REGENERATION}
                   isRegenerating={regeneratingBlockId === block.id}
                   onGenerateImage={plan.aiAccess ? handleGenerateBlockImage : undefined}
                   isGeneratingImage={imageGeneratingBlockId === block.id}

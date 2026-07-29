@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Store, ArrowRight } from 'lucide-react';
+import { Store, ArrowRight, Star } from 'lucide-react';
 import { fetchTemplates, cloneTemplate } from '../../lib/templatesApi';
 import { CATEGORIES, getCategory } from '../../lib/funnelTemplates';
 import { useAuth } from '../../context/AuthContext';
@@ -111,9 +111,14 @@ export default function TemplatesMarketplacePage() {
           {sortTemplates(templates, sortBy).map((t) => {
             const cat = getCategory(t.category);
             return (
-              <div key={t.id} className="bg-background border border-surface/10 rounded-[2rem] overflow-hidden shadow-soft flex flex-col">
-                <div className="h-24 flex items-center justify-center bg-primary/5">
+              <div key={t.id} className={`bg-background border rounded-[2rem] overflow-hidden shadow-soft flex flex-col ${t.featured ? 'border-accent/40' : 'border-surface/10'}`}>
+                <div className="h-24 flex items-center justify-center bg-primary/5 relative">
                   <cat.icon className="w-7 h-7 text-accent/70" />
+                  {t.featured && (
+                    <span className="absolute top-3 right-3 inline-flex items-center gap-1 bg-accent text-background px-2.5 py-1 rounded-full text-[10px] font-semibold">
+                      <Star className="w-3 h-3 fill-background" /> Recommandé
+                    </span>
+                  )}
                 </div>
                 <div className="p-5 flex-1 flex flex-col">
                   <span className="text-[10px] font-mono uppercase tracking-wider text-surface/40 mb-1">{cat.label}</span>

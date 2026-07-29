@@ -11,6 +11,11 @@ if (import.meta.env.VITE_SENTRY_DSN) {
   Sentry.init({
     dsn: import.meta.env.VITE_SENTRY_DSN,
     environment: import.meta.env.MODE,
+    // tracesSampleRate seul ne suffit pas : sans cette intégration, aucune
+    // transaction de performance n'est jamais créée (le taux d'échantillonnage
+    // s'applique à des transactions qui n'existaient pas). C'est elle qui
+    // capture aussi les Core Web Vitals (LCP/CLS/INP) automatiquement.
+    integrations: [Sentry.browserTracingIntegration()],
     tracesSampleRate: 0.1,
   });
 }

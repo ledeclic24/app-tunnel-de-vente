@@ -6,14 +6,77 @@ import { PLANS, PLAN_ORDER, getPlan, formatPrice } from '../../lib/plans';
 import { updateBrandingForUser } from '../../lib/funnelsApi';
 import { getLivePlans } from '../../lib/plansApi';
 import { createPayment } from '../../lib/paymentsApi';
-import { fetchCreditsBalance, fetchCreditPacks, purchaseCreditPack } from '../../lib/creditsApi';
+import { fetchCreditsBalance, fetchCreditPacks, purchaseCreditPack, fetchCreditTransactions } from '../../lib/creditsApi';
 import GradientBanner from '../../components/ui/GradientBanner';
+import CollapsibleSection from '../../components/app/CollapsibleSection';
+import Spinner from '../../components/app/Spinner';
 
 const PACK_LABELS = {
   boost: 'Boost',
   'pro-plus': 'Pro+',
   studio: 'Studio',
 };
+
+// Mêmes chaînes que celles passées à CreditsService.deduct/addCredits côté
+// serveur (voir ai.service.ts, ebooks.service.ts, images.service.ts) —
+// purement cosmétique, aucun impact sur le calcul du solde.
+const REASON_LABELS = {
+  monthly_refill: 'Recharge mensuelle',
+  tunnel_generation: 'Génération de tunnel',
+  tunnel_edit: 'Modification de tunnel (IA)',
+  block_regeneration: 'Régénération de bloc',
+  element_improvement: 'Amélioration de texte',
+  image_generation: "Génération d'image",
+  signature_visual_generation: 'Visuel signature',
+  ebook_outline: "Sommaire d'ebook",
+  ebook_chapter: "Chapitre d'ebook",
+  ebook_chapter_regenerate: 'Régénération de chapitre',
+  ebook_more_chapters: 'Chapitres supplémentaires',
+};
+
+function formatReason(reason) {
+  if (reason.startsWith('pack_purchase:')) {
+    const key = reason.split(':')[1];
+    return `Achat pack ${PACK_LABELS[key] || key}`;
+  }
+  return REASON_LABELS[reason] || reason;
+}
+
+function CreditsHistorySection() {
+  const [data, setData] = useState(null);
+
+  useEffect(() => {
+    fetchCreditTransactions({ limit: 30 }).then(setData).catch(() => setData({ rows: [] }));
+  }, []);
+
+  if (!data) {
+    return (
+      <div className="flex justify-center py-6">
+        <Spinner size="sm" />
+      </div>
+    );
+  }
+
+  if (data.rows.length === 0) {
+    return <p className="text-sm text-surface/50">Aucun mouvement de crédits pour l'instant.</p>;
+  }
+
+  return (
+    <div className="space-y-1">
+      {data.rows.map((tx) => (
+        <div key={tx.id} className="flex items-center justify-between gap-4 py-2 border-b border-surface/5 last:border-0 text-sm">
+          <div className="min-w-0">
+            <p className="text-surface/80 truncate">{formatReason(tx.reason)}</p>
+            <p className="text-xs text-surface/40">{new Date(tx.createdAt).toLocaleString('fr-FR')}</p>
+          </div>
+          <span className={`font-mono text-sm shrink-0 ${tx.amount > 0 ? 'text-accent' : 'text-surface/60'}`}>
+            {tx.amount > 0 ? '+' : ''}{tx.amount}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 const PAYMENT_STATUS_MESSAGES = {
   success: { tone: 'ok', text: 'Paiement reçu ! Ton nouveau plan sera actif dans quelques instants (rafraîchis si besoin).' },
@@ -219,6 +282,10 @@ export default function BillingPage() {
               </div>
             ))}
           </div>
+
+          <CollapsibleSection title="Historique des crédits">
+            <CreditsHistorySection />
+          </CollapsibleSection>
         </div>
       )}
     </div>

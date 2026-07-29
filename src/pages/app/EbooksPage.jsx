@@ -5,6 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 import { getPlan } from '../../lib/plans';
 import { fetchEbooks, generateOutline, deleteEbook } from '../../lib/ebooksApi';
 import { generateImages } from '../../lib/imagesApi';
+import { fetchCreditCosts } from '../../lib/creditsApi';
 import ImageUploadField from '../../components/blocks/ImageUploadField';
 import DownloadMenu from '../../components/app/DownloadMenu';
 import { useConfirm } from '../../components/app/ConfirmDialog';
@@ -97,12 +98,14 @@ export default function EbooksPage() {
   const [selectedIds, setSelectedIds] = useState(() => new Set());
   const [bulkBusy, setBulkBusy] = useState(false);
   const [sortBy, setSortBy] = useState('created_desc');
+  const [costs, setCosts] = useState(null);
   const confirm = useConfirm();
   const toast = useToast();
 
   useEffect(() => {
     if (!plan.ebookAccess) return;
     fetchEbooks().then(setEbooks).catch(() => setEbooks([]));
+    fetchCreditCosts().then(setCosts).catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -437,13 +440,16 @@ export default function EbooksPage() {
               {errorCode === 'insufficient_credits' && <RechargeCreditsButton className="mt-2" />}
             </div>
           )}
-          <button
-            type="submit"
-            disabled={!title.trim() || !description.trim() || generating}
-            className="magnetic-btn inline-flex items-center gap-2 bg-accent text-background px-5 py-3 rounded-full text-sm font-semibold disabled:opacity-50"
-          >
-            <Wand2 className="w-4 h-4" /> {generating ? 'Génération du sommaire...' : 'Générer le sommaire'}
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              type="submit"
+              disabled={!title.trim() || !description.trim() || generating}
+              className="magnetic-btn inline-flex items-center gap-2 bg-accent text-background px-5 py-3 rounded-full text-sm font-semibold disabled:opacity-50"
+            >
+              <Wand2 className="w-4 h-4" /> {generating ? 'Génération du sommaire...' : 'Générer le sommaire'}
+            </button>
+            {costs && <span className="text-xs text-surface/40">Coûte {costs.EBOOK_OUTLINE} crédits · {costs.EBOOK_CHAPTER} crédits par chapitre rédigé ensuite</span>}
+          </div>
         </form>
       )}
 

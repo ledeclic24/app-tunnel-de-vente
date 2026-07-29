@@ -2,10 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Lock, TrendingUp, ArrowRight } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { fetchUserFunnels, fetchFunnelStepsAnalytics } from '../../lib/funnelsApi';
+import { fetchUserFunnels, fetchFunnelStepsAnalytics, fetchUpsellAnalytics } from '../../lib/funnelsApi';
 import { fetchCategoryBenchmark } from '../../lib/growthApi';
 import { getPlan } from '../../lib/plans';
 import { getCategory } from '../../lib/funnelTemplates';
+import { formatPrice } from '../../lib/currency';
 import GradientBanner from '../../components/ui/GradientBanner';
 import Spinner, { CenteredSpinner } from '../../components/app/Spinner';
 
@@ -47,6 +48,42 @@ function StepArrow({ fromViews, toViews }) {
         </span>
       )}
       <ArrowRight className="w-5 h-5 text-surface/20" />
+    </div>
+  );
+}
+
+function UpsellSection({ funnelId, currency }) {
+  const [rows, setRows] = useState(null);
+
+  useEffect(() => {
+    let active = true;
+    fetchUpsellAnalytics(funnelId)
+      .then((data) => { if (active) setRows(data); })
+      .catch(() => { if (active) setRows([]); });
+    return () => { active = false; };
+  }, [funnelId]);
+
+  if (!rows || rows.length === 0) return null;
+
+  return (
+    <div className="mt-6 pt-6 border-t border-surface/10 space-y-4">
+      <p className="text-xs font-mono uppercase tracking-wider text-surface/40">Acceptation upsell</p>
+      {rows.map((r) => (
+        <div key={r.stepId} className="flex items-center justify-between gap-4 text-sm">
+          <span className="text-surface/80 truncate">{r.stepName}</span>
+          <div className="flex items-center gap-3 shrink-0">
+            <span className="text-surface/50 text-xs font-mono">
+              {r.accepted}/{r.views} vue{r.views > 1 ? 's' : ''}
+            </span>
+            <span className="font-mono text-xs text-accent w-12 text-right">
+              {r.views > 0 ? `${(r.acceptanceRate * 100).toFixed(0)}%` : '—'}
+            </span>
+            {r.revenue > 0 && (
+              <span className="text-surface/50 text-xs">{formatPrice(r.revenue, currency)}</span>
+            )}
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
@@ -101,6 +138,8 @@ function FunnelJourney({ funnel }) {
           </div>
         </div>
       )}
+
+      {steps && steps.length > 0 && <UpsellSection funnelId={funnel.id} currency={funnel.currency} />}
     </div>
   );
 }
