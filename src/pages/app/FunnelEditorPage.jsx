@@ -545,11 +545,18 @@ export default function FunnelEditorPage() {
       applyBlocks(next);
       pushHistory(next);
     } catch (err) {
-      setActionError(AI_ERROR_MESSAGES[err.message] || AI_ERROR_MESSAGES.server_error);
+      // La bannière tout en haut de page (actionError) reste invisible tant
+      // qu'on n'y remonte pas — un vendeur qui régénère un bloc en bas d'un
+      // long tunnel n'a alors AUCUN signe qu'une erreur (ex. crédits
+      // épuisés) s'est produite. Le toast, flottant en bas de l'écran, est
+      // visible immédiatement quel que soit le défilement.
+      const message = AI_ERROR_MESSAGES[err.message] || AI_ERROR_MESSAGES.server_error;
+      setActionError(message);
       setActionErrorCode(err.message);
+      toast.error(message);
     }
     setRegeneratingBlockId(null);
-  }, [regeneratingBlockId, applyBlocks, pushHistory]);
+  }, [regeneratingBlockId, applyBlocks, pushHistory, toast]);
 
   const handleGenerateBlockImage = useCallback(async (blockId, imageType) => {
     if (imageGeneratingBlockId) return;
@@ -562,11 +569,13 @@ export default function FunnelEditorPage() {
       applyBlocks(next);
       pushHistory(next);
     } catch (err) {
-      setActionError(IMAGE_ERROR_MESSAGES[err.message] || IMAGE_ERROR_MESSAGES.server_error);
+      const message = IMAGE_ERROR_MESSAGES[err.message] || IMAGE_ERROR_MESSAGES.server_error;
+      setActionError(message);
       setActionErrorCode(err.message);
+      toast.error(message);
     }
     setImageGeneratingBlockId(null);
-  }, [imageGeneratingBlockId, applyBlocks, pushHistory]);
+  }, [imageGeneratingBlockId, applyBlocks, pushHistory, toast]);
 
   const handleRegenerateSignatureVisual = useCallback(async (blockId) => {
     if (signatureVisualGeneratingBlockId) return;
@@ -579,11 +588,13 @@ export default function FunnelEditorPage() {
       applyBlocks(next);
       pushHistory(next);
     } catch (err) {
-      setActionError(AI_ERROR_MESSAGES[err.message] || AI_ERROR_MESSAGES.server_error);
+      const message = AI_ERROR_MESSAGES[err.message] || AI_ERROR_MESSAGES.server_error;
+      setActionError(message);
       setActionErrorCode(err.message);
+      toast.error(message);
     }
     setSignatureVisualGeneratingBlockId(null);
-  }, [signatureVisualGeneratingBlockId, applyBlocks, pushHistory]);
+  }, [signatureVisualGeneratingBlockId, applyBlocks, pushHistory, toast]);
 
   // Références stables (jamais recréées) passées telles quelles à chaque
   // BlockCard — condition nécessaire pour que React.memo les laisse
@@ -607,8 +618,10 @@ export default function FunnelEditorPage() {
       applyBlocks(next);
       pushHistory(next);
     } catch (err) {
-      setActionError(AI_ERROR_MESSAGES[err.message] || AI_ERROR_MESSAGES.server_error);
+      const message = AI_ERROR_MESSAGES[err.message] || AI_ERROR_MESSAGES.server_error;
+      setActionError(message);
       setActionErrorCode(err.message);
+      toast.error(message);
     }
     setImprovingElementKey(null);
   };
