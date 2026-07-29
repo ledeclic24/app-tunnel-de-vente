@@ -151,6 +151,38 @@ export async function unpublishFunnel(funnelId) {
   return normalizeFunnel(funnel);
 }
 
+// Aucun endpoint dédié côté serveur : même principe que le clonage d'un
+// modèle de la marketplace (cloneTemplate ci-dessous) — on relit le
+// contenu live (étapes + blocs, en un seul appel groupé grâce à
+// fetchAllBlocksForFunnel) puis on le repasse tel quel à la création
+// normale d'un tunnel, qui applique déjà limites de plan, blocs
+// autorisés et unicité du slug. Contrairement au clonage marketplace,
+// les liens de paiement sont conservés : même propriétaire, pas un tiers.
+export async function duplicateFunnel(funnelId) {
+  const [original, steps, blocksByStep] = await Promise.all([
+    fetchFunnel(funnelId),
+    fetchSteps(funnelId),
+    fetchAllBlocksForFunnel(funnelId),
+  ]);
+  const name = `${original.name} (copie)`;
+  const slug = generateFunnelSlug(name);
+  const funnel = await apiPost('/funnels', {
+    name,
+    slug,
+    template: original.template,
+    showBranding: original.show_branding,
+    category: original.category,
+    brand: original.brand,
+    steps: steps.map((s) => ({
+      name: s.name,
+      slug: s.slug,
+      stepType: s.stepType,
+      blocks: (blocksByStep[s.id] || []).map((b) => ({ type: b.type, content: b.content })),
+    })),
+  });
+  return normalizeFunnel(funnel);
+}
+
 // Utilisé exclusivement par PublishedFunnelPage.jsx (visiteurs publics) :
 // renvoie {id,name,slug,brand,show_branding,seo*,steps:[{...,blocks}]} déjà
 // figé au dernier "Publier" — jamais les tables live steps/blocks.

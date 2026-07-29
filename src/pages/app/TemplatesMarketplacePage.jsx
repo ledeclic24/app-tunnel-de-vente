@@ -6,6 +6,22 @@ import { CATEGORIES, getCategory } from '../../lib/funnelTemplates';
 import { useAuth } from '../../context/AuthContext';
 import { getPlan } from '../../lib/plans';
 import Spinner from '../../components/app/Spinner';
+import SortMenu from '../../components/app/SortMenu';
+
+const SORT_OPTIONS = [
+  { value: 'popularity', label: 'Popularité' },
+  { value: 'created_desc', label: 'Plus récent' },
+  { value: 'created_asc', label: 'Plus ancien' },
+];
+
+// 'popularity' laisse l'ordre déjà renvoyé par le serveur inchangé (voir
+// TemplatesService.listApproved, orderBy usageCount DESC) — les deux
+// autres options trient par date, entièrement côté client.
+function sortTemplates(list, sortBy) {
+  if (sortBy === 'popularity') return list;
+  const dir = sortBy === 'created_desc' ? -1 : 1;
+  return [...list].sort((a, b) => dir * (new Date(a.created_at).getTime() - new Date(b.created_at).getTime()));
+}
 
 export default function TemplatesMarketplacePage() {
   const { effectiveProfile } = useAuth();
@@ -16,6 +32,7 @@ export default function TemplatesMarketplacePage() {
   const [search, setSearch] = useState('');
   const [error, setError] = useState('');
   const [cloningId, setCloningId] = useState(null);
+  const [sortBy, setSortBy] = useState('popularity');
 
   useEffect(() => {
     setTemplates(null);
@@ -72,6 +89,7 @@ export default function TemplatesMarketplacePage() {
           placeholder="Rechercher un modèle..."
           className="ml-auto bg-primary/5 border border-surface/10 rounded-full px-4 py-1.5 text-sm focus:outline-none focus:border-accent transition-colors text-surface"
         />
+        <SortMenu value={sortBy} onChange={setSortBy} options={SORT_OPTIONS} />
       </div>
 
       {error && <p className="text-sm text-red-500 mb-4">{error}</p>}
@@ -90,7 +108,7 @@ export default function TemplatesMarketplacePage() {
 
       {templates && templates.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {templates.map((t) => {
+          {sortTemplates(templates, sortBy).map((t) => {
             const cat = getCategory(t.category);
             return (
               <div key={t.id} className="bg-background border border-surface/10 rounded-[2rem] overflow-hidden shadow-soft flex flex-col">

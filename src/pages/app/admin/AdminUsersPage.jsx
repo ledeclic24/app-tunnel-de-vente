@@ -5,6 +5,19 @@ import { useAuth } from '../../../context/AuthContext';
 import { PLAN_ORDER, getPlan } from '../../../lib/plans';
 import { useToast } from '../../../components/app/Toast';
 import Spinner from '../../../components/app/Spinner';
+import SortMenu from '../../../components/app/SortMenu';
+
+const SORT_OPTIONS = [
+  { value: 'created_desc', label: 'Plus récent' },
+  { value: 'created_asc', label: 'Plus ancien' },
+];
+
+// Tri côté client (liste déjà entièrement chargée) — 'created_desc' par
+// défaut reproduit l'ordre déjà renvoyé par l'API (order: createdAt DESC).
+function sortProfiles(list, sortBy) {
+  const dir = sortBy === 'created_desc' ? -1 : 1;
+  return [...list].sort((a, b) => dir * (new Date(a.created_at).getTime() - new Date(b.created_at).getTime()));
+}
 
 export default function AdminUsersPage() {
   const toast = useToast();
@@ -12,6 +25,7 @@ export default function AdminUsersPage() {
   const [profiles, setProfiles] = useState(null);
   const [query, setQuery] = useState('');
   const [busyId, setBusyId] = useState(null);
+  const [sortBy, setSortBy] = useState('created_desc');
 
   const load = async () => setProfiles(await fetchAllProfiles());
 
@@ -22,9 +36,9 @@ export default function AdminUsersPage() {
   const filtered = useMemo(() => {
     if (!profiles) return [];
     const q = query.trim().toLowerCase();
-    if (!q) return profiles;
-    return profiles.filter((p) => p.email.toLowerCase().includes(q) || (p.full_name || '').toLowerCase().includes(q));
-  }, [profiles, query]);
+    const base = q ? profiles.filter((p) => p.email.toLowerCase().includes(q) || (p.full_name || '').toLowerCase().includes(q)) : profiles;
+    return sortProfiles(base, sortBy);
+  }, [profiles, query, sortBy]);
 
   const handlePlanChange = async (profileId, plan) => {
     setBusyId(profileId);
@@ -63,14 +77,17 @@ export default function AdminUsersPage() {
 
   return (
     <div>
-      <div className="relative mb-4 max-w-sm">
-        <Search className="w-4 h-4 text-zinc-500 absolute left-4 top-1/2 -translate-y-1/2" />
-        <input
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Rechercher par email ou nom..."
-          className="w-full bg-zinc-900 border border-zinc-800 rounded-xl pl-10 pr-4 py-3 text-sm text-zinc-100 focus:outline-none focus:border-emerald-500 transition-colors"
-        />
+      <div className="flex items-center gap-3 mb-4">
+        <div className="relative max-w-sm flex-1">
+          <Search className="w-4 h-4 text-zinc-500 absolute left-4 top-1/2 -translate-y-1/2" />
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Rechercher par email ou nom..."
+            className="w-full bg-zinc-900 border border-zinc-800 rounded-xl pl-10 pr-4 py-3 text-sm text-zinc-100 focus:outline-none focus:border-emerald-500 transition-colors"
+          />
+        </div>
+        <SortMenu value={sortBy} onChange={setSortBy} options={SORT_OPTIONS} tone="admin" />
       </div>
 
       <div className="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden">

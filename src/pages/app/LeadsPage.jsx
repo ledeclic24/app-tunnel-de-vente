@@ -8,6 +8,19 @@ import { formatPrice } from '../../lib/currency';
 import { useToast } from '../../components/app/Toast';
 import GradientBanner from '../../components/ui/GradientBanner';
 import Spinner from '../../components/app/Spinner';
+import SortMenu from '../../components/app/SortMenu';
+
+const SORT_OPTIONS = [
+  { value: 'created_desc', label: 'Plus récent' },
+  { value: 'created_asc', label: 'Plus ancien' },
+];
+
+// Tri côté client (liste déjà entièrement chargée) — 'created_desc' par
+// défaut reproduit l'ordre déjà renvoyé par l'API (order: createdAt DESC).
+function sortLeads(list, sortBy) {
+  const dir = sortBy === 'created_desc' ? -1 : 1;
+  return [...list].sort((a, b) => dir * (new Date(a.created_at).getTime() - new Date(b.created_at).getTime()));
+}
 
 // Un lead payé peut avoir n'importe quelle devise (selon le moyen de
 // paiement utilisé) — on regroupe donc le total par devise plutôt que de
@@ -45,6 +58,7 @@ export default function LeadsPage() {
   const [leads, setLeads] = useState(null);
   const [resendingId, setResendingId] = useState(null);
   const [refundingId, setRefundingId] = useState(null);
+  const [sortBy, setSortBy] = useState('created_desc');
   const plan = getPlan(effectiveProfile?.plan);
 
   useEffect(() => {
@@ -93,7 +107,8 @@ export default function LeadsPage() {
   }
 
   const visibleLimit = plan.leadsHistoryLimit ?? Infinity;
-  const visibleLeads = leads.slice(0, visibleLimit === Infinity ? leads.length : visibleLimit);
+  const sortedLeads = sortLeads(leads, sortBy);
+  const visibleLeads = sortedLeads.slice(0, visibleLimit === Infinity ? sortedLeads.length : visibleLimit);
   const hiddenCount = leads.length - visibleLeads.length;
   const revenueByCurrency = computeRevenueByCurrency(leads);
   // Exclut les leads remboursés, comme le total du revenu juste à côté —
@@ -136,7 +151,11 @@ export default function LeadsPage() {
       )}
 
       {leads.length > 0 && (
-        <div className="bg-background border border-surface/10 rounded-[2rem] overflow-hidden shadow-soft">
+        <>
+          <div className="flex justify-end mb-4">
+            <SortMenu value={sortBy} onChange={setSortBy} options={SORT_OPTIONS} />
+          </div>
+          <div className="bg-background border border-surface/10 rounded-[2rem] overflow-hidden shadow-soft">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
@@ -250,7 +269,8 @@ export default function LeadsPage() {
               </div>
             </div>
           )}
-        </div>
+          </div>
+        </>
       )}
     </div>
   );

@@ -11,6 +11,20 @@ import { useConfirm } from '../../components/app/ConfirmDialog';
 import { useToast } from '../../components/app/Toast';
 import GradientBanner from '../../components/ui/GradientBanner';
 import RechargeCreditsButton from '../../components/app/RechargeCreditsButton';
+import SortMenu from '../../components/app/SortMenu';
+
+const SORT_OPTIONS = [
+  { value: 'created_desc', label: 'Plus récent' },
+  { value: 'created_asc', label: 'Plus ancien' },
+];
+
+// Tri côté client (liste déjà entièrement chargée, jamais normalisée —
+// voir fetchEbooks) — 'created_desc' par défaut reproduit l'ordre déjà
+// renvoyé par l'API (order: createdAt DESC).
+function sortEbooks(list, sortBy) {
+  const dir = sortBy === 'created_desc' ? -1 : 1;
+  return [...list].sort((a, b) => dir * (new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()));
+}
 
 const ERROR_MESSAGES = {
   plan_required: "Le générateur d'ebook nécessite le plan Pro ou Entreprise.",
@@ -82,6 +96,7 @@ export default function EbooksPage() {
   const [errorCode, setErrorCode] = useState('');
   const [selectedIds, setSelectedIds] = useState(() => new Set());
   const [bulkBusy, setBulkBusy] = useState(false);
+  const [sortBy, setSortBy] = useState('created_desc');
   const confirm = useConfirm();
   const toast = useToast();
 
@@ -449,8 +464,14 @@ export default function EbooksPage() {
         </div>
       )}
 
+      {ebooks && ebooks.length > 1 && (
+        <div className="flex justify-end mb-3">
+          <SortMenu value={sortBy} onChange={setSortBy} options={SORT_OPTIONS} />
+        </div>
+      )}
+
       <div className="space-y-3">
-        {ebooks?.map((ebook, i) => (
+        {ebooks && sortEbooks(ebooks, sortBy).map((ebook, i) => (
           // Alternance légère (teinte primary) entre les lignes, même
           // principe que le tableau des leads, pour rythmer la liste.
           <div key={ebook.id} className={`flex items-center justify-between gap-2 border rounded-2xl px-5 py-4 transition-colors ${i % 2 === 1 ? 'bg-primary/[0.03]' : 'bg-background'} ${selectedIds.has(ebook.id) ? 'border-accent' : 'border-surface/10'}`}>
