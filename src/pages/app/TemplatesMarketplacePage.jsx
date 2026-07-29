@@ -5,6 +5,7 @@ import { fetchTemplates, cloneTemplate } from '../../lib/templatesApi';
 import { CATEGORIES, getCategory } from '../../lib/funnelTemplates';
 import { useAuth } from '../../context/AuthContext';
 import { getPlan } from '../../lib/plans';
+import Spinner from '../../components/app/Spinner';
 
 export default function TemplatesMarketplacePage() {
   const { effectiveProfile } = useAuth();
@@ -77,7 +78,7 @@ export default function TemplatesMarketplacePage() {
 
       {templates === null && (
         <div className="flex justify-center py-16">
-          <div className="w-6 h-6 border-2 border-surface/20 border-t-accent rounded-full animate-spin" />
+          <Spinner />
         </div>
       )}
 

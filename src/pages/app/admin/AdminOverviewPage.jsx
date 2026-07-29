@@ -3,6 +3,7 @@ import { Users, Layers, Rocket, Mail, Shield, ArrowRight } from 'lucide-react';
 import { fetchAllProfiles, fetchAllFunnels, fetchAllLeadCounts, setAdminStatus } from '../../../lib/adminApi';
 import { useAuth } from '../../../context/AuthContext';
 import { PLAN_ORDER, getPlan } from '../../../lib/plans';
+import Spinner from '../../../components/app/Spinner';
 
 function StatCard({ icon: Icon, label, value }) {
   return (
@@ -60,7 +61,7 @@ export default function AdminOverviewPage() {
   if (!profiles || !funnels || !leadCounts) {
     return (
       <div className="flex items-center justify-center py-16">
-        <div className="w-8 h-8 border-2 border-zinc-700 border-t-emerald-400 rounded-full animate-spin" />
+        <Spinner size="lg" tone="admin" />
       </div>
     );
   }

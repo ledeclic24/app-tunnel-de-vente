@@ -4,6 +4,7 @@ import { fetchAllProfiles, updateUserPlanAsAdmin, setAdminStatus } from '../../.
 import { useAuth } from '../../../context/AuthContext';
 import { PLAN_ORDER, getPlan } from '../../../lib/plans';
 import { useToast } from '../../../components/app/Toast';
+import Spinner from '../../../components/app/Spinner';
 
 export default function AdminUsersPage() {
   const toast = useToast();
@@ -55,7 +56,7 @@ export default function AdminUsersPage() {
   if (!profiles) {
     return (
       <div className="flex items-center justify-center py-16">
-        <div className="w-8 h-8 border-2 border-zinc-700 border-t-emerald-400 rounded-full animate-spin" />
+        <Spinner size="lg" tone="admin" />
       </div>
     );
   }

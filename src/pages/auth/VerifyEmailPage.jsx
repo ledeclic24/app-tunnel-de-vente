@@ -5,6 +5,7 @@ import AuthLayout from '../../components/auth/AuthLayout';
 import { useAuth } from '../../context/AuthContext';
 import { isApiConfigured } from '../../lib/apiClient';
 import SetupRequired from '../../components/app/SetupRequired';
+import Spinner from '../../components/app/Spinner';
 
 export default function VerifyEmailPage() {
   const { verifyEmail } = useAuth();
@@ -62,7 +63,7 @@ export default function VerifyEmailPage() {
   return (
     <AuthLayout title="Confirmation en cours...">
       <div className="flex justify-center py-8">
-        <div className="w-8 h-8 border-2 border-surface/20 border-t-accent rounded-full animate-spin" />
+        <Spinner size="lg" />
       </div>
     </AuthLayout>
   );

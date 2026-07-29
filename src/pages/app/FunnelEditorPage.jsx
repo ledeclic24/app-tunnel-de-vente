@@ -14,7 +14,7 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import {
   fetchFunnel, updateFunnel, publishFunnel, unpublishFunnel, fetchSteps, addStep, deleteStep, reorderSteps, updateStep,
-  fetchBlocks, addBlock, updateBlock, deleteBlock, reorderBlocks, countLeads, toggleBlockLock,
+  fetchAllBlocksForFunnel, addBlock, updateBlock, deleteBlock, reorderBlocks, countLeads, toggleBlockLock,
 } from '../../lib/funnelsApi';
 import { BLOCK_TYPES, createDefaultContent } from '../../lib/blockTypes';
 import { slugify } from '../../lib/slug';
@@ -27,6 +27,7 @@ import { fetchReusableBlocks, saveReusableBlock, deleteReusableBlock, incrementR
 import { useConfirm } from '../../components/app/ConfirmDialog';
 import { useToast } from '../../components/app/Toast';
 import RechargeCreditsButton from '../../components/app/RechargeCreditsButton';
+import Spinner from '../../components/app/Spinner';
 import { editFunnelWithAI, regenerateBlockWithAI, generateBlockImageWithAI, regenerateSignatureVisualWithAI, improveElementWithAI } from '../../lib/aiApi';
 import BlockRenderer from '../../components/blocks/BlockRenderer';
 import BlockEditorPanel from '../../components/blocks/BlockEditorPanel';
@@ -282,18 +283,21 @@ export default function FunnelEditorPage() {
     blocksRef.current = blocks;
   }, [blocks]);
 
-  const loadAllBlocks = useCallback(async (stepList) => {
-    const entries = await Promise.all(stepList.map(async (s) => [s.id, await fetchBlocks(s.id)]));
-    const map = Object.fromEntries(entries);
-    setBlocksByStepId(map);
-    return map;
-  }, []);
-
   const loadAll = useCallback(async () => {
     setLoading(true);
-    let f;
+    // fetchFunnel/fetchSteps/fetchAllBlocksForFunnel/countLeads ne dépendent
+    // tous que de funnelId — aucun n'a besoin du résultat d'un autre, donc
+    // un seul aller-retour groupé au lieu de 4 successifs. Les blocs de
+    // TOUTES les étapes arrivent en un seul appel (fetchAllBlocksForFunnel,
+    // déjà groupés par étape côté serveur) au lieu d'un appel par étape.
+    let f, s, blocksMap, count;
     try {
-      f = await fetchFunnel(funnelId);
+      [f, s, blocksMap, count] = await Promise.all([
+        fetchFunnel(funnelId),
+        fetchSteps(funnelId),
+        fetchAllBlocksForFunnel(funnelId),
+        countLeads(funnelId),
+      ]);
     } catch {
       setNotFound(true);
       setLoading(false);
@@ -301,18 +305,16 @@ export default function FunnelEditorPage() {
     }
     setFunnel(f);
     setNameDraft(f.name);
-    const s = await fetchSteps(funnelId);
     setSteps(s);
-    const map = await loadAllBlocks(s);
+    setBlocksByStepId(blocksMap);
     const firstStep = s[0]?.id || null;
     setSelectedStepId(firstStep);
-    const initialBlocks = map[firstStep] || [];
+    const initialBlocks = blocksMap[firstStep] || [];
     setBlocks(initialBlocks);
     setHistoryState({ stack: [initialBlocks], index: 0 });
-    const count = await countLeads(funnelId);
     setLeadsCount(count);
     setLoading(false);
-  }, [funnelId, loadAllBlocks]);
+  }, [funnelId]);
 
   useEffect(() => { loadAll(); }, [loadAll]);
 
@@ -925,7 +927,7 @@ export default function FunnelEditorPage() {
   if (loading) {
     return (
       <div className="flex justify-center py-24">
-        <div className="w-8 h-8 border-2 border-surface/20 border-t-accent rounded-full animate-spin" />
+        <Spinner size="lg" />
       </div>
     );
   }
@@ -1250,7 +1252,7 @@ export default function FunnelEditorPage() {
                 </div>
               ) : libraryLoading ? (
                 <div className="flex justify-center py-6">
-                  <div className="w-5 h-5 border-2 border-surface/20 border-t-accent rounded-full animate-spin" />
+                  <Spinner size="sm" />
                 </div>
               ) : libraryError ? (
                 <p className="text-xs text-red-500 text-center py-4">{libraryError}</p>

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { ScrollText } from 'lucide-react';
 import { fetchAuditLog } from '../../../lib/growthApi';
+import Spinner from '../../../components/app/Spinner';
 
 const ACTION_LABELS = {
   'plan.change': 'Changement de plan',
@@ -31,7 +32,7 @@ export default function AdminAuditLogPage() {
   if (!events) {
     return (
       <div className="flex items-center justify-center py-16">
-        <div className="w-8 h-8 border-2 border-zinc-700 border-t-emerald-400 rounded-full animate-spin" />
+        <Spinner size="lg" tone="admin" />
       </div>
     );
   }

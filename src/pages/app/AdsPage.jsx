@@ -12,6 +12,7 @@ import {
 } from '../../lib/metaAdsApi';
 import { useConfirm } from '../../components/app/ConfirmDialog';
 import GradientBanner from '../../components/ui/GradientBanner';
+import { CenteredSpinner } from '../../components/app/Spinner';
 
 // Le code est prêt (OAuth, tableau de bord, coût par lead) mais attend les
 // identifiants de l'App Facebook côté serveur — passer à false dès qu'ils
@@ -32,14 +33,6 @@ const STATUS_CLASS = {
   DELETED: 'bg-red-500/10 text-red-500',
   ARCHIVED: 'bg-surface/10 text-surface/50',
 };
-
-function Spinner() {
-  return (
-    <div className="flex justify-center py-16">
-      <div className="w-6 h-6 border-2 border-surface/20 border-t-accent rounded-full animate-spin" />
-    </div>
-  );
-}
 
 function KpiCard({ icon: Icon, label, value }) {
   return (
@@ -242,7 +235,7 @@ export default function AdsPage() {
       {oauthError && <p className="text-sm text-red-500 mb-6">La connexion à Facebook a échoué, réessaie.</p>}
       {error && <p className="text-sm text-red-500 mb-6">{error}</p>}
 
-      {accounts === null && <Spinner />}
+      {accounts === null && <CenteredSpinner />}
 
       {accounts && accounts.length === 0 && (
         <div className="text-center py-16 border border-dashed border-surface/20 rounded-[2rem]">
@@ -306,7 +299,7 @@ export default function AdsPage() {
             ))}
           </div>
 
-          {summary === null && <Spinner />}
+          {summary === null && <CenteredSpinner />}
 
           {summary && (
             <>
@@ -324,7 +317,7 @@ export default function AdsPage() {
             </>
           )}
 
-          {campaigns === null && <Spinner />}
+          {campaigns === null && <CenteredSpinner />}
           {campaigns && <CampaignsTable campaigns={campaigns} currency={selectedAccount?.currency} />}
         </>
       )}

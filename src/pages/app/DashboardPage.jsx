@@ -2,11 +2,12 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Plus, ExternalLink, Pencil, Trash2, Rocket, Mail, Eye, Layers, CheckCircle2, Circle, LayoutDashboard, Wallet } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { fetchUserFunnels, deleteFunnel, fetchLeadsForUser, fetchFunnelStepsAnalytics } from '../../lib/funnelsApi';
+import { fetchUserFunnels, deleteFunnel, fetchLeadsForUser, fetchTotalViewsForOwner } from '../../lib/funnelsApi';
 import { getPlan } from '../../lib/plans';
 import { formatPrice } from '../../lib/currency';
 import { useConfirm } from '../../components/app/ConfirmDialog';
 import GradientBanner from '../../components/ui/GradientBanner';
+import Spinner from '../../components/app/Spinner';
 
 // Une carte est "mise en avant" (fond dégradé sombre, comme la bannière)
 // plutôt que les autres (fond clair, icône dans un cercle teinté) — reprend
@@ -107,18 +108,20 @@ export default function DashboardPage() {
 
   const load = async () => {
     try {
-      const data = await fetchUserFunnels(effectiveOwnerId);
-      setFunnels(data);
-
-      const [leadsData, viewsPerFunnel] = await Promise.all([
+      // Les 3 appels ne dépendent que de effectiveOwnerId (déjà connu) —
+      // aucun n'a besoin du résultat d'un autre, donc tous en parallèle
+      // plutôt qu'un chargement des tunnels suivi d'un aller-retour de plus.
+      const [data, leadsData, totalViewsData] = await Promise.all([
+        fetchUserFunnels(effectiveOwnerId),
         fetchLeadsForUser(effectiveOwnerId),
-        Promise.all(data.map((f) => fetchFunnelStepsAnalytics(f.id))),
+        fetchTotalViewsForOwner(),
       ]);
+      setFunnels(data);
 
       const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
       const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
       setLeads7d(leadsData.filter((l) => new Date(l.created_at).getTime() >= sevenDaysAgo).length);
-      setTotalViews(viewsPerFunnel.flat().reduce((sum, step) => sum + (step.views || 0), 0));
+      setTotalViews(totalViewsData);
 
       // Regroupé par devise (plutôt qu'un seul total) : un vendeur pourrait
       // en théorie avoir des ventes dans plusieurs devises selon ses moyens
@@ -191,7 +194,7 @@ export default function DashboardPage() {
 
       {funnels === null && !error && (
         <div className="flex justify-center py-16">
-          <div className="w-6 h-6 border-2 border-surface/20 border-t-accent rounded-full animate-spin" />
+          <Spinner />
         </div>
       )}
 

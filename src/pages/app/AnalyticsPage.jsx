@@ -7,14 +7,7 @@ import { fetchCategoryBenchmark } from '../../lib/growthApi';
 import { getPlan } from '../../lib/plans';
 import { getCategory } from '../../lib/funnelTemplates';
 import GradientBanner from '../../components/ui/GradientBanner';
-
-function Spinner() {
-  return (
-    <div className="flex justify-center py-16">
-      <div className="w-6 h-6 border-2 border-surface/20 border-t-accent rounded-full animate-spin" />
-    </div>
-  );
-}
+import Spinner, { CenteredSpinner } from '../../components/app/Spinner';
 
 function LockedSection({ title, description }) {
   return (
@@ -82,7 +75,7 @@ function FunnelJourney({ funnel }) {
 
       {steps === null && (
         <div className="h-16 flex items-center justify-center">
-          <div className="w-5 h-5 border-2 border-surface/20 border-t-accent rounded-full animate-spin" />
+          <Spinner size="sm" />
         </div>
       )}
 
@@ -121,10 +114,14 @@ function BenchmarkCard({ funnel }) {
     let active = true;
     async function load() {
       try {
-        const steps = await fetchFunnelStepsAnalytics(funnel.id);
+        // Indépendants (l'un a besoin de l'id du tunnel, l'autre seulement
+        // de sa catégorie) — en parallèle plutôt qu'en série.
+        const [steps, benchmark] = await Promise.all([
+          fetchFunnelStepsAnalytics(funnel.id),
+          fetchCategoryBenchmark(funnel.category),
+        ]);
         const totalViews = steps.reduce((sum, s) => sum + s.views, 0);
         const totalLeads = steps.reduce((sum, s) => sum + s.leadCount, 0);
-        const benchmark = await fetchCategoryBenchmark(funnel.category);
         if (active) {
           setData({
             ownRate: totalViews > 0 ? totalLeads / totalViews : null,
@@ -150,7 +147,7 @@ function BenchmarkCard({ funnel }) {
 
       {!data && !error && (
         <div className="h-16 flex items-center justify-center">
-          <div className="w-5 h-5 border-2 border-surface/20 border-t-accent rounded-full animate-spin" />
+          <Spinner size="sm" />
         </div>
       )}
 
@@ -234,7 +231,7 @@ export default function AnalyticsPage() {
           />
         )}
 
-        {plan.analytics && funnels === null && <Spinner />}
+        {plan.analytics && funnels === null && <CenteredSpinner />}
 
         {plan.analytics && funnels && funnels.length === 0 && (
           <div className="text-center py-16 border border-dashed border-surface/20 rounded-[2rem]">
@@ -262,7 +259,7 @@ export default function AnalyticsPage() {
           />
         )}
 
-        {plan.benchmark && funnels === null && <Spinner />}
+        {plan.benchmark && funnels === null && <CenteredSpinner />}
 
         {plan.benchmark && publishedFunnels && publishedFunnels.length === 0 && (
           <div className="text-center py-16 border border-dashed border-surface/20 rounded-[2rem]">

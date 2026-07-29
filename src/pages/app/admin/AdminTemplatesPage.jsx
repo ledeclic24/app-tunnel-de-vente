@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Check, X } from 'lucide-react';
 import { fetchPendingTemplates, reviewTemplate } from '../../../lib/templatesApi';
 import { useToast } from '../../../components/app/Toast';
+import Spinner from '../../../components/app/Spinner';
 
 export default function AdminTemplatesPage() {
   const toast = useToast();
@@ -45,7 +46,7 @@ export default function AdminTemplatesPage() {
   if (!templates) {
     return (
       <div className="flex items-center justify-center py-16">
-        <div className="w-8 h-8 border-2 border-zinc-700 border-t-emerald-400 rounded-full animate-spin" />
+        <Spinner size="lg" tone="admin" />
       </div>
     );
   }

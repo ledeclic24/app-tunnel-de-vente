@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { ExternalLink, Sparkles } from 'lucide-react';
 import { fetchGalleryFunnels } from '../../lib/funnelsApi';
 import { CATEGORIES, getCategory } from '../../lib/funnelTemplates';
+import Spinner from '../../components/app/Spinner';
 
 export default function GalleryPage() {
   const [funnels, setFunnels] = useState(null);
@@ -47,7 +48,7 @@ export default function GalleryPage() {
 
       {funnels === null && (
         <div className="flex justify-center py-16">
-          <div className="w-6 h-6 border-2 border-surface/20 border-t-accent rounded-full animate-spin" />
+          <Spinner />
         </div>
       )}
 

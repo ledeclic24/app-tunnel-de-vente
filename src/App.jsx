@@ -11,15 +11,22 @@ import AdminRoute from './components/app/AdminRoute';
 import AppShell from './components/app/AppShell';
 import AdminShell from './components/app/AdminShell';
 import { resolveDomain } from './lib/domainsApi';
+import Spinner from './components/app/Spinner';
 
-import LandingPage from './pages/marketing/LandingPage';
-import LoginPage from './pages/auth/LoginPage';
-import SignupPage from './pages/auth/SignupPage';
-import ForgotPasswordPage from './pages/auth/ForgotPasswordPage';
-import ResetPasswordPage from './pages/auth/ResetPasswordPage';
-import VerifyEmailPage from './pages/auth/VerifyEmailPage';
-import PublishedFunnelPage from './pages/public/PublishedFunnelPage';
-import LegalPage from './pages/marketing/LegalPage';
+// Chargées à la demande (comme les pages /app/* ci-dessous) plutôt qu'en
+// avance : ces 8 routes finissaient toutes dans le même paquet que
+// React/react-router/gsap (752 Ko), avec PublishedFunnelPage — la page
+// publique vue par CHAQUE visiteur d'un tunnel — qui entraînait avec elle
+// tout src/components/blocks/ (~4700 lignes, tous les types de blocs)
+// même pour un simple chargement de la page d'accueil ou de connexion.
+const LandingPage = lazy(() => import('./pages/marketing/LandingPage'));
+const LoginPage = lazy(() => import('./pages/auth/LoginPage'));
+const SignupPage = lazy(() => import('./pages/auth/SignupPage'));
+const ForgotPasswordPage = lazy(() => import('./pages/auth/ForgotPasswordPage'));
+const ResetPasswordPage = lazy(() => import('./pages/auth/ResetPasswordPage'));
+const VerifyEmailPage = lazy(() => import('./pages/auth/VerifyEmailPage'));
+const PublishedFunnelPage = lazy(() => import('./pages/public/PublishedFunnelPage'));
+const LegalPage = lazy(() => import('./pages/marketing/LegalPage'));
 
 const DashboardPage = lazy(() => import('./pages/app/DashboardPage'));
 const NewFunnelPage = lazy(() => import('./pages/app/NewFunnelPage'));
@@ -60,7 +67,7 @@ function NotFoundPage() {
 function RouteFallback() {
   return (
     <div className="min-h-screen bg-background flex items-center justify-center">
-      <div className="w-8 h-8 border-2 border-surface/20 border-t-accent rounded-full animate-spin" />
+      <Spinner size="lg" />
     </div>
   );
 }

@@ -3,6 +3,7 @@ import { Search, ExternalLink, Trash2 } from 'lucide-react';
 import { fetchAllProfiles, fetchAllFunnels, fetchAllLeadCounts, deleteFunnelAsAdmin } from '../../../lib/adminApi';
 import { useConfirm } from '../../../components/app/ConfirmDialog';
 import { useToast } from '../../../components/app/Toast';
+import Spinner from '../../../components/app/Spinner';
 
 export default function AdminFunnelsPage() {
   const toast = useToast();
@@ -58,7 +59,7 @@ export default function AdminFunnelsPage() {
   if (!profiles || !funnels || !leadCounts) {
     return (
       <div className="flex items-center justify-center py-16">
-        <div className="w-8 h-8 border-2 border-zinc-700 border-t-emerald-400 rounded-full animate-spin" />
+        <Spinner size="lg" tone="admin" />
       </div>
     );
   }

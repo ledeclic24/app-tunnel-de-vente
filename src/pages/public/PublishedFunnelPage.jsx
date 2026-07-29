@@ -14,6 +14,7 @@ import PurchaseNotification from '../../components/public/PurchaseNotification';
 import StickyFooterCta from '../../components/public/StickyFooterCta';
 import ExitIntentPopup from '../../components/public/ExitIntentPopup';
 import CheckoutModal from '../../components/public/CheckoutModal';
+import Spinner from '../../components/app/Spinner';
 
 const META_PIXEL_RE = /^[0-9]{5,20}$/;
 const GA_ID_RE = /^(G|UA|AW)-[A-Z0-9-]{4,20}$/i;
@@ -267,7 +268,7 @@ export default function PublishedFunnelPage({ funnelSlugOverride } = {}) {
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-surface/20 border-t-accent rounded-full animate-spin" />
+        <Spinner size="lg" />
       </div>
     );
   }

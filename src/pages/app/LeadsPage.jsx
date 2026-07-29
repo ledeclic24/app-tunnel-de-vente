@@ -7,6 +7,7 @@ import { getPlan } from '../../lib/plans';
 import { formatPrice } from '../../lib/currency';
 import { useToast } from '../../components/app/Toast';
 import GradientBanner from '../../components/ui/GradientBanner';
+import Spinner from '../../components/app/Spinner';
 
 // Un lead payé peut avoir n'importe quelle devise (selon le moyen de
 // paiement utilisé) — on regroupe donc le total par devise plutôt que de
@@ -86,7 +87,7 @@ export default function LeadsPage() {
   if (leads === null) {
     return (
       <div className="flex justify-center py-24">
-        <div className="w-6 h-6 border-2 border-surface/20 border-t-accent rounded-full animate-spin" />
+        <Spinner />
       </div>
     );
   }

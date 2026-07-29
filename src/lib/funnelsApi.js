@@ -211,6 +211,13 @@ export async function fetchBlocks(stepId) {
   return apiGet(`/steps/${stepId}/blocks`);
 }
 
+// Remplace un appel par étape (fetchBlocks ci-dessus, en boucle) par un
+// seul appel ramenant les blocs de TOUTES les étapes du tunnel, déjà
+// regroupés par stepId — utilisé par l'éditeur à l'ouverture.
+export async function fetchAllBlocksForFunnel(funnelId) {
+  return apiGet(`/funnels/${funnelId}/blocks`);
+}
+
 export async function addBlock(stepId, type, content, position) {
   return apiPost(`/steps/${stepId}/blocks`, { type, content, position });
 }
@@ -242,6 +249,13 @@ export async function insertLead({ funnelId, stepId, name, email }) {
 export async function countLeads(funnelId) {
   const { count } = await apiGet(`/funnels/${funnelId}/leads/count`);
   return count || 0;
+}
+
+// Remplace un appel par tunnel (fetchFunnelStepsAnalytics, en boucle) par
+// un seul total déjà agrégé côté serveur — utilisé par le tableau de bord.
+export async function fetchTotalViewsForOwner() {
+  const { totalViews } = await apiGet('/leads/views-summary');
+  return totalViews || 0;
 }
 
 export async function incrementStepView(stepId) {

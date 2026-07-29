@@ -4,6 +4,7 @@ import { Wallet, UserPlus, Mail, Layers } from 'lucide-react';
 import { fetchAnalyticsData, bucketByDay } from '../../../lib/analyticsApi';
 import { getLivePlans } from '../../../lib/plansApi';
 import { PLANS } from '../../../lib/plans';
+import Spinner from '../../../components/app/Spinner';
 
 const RANGES = [
   { key: 7, label: '7 jours' },
@@ -67,7 +68,7 @@ export default function AdminAnalyticsPage() {
   if (!data || !filtered) {
     return (
       <div className="flex items-center justify-center py-16">
-        <div className="w-8 h-8 border-2 border-zinc-700 border-t-emerald-400 rounded-full animate-spin" />
+        <Spinner size="lg" tone="admin" />
       </div>
     );
   }

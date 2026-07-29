@@ -7,14 +7,7 @@ import { fetchWebhooks, createWebhook, toggleWebhook, deleteWebhook, fetchWebhoo
 import { getPlan } from '../../lib/plans';
 import { useConfirm } from '../../components/app/ConfirmDialog';
 import GradientBanner from '../../components/ui/GradientBanner';
-
-function Spinner() {
-  return (
-    <div className="flex justify-center py-16">
-      <div className="w-6 h-6 border-2 border-surface/20 border-t-accent rounded-full animate-spin" />
-    </div>
-  );
-}
+import { CenteredSpinner } from '../../components/app/Spinner';
 
 function NewWebhookForm({ funnels, onCreate, onCancel }) {
   const [label, setLabel] = useState('');
@@ -210,7 +203,7 @@ export default function IntegrationsPage() {
         <NewWebhookForm funnels={funnels} onCreate={handleCreate} onCancel={() => setShowForm(false)} />
       )}
 
-      {webhooks === null && <Spinner />}
+      {webhooks === null && <CenteredSpinner />}
 
       {webhooks && webhooks.length === 0 && (
         <div className="text-center py-16 border border-dashed border-surface/20 rounded-[2rem] mb-10">
@@ -257,7 +250,7 @@ export default function IntegrationsPage() {
         Les envois se font en arrière-plan : on peut te confirmer l'heure à laquelle un lead a été envoyé, mais pas s'il a bien été reçu côté Zapier ou Make — vérifie directement dans ton outil en cas de doute.
       </p>
 
-      {logs === null && <Spinner />}
+      {logs === null && <CenteredSpinner />}
 
       {logs && logs.length === 0 && (
         <div className="text-center py-12 border border-dashed border-surface/20 rounded-[2rem]">
