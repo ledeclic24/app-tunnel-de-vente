@@ -44,7 +44,7 @@ const COMPONENTS = {
 };
 
 export default function BlockRenderer({
-  block, onAdvance, onSubmitLead, onMonerooCheckout, editMode, selectedElement, onSelectElement, onContentChange, userId, defaultBg,
+  block, onAdvance, onSubmitLead, onOpenCheckout, primaryOffer, editMode, selectedElement, onSelectElement, onContentChange, userId, defaultBg,
   siblingSteps, onNavigateToStep, currentStepSlug, onGenerateImage, isGeneratingImage, onRegenerateSignatureVisual, isGeneratingSignatureVisual, currency, discountPercent,
   checkoutPrefill,
 }) {
@@ -83,7 +83,8 @@ export default function BlockRenderer({
           blockId={block.id}
           onAdvance={onAdvance}
           onSubmitLead={onSubmitLead}
-          onMonerooCheckout={onMonerooCheckout}
+          onOpenCheckout={onOpenCheckout}
+          primaryOffer={primaryOffer}
           editMode={editMode}
           selectedElement={selectedElement}
           onSelectElement={onSelectElement}

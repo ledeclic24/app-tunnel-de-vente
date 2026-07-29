@@ -1,5 +1,5 @@
 import React from 'react';
-import { Check, X, Loader2 } from 'lucide-react';
+import { Check, X } from 'lucide-react';
 import { getEditableProps, getContentEditableProps, getSectionBackground, cx } from '../../lib/blockStyle';
 import { parsePriceAmount } from '../../lib/checkoutApi';
 import { formatPrice } from '../../lib/currency';
@@ -7,87 +7,6 @@ import { applyDiscount } from '../../lib/exitIntentDiscount';
 import SlotList, { SlotReadOnly } from './SlotList';
 import EditableItemImage from './EditableItemImage';
 import FloatingOrbs from './FloatingOrbs';
-
-// Mini-formulaire nom + email affiché avant la redirection vers Moneroo —
-// requis par leur API pour initialiser une transaction (voir
-// PaymentsService côté backend), impossible de rediriger sans ces infos.
-// L'order bump (offre complémentaire optionnelle, jamais cochée par
-// défaut) s'affiche ici, juste avant la redirection : c'est le seul moment
-// où l'acheteur est déjà engagé dans l'achat sans avoir encore payé.
-function MonerooCheckoutModal({ planName, orderBump, currency, initialName, initialEmail, onClose, onSubmit }) {
-  // Pré-rempli quand ces infos sont déjà connues (ex. offre upsell juste
-  // après un premier achat, voir checkoutPrefill/getCheckoutCustomer) —
-  // jamais autre chose qu'un confort, le visiteur reste libre de modifier.
-  const [name, setName] = React.useState(initialName || '');
-  const [email, setEmail] = React.useState(initialEmail || '');
-  const [bumpChecked, setBumpChecked] = React.useState(false);
-  const [submitting, setSubmitting] = React.useState(false);
-  const [error, setError] = React.useState('');
-
-  const bumpAmount = orderBump?.enabled ? parsePriceAmount(orderBump.price) : 0;
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setSubmitting(true);
-    setError('');
-    try {
-      await onSubmit({ name, email, orderBumpTaken: bumpChecked, orderBumpAmount: bumpChecked ? bumpAmount : undefined });
-    } catch {
-      setError('Impossible de lancer le paiement pour le moment. Réessaie dans un instant.');
-      setSubmitting(false);
-    }
-  };
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60" onClick={onClose}>
-      <div className="bg-background text-surface rounded-2xl p-6 w-full max-w-sm" onClick={(e) => e.stopPropagation()}>
-        <h3 className="font-sans font-bold text-lg mb-1">{planName}</h3>
-        <p className="text-sm text-surface/60 mb-4">Renseigne tes informations pour continuer vers le paiement sécurisé.</p>
-        <form onSubmit={handleSubmit} className="space-y-3">
-          <input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Prénom"
-            required
-            className="w-full bg-primary/5 border border-surface/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-accent transition-colors"
-          />
-          <input
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="Email"
-            type="email"
-            required
-            className="w-full bg-primary/5 border border-surface/10 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-accent transition-colors"
-          />
-          {orderBump?.enabled && (
-            <label className="flex items-start gap-3 bg-accent/5 border border-accent/20 rounded-xl p-3 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={bumpChecked}
-                onChange={(e) => setBumpChecked(e.target.checked)}
-                className="w-4 h-4 mt-0.5 accent-accent shrink-0"
-              />
-              <span className="text-sm">
-                <span className="font-semibold block">{orderBump.heading || 'Ajouter une offre complémentaire'}</span>
-                {orderBump.description && <span className="block text-surface/60 text-xs mt-0.5">{orderBump.description}</span>}
-                <span className="block text-accent font-semibold mt-1">+ {formatPrice(parsePriceAmount(orderBump.price), currency)}</span>
-              </span>
-            </label>
-          )}
-          {error && <p className="text-sm text-red-500">{error}</p>}
-          <button
-            type="submit"
-            disabled={submitting}
-            className="magnetic-btn w-full flex items-center justify-center gap-2 bg-accent text-background py-3 rounded-xl text-sm font-semibold disabled:opacity-60"
-          >
-            {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
-            {submitting ? 'Redirection...' : 'Continuer vers le paiement'}
-          </button>
-        </form>
-      </div>
-    </div>
-  );
-}
 
 const GRID_COLS_CLASS = { 1: '', 2: 'md:grid-cols-2', 3: 'md:grid-cols-3' };
 
@@ -128,14 +47,13 @@ function isSlotsValid(slots, itemCount) {
   return fieldSlots.length === itemCount;
 }
 
-export default function PricingBlock({ content, blockId, onAdvance, onMonerooCheckout, editMode, selectedElement, onSelectElement, onContentChange, userId, defaultBg, currency, discountPercent, checkoutPrefill }) {
+export default function PricingBlock({ content, blockId, onAdvance, onOpenCheckout, editMode, selectedElement, onSelectElement, onContentChange, userId, defaultBg, currency, discountPercent }) {
   const { heading, plans = [], layout, comparisonRows, slots } = content;
   const isComparison = layout === 'comparison' && (comparisonRows || []).length > 0;
   const gridClass = GRID_COLS_CLASS[Math.min(plans.length, 3)] || '';
   const editable = (elementKey, kind, label) =>
     getEditableProps({ elementKey, kind, styles: content.styles, editMode, selectedElement, onSelectElement, label });
   const bg = getSectionBackground(content.styles, defaultBg || 'white');
-  const [checkoutTarget, setCheckoutTarget] = React.useState(null);
   // Le prix/prix barré affichent leur version formatée avec la devise du
   // compte (ex. "17 900 GHS") — sauf le champ qu'on est en train d'éditer,
   // qui repasse en texte brut le temps de la frappe (sinon la valeur tapée
@@ -230,7 +148,7 @@ export default function PricingBlock({ content, blockId, onAdvance, onMonerooChe
                   <button
                     key={j}
                     type="button"
-                    onClick={editMode ? buttonProps.onClick : () => setCheckoutTarget({ plan, link, planIndex: i })}
+                    onClick={editMode ? buttonProps.onClick : () => onOpenCheckout?.(blockId, i, link, plan.name)}
                     style={j === 0 ? buttonProps.style : undefined}
                     className={sharedClassName}
                   >
@@ -318,30 +236,6 @@ export default function PricingBlock({ content, blockId, onAdvance, onMonerooChe
         <div className={`stagger-children grid grid-cols-1 gap-6 ${gridClass}`}>
           {effectiveSlots.map((slot) => <SlotReadOnly key={slot.id} slot={slot} renderField={renderField} bg={bg} />)}
         </div>
-      )}
-      {checkoutTarget && (
-        <MonerooCheckoutModal
-          planName={checkoutTarget.plan.name}
-          orderBump={content.orderBump}
-          currency={currency}
-          initialName={checkoutPrefill?.name}
-          initialEmail={checkoutPrefill?.email}
-          onClose={() => setCheckoutTarget(null)}
-          onSubmit={async ({ name, email, orderBumpTaken }) => {
-            // Le montant réel est recalculé côté serveur à partir du prix
-            // stocké dans CE bloc (blockId + planIndex) — jamais envoyé
-            // depuis ici, pour qu'un appel direct à l'API ne puisse pas
-            // payer un montant différent de celui affiché sur la page.
-            await onMonerooCheckout?.({
-              paymentMethodId: checkoutTarget.link.paymentMethodId,
-              blockId,
-              planIndex: checkoutTarget.planIndex,
-              customerEmail: email,
-              customerName: name,
-              orderBumpTaken,
-            });
-          }}
-        />
       )}
     </section>
   );

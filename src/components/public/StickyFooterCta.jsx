@@ -2,14 +2,27 @@ import React from 'react';
 import { ArrowRight } from 'lucide-react';
 
 // Pied de page collant (cahier des charges "tunnel standard") — fixe en
-// bas de chaque page où il est activé. Cible : soit l'étape "page de
+// bas de chaque page où il est activé. `offer` (voir resolveStickyFooterOffer)
+// vient de l'offre déjà choisie explicitement par le créateur pour afficher
+// le prix (priceBlockId/planIndex) — quand elle résout vers un lien de
+// paiement valide, cliquer mène directement au paiement de CETTE offre au
+// lieu de simplement naviguer. Sinon, cible : soit l'étape "page de
 // commande" désignée une fois par le créateur (targetStepSlug), soit une
-// URL externe, soit — à défaut des deux — l'étape suivante du tunnel
-// (repli, décision actée).
-export default function StickyFooterCta({ config, onNavigateToStep, onAdvance }) {
+// URL externe, soit — à défaut de tout — l'étape suivante du tunnel (repli).
+export default function StickyFooterCta({ config, offer, onOpenCheckout, onNavigateToStep, onAdvance }) {
   if (!config?.enabled) return null;
 
   const handleClick = () => {
+    if (offer) {
+      if (offer.link.provider === 'moneroo') {
+        onOpenCheckout?.(offer.blockId, offer.planIndex, offer.link, offer.plan.name);
+        return;
+      }
+      if (offer.link.url) {
+        window.open(offer.link.url, '_blank', 'noreferrer');
+        return;
+      }
+    }
     if (config.externalUrl) {
       window.open(config.externalUrl, '_blank', 'noreferrer');
     } else if (config.targetStepSlug) {

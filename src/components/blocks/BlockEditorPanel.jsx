@@ -3,6 +3,7 @@ import { Plus, Trash2 } from 'lucide-react';
 import ImageUploadField from './ImageUploadField';
 import { fetchPaymentMethods } from '../../lib/paymentMethodsApi';
 import { TRUST_BADGE_ICONS } from './TrustBadgesBlock';
+import CollapsibleSection from '../app/CollapsibleSection';
 
 const inputClass = "w-full bg-primary/5 border border-surface/10 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-accent transition-colors text-surface";
 const labelClass = "block text-xs font-semibold text-surface/70 uppercase tracking-wider mb-1";
@@ -277,10 +278,6 @@ function BlockFields({ type, content, set, userId, blockId, onGenerateImage, ima
           <Field label="Titre de la section">
             <input className={inputClass} value={content.heading || ''} onChange={(e) => set({ heading: e.target.value })} />
           </Field>
-          <label className="flex items-center gap-2 text-sm text-surface/70">
-            <input type="checkbox" checked={isComparison} onChange={(e) => set({ layout: e.target.checked ? 'comparison' : 'cards' })} />
-            Mode comparaison (mêmes lignes ✓/✗ partagées entre les offres, au lieu d'une liste propre à chaque offre)
-          </label>
           <Field label="Offres">
             <ListEditor
               items={content.plans || []}
@@ -369,70 +366,83 @@ function BlockFields({ type, content, set, userId, blockId, onGenerateImage, ima
               )}
             />
           </Field>
-          {isComparison && (
-            <Field label="Lignes de comparaison (partagées entre toutes les offres)" hint="Une coche par offre indique si la ligne est incluse dans cette offre.">
-              <ListEditor
-                items={content.comparisonRows || []}
-                onChange={(comparisonRows) => set({ comparisonRows })}
-                emptyItem={{ label: '', values: Array(planCount).fill(true) }}
-                addLabel="Ajouter une ligne"
-                renderRow={(row, updateRow) => (
-                  <>
-                    <input className={inputClass} placeholder="Ex : Accompagnement 6 mois" value={row.label || ''} onChange={(e) => updateRow({ label: e.target.value })} />
-                    <div className="flex flex-wrap gap-3">
-                      {(content.plans || []).map((plan, pi) => (
-                        <label key={pi} className="flex items-center gap-1.5 text-xs text-surface/60">
-                          <input
-                            type="checkbox"
-                            checked={Boolean(row.values?.[pi])}
-                            onChange={(e) => {
-                              const next = [...(row.values || [])];
-                              next[pi] = e.target.checked;
-                              updateRow({ values: next });
-                            }}
-                          />
-                          {plan.name || `Offre ${pi + 1}`}
-                        </label>
-                      ))}
-                    </div>
-                  </>
-                )}
-              />
-            </Field>
-          )}
-          <div className="border-t border-surface/10 pt-4">
-            <label className="flex items-center gap-2 text-sm text-surface/70 mb-3">
-              <input
-                type="checkbox"
-                checked={Boolean(content.orderBump?.enabled)}
-                onChange={(e) => set({ orderBump: { ...(content.orderBump || {}), enabled: e.target.checked } })}
-              />
-              Order bump — offre complémentaire proposée juste avant le paiement (case à cocher, jamais cochée par défaut)
-            </label>
-            {content.orderBump?.enabled && (
-              <div className="space-y-2">
+          <CollapsibleSection
+            title="Options avancées"
+            defaultOpen={isComparison || Boolean(content.orderBump?.enabled)}
+          >
+            <div>
+              <label className="flex items-center gap-2 text-sm text-surface/70">
+                <input type="checkbox" checked={isComparison} onChange={(e) => set({ layout: e.target.checked ? 'comparison' : 'cards' })} />
+                Mode comparaison (mêmes lignes ✓/✗ partagées entre les offres, au lieu d'une liste propre à chaque offre)
+              </label>
+              {isComparison && (
+                <div className="mt-3">
+                  <Field label="Lignes de comparaison (partagées entre toutes les offres)" hint="Une coche par offre indique si la ligne est incluse dans cette offre.">
+                    <ListEditor
+                      items={content.comparisonRows || []}
+                      onChange={(comparisonRows) => set({ comparisonRows })}
+                      emptyItem={{ label: '', values: Array(planCount).fill(true) }}
+                      addLabel="Ajouter une ligne"
+                      renderRow={(row, updateRow) => (
+                        <>
+                          <input className={inputClass} placeholder="Ex : Accompagnement 6 mois" value={row.label || ''} onChange={(e) => updateRow({ label: e.target.value })} />
+                          <div className="flex flex-wrap gap-3">
+                            {(content.plans || []).map((plan, pi) => (
+                              <label key={pi} className="flex items-center gap-1.5 text-xs text-surface/60">
+                                <input
+                                  type="checkbox"
+                                  checked={Boolean(row.values?.[pi])}
+                                  onChange={(e) => {
+                                    const next = [...(row.values || [])];
+                                    next[pi] = e.target.checked;
+                                    updateRow({ values: next });
+                                  }}
+                                />
+                                {plan.name || `Offre ${pi + 1}`}
+                              </label>
+                            ))}
+                          </div>
+                        </>
+                      )}
+                    />
+                  </Field>
+                </div>
+              )}
+            </div>
+            <div>
+              <label className="flex items-center gap-2 text-sm text-surface/70 mb-3">
                 <input
-                  className={inputClass}
-                  placeholder="Titre (ex : Ajoute le guide PDF)"
-                  value={content.orderBump?.heading || ''}
-                  onChange={(e) => set({ orderBump: { ...content.orderBump, heading: e.target.value } })}
+                  type="checkbox"
+                  checked={Boolean(content.orderBump?.enabled)}
+                  onChange={(e) => set({ orderBump: { ...(content.orderBump || {}), enabled: e.target.checked } })}
                 />
-                <textarea
-                  className={inputClass}
-                  placeholder="Description (optionnel)"
-                  rows={2}
-                  value={content.orderBump?.description || ''}
-                  onChange={(e) => set({ orderBump: { ...content.orderBump, description: e.target.value } })}
-                />
-                <input
-                  className={inputClass}
-                  placeholder="Prix (ex : 5 000 FCFA)"
-                  value={content.orderBump?.price || ''}
-                  onChange={(e) => set({ orderBump: { ...content.orderBump, price: e.target.value } })}
-                />
-              </div>
-            )}
-          </div>
+                Order bump — offre complémentaire proposée juste avant le paiement (case à cocher, jamais cochée par défaut)
+              </label>
+              {content.orderBump?.enabled && (
+                <div className="space-y-2">
+                  <input
+                    className={inputClass}
+                    placeholder="Titre (ex : Ajoute le guide PDF)"
+                    value={content.orderBump?.heading || ''}
+                    onChange={(e) => set({ orderBump: { ...content.orderBump, heading: e.target.value } })}
+                  />
+                  <textarea
+                    className={inputClass}
+                    placeholder="Description (optionnel)"
+                    rows={2}
+                    value={content.orderBump?.description || ''}
+                    onChange={(e) => set({ orderBump: { ...content.orderBump, description: e.target.value } })}
+                  />
+                  <input
+                    className={inputClass}
+                    placeholder="Prix (ex : 5 000 FCFA)"
+                    value={content.orderBump?.price || ''}
+                    onChange={(e) => set({ orderBump: { ...content.orderBump, price: e.target.value } })}
+                  />
+                </div>
+              )}
+            </div>
+          </CollapsibleSection>
         </div>
       );
     }

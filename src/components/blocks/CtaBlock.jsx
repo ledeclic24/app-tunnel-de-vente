@@ -15,12 +15,29 @@ function isSlotsValid(slots) {
   return fieldSlots.length === 2 && fieldSlots.includes('heading') && fieldSlots.includes('button');
 }
 
-export default function CtaBlock({ content, onAdvance, editMode, selectedElement, onSelectElement, onContentChange, userId, defaultBg }) {
+export default function CtaBlock({ content, onAdvance, onOpenCheckout, primaryOffer, editMode, selectedElement, onSelectElement, onContentChange, userId, defaultBg }) {
   const { heading, buttonText, externalUrl, slots } = content;
   const editable = (elementKey, kind, label) =>
     getEditableProps({ elementKey, kind, styles: content.styles, editMode, selectedElement, onSelectElement, label });
   const editableText = (field) => getContentEditableProps({ editMode, onContentChange, content, field });
   const bg = getSectionBackground(content.styles, defaultBg || 'white');
+
+  // Voir HeroBlock.jsx pour le même mécanisme et sa justification : mène
+  // directement au paiement quand la page a une offre unique et non
+  // ambiguë, sinon avance normalement à l'étape suivante.
+  const handleClick = () => {
+    if (primaryOffer) {
+      if (primaryOffer.link.provider === 'moneroo') {
+        onOpenCheckout?.(primaryOffer.blockId, primaryOffer.planIndex, primaryOffer.link, primaryOffer.plan.name);
+        return;
+      }
+      if (primaryOffer.link.url) {
+        window.open(primaryOffer.link.url, '_blank', 'noreferrer');
+        return;
+      }
+    }
+    onAdvance?.();
+  };
 
   const headingProps = editable('heading', 'text', 'Titre');
   const buttonProps = editable('button', 'button', 'Bouton');
@@ -53,7 +70,7 @@ export default function CtaBlock({ content, onAdvance, editMode, selectedElement
         </a>
       ) : (
         <button
-          onClick={editMode ? buttonProps.onClick : onAdvance}
+          onClick={editMode ? buttonProps.onClick : handleClick}
           style={buttonStyle}
           className={cx('magnetic-btn btn-fill-slide group relative inline-flex items-center gap-2 bg-accent text-background px-10 py-4 rounded-full text-lg font-medium', buttonProps.className)}
         >

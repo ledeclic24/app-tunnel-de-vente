@@ -1,5 +1,13 @@
 // Évalue la qualité d'un tunnel à partir de son contenu réel (étapes + blocs),
 // sans appel réseau : tout est déjà chargé côté éditeur au moment du calcul.
+//
+// Certains points vérifiés portent en plus `stepId`/`blockId`/`target`
+// (voir HealthScoreCard.jsx) : la première occurrence en échec repérée
+// pendant le parcours, pour qu'un clic sur ce point amène directement à
+// l'endroit à corriger plutôt que de rester un simple constat. Un point
+// sans `stepId` (ex. absence de témoignages) n'a pas d'endroit unique où
+// naviguer — il ajouterait un bloc, pas en corriger un — et reste un
+// simple indicateur, non cliquable.
 
 function stepBlocks(blocksByStepId, stepId) {
   return blocksByStepId[stepId] || [];
@@ -21,40 +29,73 @@ export function computeHealthScore(steps, blocksByStepId) {
     id: 'no-empty-steps',
     label: emptySteps.length === 0 ? 'Chaque étape contient au moins un bloc' : `${emptySteps.length} étape(s) sans aucun contenu`,
     passed: emptySteps.length === 0,
+    stepId: emptySteps[0]?.id,
+    target: 'step',
   });
 
-  const heroBlocks = allBlocks.filter((b) => b.type === 'hero');
-  const heroHasHeading = heroBlocks.length === 0 || heroBlocks.every((b) => (b.content?.heading || '').trim().length > 0);
+  let heroHeadingStepId, heroHeadingBlockId;
+  for (const s of steps) {
+    const hero = stepBlocks(blocksByStepId, s.id).find((b) => b.type === 'hero' && !(b.content?.heading || '').trim());
+    if (hero) { heroHeadingStepId = s.id; heroHeadingBlockId = hero.id; break; }
+  }
   checks.push({
     id: 'hero-heading',
-    label: heroHasHeading ? 'Le titre principal est renseigné' : 'Un bloc Hero a un titre vide',
-    passed: heroHasHeading,
+    label: !heroHeadingBlockId ? 'Le titre principal est renseigné' : 'Un bloc Hero a un titre vide',
+    passed: !heroHeadingBlockId,
+    stepId: heroHeadingStepId,
+    blockId: heroHeadingBlockId,
+    target: 'block',
   });
 
-  const imageBlocks = allBlocks.filter((b) => b.type === 'image' || b.type === 'hero');
-  const imagesWithoutAlt = imageBlocks.filter((b) => b.content?.url || b.content?.imageUrl ? !(b.content?.alt || '').trim() : false);
+  let imageAltStepId, imageAltBlockId, imagesWithoutAltCount = 0;
+  for (const s of steps) {
+    for (const b of stepBlocks(blocksByStepId, s.id)) {
+      if (b.type !== 'image' && b.type !== 'hero') continue;
+      const hasImage = b.content?.url || b.content?.imageUrl;
+      const hasAlt = (b.content?.alt || '').trim();
+      if (hasImage && !hasAlt) {
+        imagesWithoutAltCount += 1;
+        if (!imageAltBlockId) { imageAltStepId = s.id; imageAltBlockId = b.id; }
+      }
+    }
+  }
   checks.push({
     id: 'image-alt',
-    label: imagesWithoutAlt.length === 0 ? 'Toutes les images ont un texte alternatif' : `${imagesWithoutAlt.length} image(s) sans texte alternatif`,
-    passed: imagesWithoutAlt.length === 0,
+    label: imagesWithoutAltCount === 0 ? 'Toutes les images ont un texte alternatif' : `${imagesWithoutAltCount} image(s) sans texte alternatif`,
+    passed: imagesWithoutAltCount === 0,
+    stepId: imageAltStepId,
+    blockId: imageAltBlockId,
+    target: 'block',
   });
 
-  const formBlocks = allBlocks.filter((b) => b.type === 'form');
-  const formsWithGenericButton = formBlocks.filter((b) => {
-    const txt = (b.content?.buttonText || '').trim().toLowerCase();
-    return !txt || txt === 'envoyer';
-  });
+  let formCtaStepId, formCtaBlockId, formBlocksCount = 0, formsWithGenericButtonCount = 0;
+  for (const s of steps) {
+    for (const b of stepBlocks(blocksByStepId, s.id)) {
+      if (b.type !== 'form') continue;
+      formBlocksCount += 1;
+      const txt = (b.content?.buttonText || '').trim().toLowerCase();
+      if (!txt || txt === 'envoyer') {
+        formsWithGenericButtonCount += 1;
+        if (!formCtaBlockId) { formCtaStepId = s.id; formCtaBlockId = b.id; }
+      }
+    }
+  }
   checks.push({
     id: 'form-cta-text',
-    label: formsWithGenericButton.length === 0 ? 'Les boutons de formulaire ont un texte personnalisé' : 'Un formulaire utilise encore le texte de bouton par défaut',
-    passed: formBlocks.length === 0 || formsWithGenericButton.length === 0,
+    label: formsWithGenericButtonCount === 0 ? 'Les boutons de formulaire ont un texte personnalisé' : 'Un formulaire utilise encore le texte de bouton par défaut',
+    passed: formBlocksCount === 0 || formsWithGenericButtonCount === 0,
+    stepId: formCtaStepId,
+    blockId: formCtaBlockId,
+    target: 'block',
   });
 
-  const ctaPerStepOverloaded = steps.some((s) => stepBlocks(blocksByStepId, s.id).filter((b) => b.type === 'cta').length > 2);
+  const overloadedStep = steps.find((s) => stepBlocks(blocksByStepId, s.id).filter((b) => b.type === 'cta').length > 2);
   checks.push({
     id: 'cta-not-overloaded',
-    label: ctaPerStepOverloaded ? 'Une étape a plus de deux appels à l\'action — risque de diluer l\'attention' : 'Le nombre d\'appels à l\'action par étape reste raisonnable',
-    passed: !ctaPerStepOverloaded,
+    label: overloadedStep ? 'Une étape a plus de deux appels à l\'action — risque de diluer l\'attention' : 'Le nombre d\'appels à l\'action par étape reste raisonnable',
+    passed: !overloadedStep,
+    stepId: overloadedStep?.id,
+    target: 'step',
   });
 
   const hasSocialProof = allBlocks.some((b) => b.type === 'testimonials');
@@ -70,6 +111,8 @@ export function computeHealthScore(steps, blocksByStepId) {
     id: 'closing-step',
     label: lastStepHasThanks ? 'La dernière étape referme bien le parcours' : 'La dernière étape ne contient ni message de remerciement ni appel à l\'action',
     passed: steps.length === 0 || lastStepHasThanks,
+    stepId: !lastStepHasThanks ? lastStep?.id : undefined,
+    target: 'step',
   });
 
   // Critères de psychologie de vente — s'ajoutent aux vérifications
@@ -80,6 +123,11 @@ export function computeHealthScore(steps, blocksByStepId) {
     id: 'urgency',
     label: hasUrgency ? 'Un compte à rebours crée un sentiment d\'urgence' : 'Aucun élément d\'urgence (ex : compte à rebours) — envisagez d\'en ajouter un si votre offre est limitée dans le temps',
     passed: hasUrgency,
+    // Réglage de page (voir PageSettingsPanel), pas un bloc à corriger —
+    // amène à la dernière étape (souvent la page de vente/commande) plutôt
+    // que de deviner laquelle parmi toutes.
+    stepId: !hasUrgency ? lastStep?.id : undefined,
+    target: 'page',
   });
 
   const hasFaq = allBlocks.some((b) => b.type === 'faq');
@@ -96,15 +144,25 @@ export function computeHealthScore(steps, blocksByStepId) {
     passed: hasTrustBadges,
   });
 
-  const ctaBlocks = allBlocks.filter((b) => b.type === 'cta');
-  const ctaBlocksGeneric = ctaBlocks.filter((b) => {
-    const txt = (b.content?.buttonText || '').trim().toLowerCase();
-    return !txt || txt === 'continuer';
-  });
+  let ctaPersonalizedStepId, ctaPersonalizedBlockId, ctaBlocksCount = 0, ctaBlocksGenericCount = 0;
+  for (const s of steps) {
+    for (const b of stepBlocks(blocksByStepId, s.id)) {
+      if (b.type !== 'cta') continue;
+      ctaBlocksCount += 1;
+      const txt = (b.content?.buttonText || '').trim().toLowerCase();
+      if (!txt || txt === 'continuer') {
+        ctaBlocksGenericCount += 1;
+        if (!ctaPersonalizedBlockId) { ctaPersonalizedStepId = s.id; ctaPersonalizedBlockId = b.id; }
+      }
+    }
+  }
   checks.push({
     id: 'cta-personalized',
-    label: ctaBlocksGeneric.length === 0 ? 'Les boutons d\'appel à l\'action sont personnalisés' : 'Un appel à l\'action utilise encore le texte par défaut ("Continuer") — un verbe d\'action à la première personne convertit mieux',
-    passed: ctaBlocks.length === 0 || ctaBlocksGeneric.length === 0,
+    label: ctaBlocksGenericCount === 0 ? 'Les boutons d\'appel à l\'action sont personnalisés' : 'Un appel à l\'action utilise encore le texte par défaut ("Continuer") — un verbe d\'action à la première personne convertit mieux',
+    passed: ctaBlocksCount === 0 || ctaBlocksGenericCount === 0,
+    stepId: ctaPersonalizedStepId,
+    blockId: ctaPersonalizedBlockId,
+    target: 'block',
   });
 
   const passedCount = checks.filter((c) => c.passed).length;

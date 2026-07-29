@@ -5,6 +5,7 @@ import { fetchDomains, addDomain, checkDomainStatus, removeDomain } from '../../
 import { fetchEbooks } from '../../lib/ebooksApi';
 import { useConfirm } from './ConfirmDialog';
 import PublishTemplateModal from './PublishTemplateModal';
+import CollapsibleSection from './CollapsibleSection';
 
 const inputClass = "w-full bg-primary/5 border border-surface/10 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-accent transition-colors text-surface";
 const labelClass = "block text-xs font-semibold text-surface/70 uppercase tracking-wider mb-1";
@@ -283,108 +284,116 @@ export default function FunnelSettingsPanel({ funnel, plan, onSave }) {
         </p>
       </div>
 
-      <div className="space-y-5 pt-6 border-t border-surface/10">
-        <div>
-          <h3 className="font-sans font-semibold text-surface">SEO & partage</h3>
-          <p className="text-sm text-surface/60 mt-1">Ce qui s'affiche dans l'onglet du navigateur et lors d'un partage sur les réseaux sociaux ou WhatsApp.</p>
-        </div>
-        <div>
-          <label className={labelClass}>Titre</label>
-          <input className={inputClass} value={draft.seo_title} onChange={(e) => set({ seo_title: e.target.value })} placeholder={funnel.name} />
-        </div>
-        <div>
-          <label className={labelClass}>Description ({draft.seo_description.length}/160)</label>
-          <textarea className={inputClass} rows={3} maxLength={300} value={draft.seo_description} onChange={(e) => set({ seo_description: e.target.value })} />
-        </div>
-        <div>
-          <label className={labelClass}>Image de partage (URL)</label>
-          <input className={inputClass} placeholder="https://..." value={draft.seo_image_url} onChange={(e) => set({ seo_image_url: e.target.value })} />
-        </div>
-
-        <div>
-          <label className={labelClass}>Aperçu du partage</label>
-          <div className="border border-surface/10 rounded-2xl overflow-hidden max-w-sm">
-            {draft.seo_image_url && (
-              <div className="w-full h-32 bg-surface/5">
-                <img src={draft.seo_image_url} alt="" className="w-full h-full object-cover" />
-              </div>
-            )}
-            <div className="p-3 bg-surface/[0.02] space-y-1">
-              <p className="text-xs text-surface/40 uppercase tracking-wide truncate">{window.location.hostname}</p>
-              <p className="text-sm font-semibold text-surface truncate">{draft.seo_title || funnel.name}</p>
-              <p className="text-xs text-surface/60 line-clamp-2">{draft.seo_description || 'Ajoute une description pour améliorer le partage.'}</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="space-y-5 pt-6 border-t border-surface/10">
-        <div>
-          <h3 className="font-sans font-semibold text-surface">Planification de publication</h3>
-        </div>
-        {!plan.scheduledPublish ? (
-          <div className="text-center py-6">
-            <Lock className="w-6 h-6 text-surface/30 mx-auto mb-2" />
-            <p className="text-sm text-surface/60 mb-3">La planification de publication est réservée aux plans payants.</p>
-            <Link to="/app/billing" className="magnetic-btn inline-flex bg-accent text-background px-5 py-2.5 rounded-full text-sm font-semibold">
-              Voir les offres
-            </Link>
-          </div>
-        ) : (
-          <>
-            <p className="text-sm text-surface/60">
-              Ces dates seront utilisées pour la publication automatique dès que cette fonctionnalité sera activée côté serveur — pour l'instant, publie ou dépublie manuellement avec le bouton "Publier" en haut de la page.
-            </p>
-            <div className="grid sm:grid-cols-2 gap-4">
-              <div>
-                <label className={labelClass}>Date de publication</label>
-                <input type="datetime-local" className={inputClass} value={draft.publish_at} onChange={(e) => set({ publish_at: e.target.value })} />
-              </div>
-              <div>
-                <label className={labelClass}>Date de dépublication</label>
-                <input type="datetime-local" className={inputClass} value={draft.unpublish_at} onChange={(e) => set({ unpublish_at: e.target.value })} />
-              </div>
-            </div>
-          </>
+      <CollapsibleSection
+        title="Options avancées"
+        defaultOpen={Boolean(
+          draft.seo_title || draft.seo_description || draft.seo_image_url ||
+          draft.publish_at || draft.unpublish_at || draft.is_gallery_opt_in,
         )}
-      </div>
+      >
+        <div className="space-y-5">
+          <div>
+            <h3 className="font-sans font-semibold text-surface">SEO & partage</h3>
+            <p className="text-sm text-surface/60 mt-1">Ce qui s'affiche dans l'onglet du navigateur et lors d'un partage sur les réseaux sociaux ou WhatsApp.</p>
+          </div>
+          <div>
+            <label className={labelClass}>Titre</label>
+            <input className={inputClass} value={draft.seo_title} onChange={(e) => set({ seo_title: e.target.value })} placeholder={funnel.name} />
+          </div>
+          <div>
+            <label className={labelClass}>Description ({draft.seo_description.length}/160)</label>
+            <textarea className={inputClass} rows={3} maxLength={300} value={draft.seo_description} onChange={(e) => set({ seo_description: e.target.value })} />
+          </div>
+          <div>
+            <label className={labelClass}>Image de partage (URL)</label>
+            <input className={inputClass} placeholder="https://..." value={draft.seo_image_url} onChange={(e) => set({ seo_image_url: e.target.value })} />
+          </div>
 
-      <div className="space-y-3 pt-6 border-t border-surface/10">
-        <div className="flex items-center gap-2">
-          <Sparkles className="w-4 h-4 text-surface/40" />
-          <h3 className="font-sans font-semibold text-surface">Galerie d'inspiration</h3>
+          <div>
+            <label className={labelClass}>Aperçu du partage</label>
+            <div className="border border-surface/10 rounded-2xl overflow-hidden max-w-sm">
+              {draft.seo_image_url && (
+                <div className="w-full h-32 bg-surface/5">
+                  <img src={draft.seo_image_url} alt="" className="w-full h-full object-cover" />
+                </div>
+              )}
+              <div className="p-3 bg-surface/[0.02] space-y-1">
+                <p className="text-xs text-surface/40 uppercase tracking-wide truncate">{window.location.hostname}</p>
+                <p className="text-sm font-semibold text-surface truncate">{draft.seo_title || funnel.name}</p>
+                <p className="text-xs text-surface/60 line-clamp-2">{draft.seo_description || 'Ajoute une description pour améliorer le partage.'}</p>
+              </div>
+            </div>
+          </div>
         </div>
-        <label className="flex items-start gap-3 cursor-pointer">
-          <input
-            type="checkbox"
-            checked={draft.is_gallery_opt_in}
-            onChange={(e) => set({ is_gallery_opt_in: e.target.checked })}
-            className="w-4 h-4 mt-0.5 accent-accent shrink-0"
-          />
-          <span className="text-sm text-surface/70">
-            Afficher ce tunnel (une fois publié) dans la galerie publique d'inspiration, pour aider d'autres créateurs à démarrer. Désactivé par défaut — ton nom et tes coordonnées ne sont jamais affichés, seulement le tunnel lui-même.
-          </span>
-        </label>
-      </div>
 
-      <div className="space-y-3 pt-6 border-t border-surface/10">
-        <div className="flex items-center gap-2">
-          <Store className="w-4 h-4 text-surface/40" />
-          <h3 className="font-sans font-semibold text-surface">Marketplace de modèles</h3>
+        <div className="space-y-5">
+          <div>
+            <h3 className="font-sans font-semibold text-surface">Planification de publication</h3>
+          </div>
+          {!plan.scheduledPublish ? (
+            <div className="text-center py-6">
+              <Lock className="w-6 h-6 text-surface/30 mx-auto mb-2" />
+              <p className="text-sm text-surface/60 mb-3">La planification de publication est réservée aux plans payants.</p>
+              <Link to="/app/billing" className="magnetic-btn inline-flex bg-accent text-background px-5 py-2.5 rounded-full text-sm font-semibold">
+                Voir les offres
+              </Link>
+            </div>
+          ) : (
+            <>
+              <p className="text-sm text-surface/60">
+                Ces dates seront utilisées pour la publication automatique dès que cette fonctionnalité sera activée côté serveur — pour l'instant, publie ou dépublie manuellement avec le bouton "Publier" en haut de la page.
+              </p>
+              <div className="grid sm:grid-cols-2 gap-4">
+                <div>
+                  <label className={labelClass}>Date de publication</label>
+                  <input type="datetime-local" className={inputClass} value={draft.publish_at} onChange={(e) => set({ publish_at: e.target.value })} />
+                </div>
+                <div>
+                  <label className={labelClass}>Date de dépublication</label>
+                  <input type="datetime-local" className={inputClass} value={draft.unpublish_at} onChange={(e) => set({ unpublish_at: e.target.value })} />
+                </div>
+              </div>
+            </>
+          )}
         </div>
-        <p className="text-sm text-surface/70">
-          Publie ce tunnel comme modèle réutilisable — d'autres vendeurs pourront le cloner pour démarrer le leur, après validation par un administrateur.
-        </p>
-        <button
-          type="button"
-          onClick={() => setShowPublishTemplate(true)}
-          className="inline-flex items-center gap-2 bg-primary/5 border border-surface/10 text-surface px-4 py-2.5 rounded-full text-sm font-semibold hover:border-accent transition-colors"
-        >
-          <Store className="w-4 h-4" /> Publier comme modèle
-        </button>
-      </div>
 
-      <DomainSection funnelId={funnel.id} />
+        <div className="space-y-3">
+          <div className="flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-surface/40" />
+            <h3 className="font-sans font-semibold text-surface">Galerie d'inspiration</h3>
+          </div>
+          <label className="flex items-start gap-3 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={draft.is_gallery_opt_in}
+              onChange={(e) => set({ is_gallery_opt_in: e.target.checked })}
+              className="w-4 h-4 mt-0.5 accent-accent shrink-0"
+            />
+            <span className="text-sm text-surface/70">
+              Afficher ce tunnel (une fois publié) dans la galerie publique d'inspiration, pour aider d'autres créateurs à démarrer. Désactivé par défaut — ton nom et tes coordonnées ne sont jamais affichés, seulement le tunnel lui-même.
+            </span>
+          </label>
+        </div>
+
+        <div className="space-y-3">
+          <div className="flex items-center gap-2">
+            <Store className="w-4 h-4 text-surface/40" />
+            <h3 className="font-sans font-semibold text-surface">Marketplace de modèles</h3>
+          </div>
+          <p className="text-sm text-surface/70">
+            Publie ce tunnel comme modèle réutilisable — d'autres vendeurs pourront le cloner pour démarrer le leur, après validation par un administrateur.
+          </p>
+          <button
+            type="button"
+            onClick={() => setShowPublishTemplate(true)}
+            className="inline-flex items-center gap-2 bg-primary/5 border border-surface/10 text-surface px-4 py-2.5 rounded-full text-sm font-semibold hover:border-accent transition-colors"
+          >
+            <Store className="w-4 h-4" /> Publier comme modèle
+          </button>
+        </div>
+
+        <DomainSection funnelId={funnel.id} />
+      </CollapsibleSection>
 
       {showPublishTemplate && (
         <PublishTemplateModal

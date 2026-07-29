@@ -104,7 +104,7 @@ function isSlotsValid(slots, hasTrustBadges) {
   return expected.every((f) => fieldSlots.includes(f)) && fieldSlots.length === expected.length;
 }
 
-export default function HeroBlock({ content, onAdvance, editMode, selectedElement, onSelectElement, onContentChange, userId, onGenerateImage, imageGenerating, onRegenerateSignatureVisual, signatureVisualGenerating }) {
+export default function HeroBlock({ content, onAdvance, onOpenCheckout, primaryOffer, editMode, selectedElement, onSelectElement, onContentChange, userId, onGenerateImage, imageGenerating, onRegenerateSignatureVisual, signatureVisualGenerating }) {
   const { eyebrow, heading, subheading, imageUrl, ctaText, externalUrl, layout, trustBadges = [], slots, heroIcon, heroSignatureSvg } = content;
   const isSplit = layout === 'split';
   // Hero est toujours sombre (bg-primary), quelle que soit sa position —
@@ -131,6 +131,26 @@ export default function HeroBlock({ content, onAdvance, editMode, selectedElemen
   const handleImageClick = (e) => {
     imageProps.onClick?.(e);
     if (editMode) setShowMenu((v) => !v);
+  };
+
+  // Sans externalUrl, ce bouton avançait auparavant systématiquement à
+  // l'étape suivante — même quand cette étape était l'écran "réservé" d'un
+  // contenu post-paiement (voir gating dans PublishedFunnelPage). Quand la
+  // page a une offre unique et non ambiguë (voir resolvePrimaryOffer), on
+  // mène directement au paiement de CETTE offre ; sinon (page opt-in, quiz,
+  // plusieurs offres...) le comportement d'origine est inchangé.
+  const handleCtaClick = () => {
+    if (primaryOffer) {
+      if (primaryOffer.link.provider === 'moneroo') {
+        onOpenCheckout?.(primaryOffer.blockId, primaryOffer.planIndex, primaryOffer.link, primaryOffer.plan.name);
+        return;
+      }
+      if (primaryOffer.link.url) {
+        window.open(primaryOffer.link.url, '_blank', 'noreferrer');
+        return;
+      }
+    }
+    onAdvance?.();
   };
 
   const handleFileChange = async (e) => {
@@ -163,7 +183,7 @@ export default function HeroBlock({ content, onAdvance, editMode, selectedElemen
       </a>
     ) : (
       <button
-        onClick={editMode ? buttonProps.onClick : onAdvance}
+        onClick={editMode ? buttonProps.onClick : handleCtaClick}
         style={buttonStyle}
         className={cx('magnetic-btn btn-fill-slide group relative inline-flex items-center gap-2 bg-accent text-background px-8 py-4 rounded-full text-base font-medium', buttonProps.className)}
       >

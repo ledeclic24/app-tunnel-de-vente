@@ -89,7 +89,7 @@ const BlockCard = React.memo(function BlockCard({
   const headerTint = defaultBg === 'primary' ? 'bg-primary/5' : 'bg-accent/5';
 
   return (
-    <div className={`bg-background border rounded-[2rem] overflow-hidden shadow-soft ${locked ? 'border-accent/30' : 'border-surface/10'}`}>
+    <div id={`block-${block.id}`} className={`bg-background border rounded-[2rem] overflow-hidden shadow-soft ${locked ? 'border-accent/30' : 'border-surface/10'}`}>
       <div className={`flex items-center justify-between px-5 py-3 border-b border-surface/10 ${headerTint}`}>
         <div className="flex items-center gap-2 text-sm font-medium text-surface/70 min-w-0">
           <button
@@ -240,6 +240,7 @@ export default function FunnelEditorPage() {
   const [showBrandKit, setShowBrandKit] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showPageSettings, setShowPageSettings] = useState(false);
+  const [showSettingsMenu, setShowSettingsMenu] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [showAiAssistant, setShowAiAssistant] = useState(false);
   const [aiMessages, setAiMessages] = useState([
@@ -392,6 +393,19 @@ export default function FunnelEditorPage() {
         err.message || (needsPublish ? 'La publication a échoué. Réessaie.' : 'La dépublication a échoué. Réessaie.'),
       );
     }
+  };
+
+  // Les 3 panneaux de réglages (Général/Design/Page) partagent un seul
+  // bouton "Réglages" avec un menu déroulant (voir le rendu plus bas) —
+  // cliquer sur l'entrée déjà ouverte la referme, comme le faisait chaque
+  // bouton séparé auparavant.
+  const selectSettingsPanel = (which) => {
+    setShowSettings(which === 'general' && !showSettings);
+    setShowBrandKit(which === 'design' && !showBrandKit);
+    setShowPageSettings(which === 'page' && !showPageSettings);
+    setShowAiAssistant(false);
+    setShowSettingsMenu(false);
+    setActionError('');
   };
 
   const handleAddStep = async () => {
@@ -834,6 +848,38 @@ export default function FunnelEditorPage() {
     [healthSnapshot],
   );
 
+  // Transforme un point du Score de santé en action concrète : amène à la
+  // page concernée, puis ouvre le bloc ou le panneau de réglages à corriger
+  // — au lieu d'un simple indicateur passif (retour utilisateur : aucun
+  // parcours guidé pour un débutant). Voir computeHealthScore pour la
+  // provenance de stepId/blockId/target par point vérifié.
+  const handleHealthCheckNavigate = async (check) => {
+    if (!check.stepId) return;
+    if (selectedStepId !== check.stepId) await selectStep(check.stepId);
+    if (check.target === 'block' && check.blockId) {
+      setShowSettings(false);
+      setShowBrandKit(false);
+      setShowPageSettings(false);
+      setShowAiAssistant(false);
+      setExpandedBlockId(check.blockId);
+      setTimeout(() => {
+        document.getElementById(`block-${check.blockId}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 50);
+    } else if (check.target === 'page') {
+      setExpandedBlockId(null);
+      setShowPageSettings(true);
+      setShowSettings(false);
+      setShowBrandKit(false);
+      setShowAiAssistant(false);
+    } else {
+      setShowSettings(false);
+      setShowBrandKit(false);
+      setShowPageSettings(false);
+      setShowAiAssistant(false);
+      setExpandedBlockId(null);
+    }
+  };
+
   // dnd-kit's useSortable() (utilisé par chaque bloc) s'abonne au tableau
   // `items` de SortableContext via un contexte React : lui passer un
   // nouveau tableau à chaque frappe (blocks.map(...) recréé à chaque rendu)
@@ -942,27 +988,40 @@ export default function FunnelEditorPage() {
           >
             <Eye className="w-4 h-4" /> Aperçu
           </button>
-          {/* Chaque bouton de panneau a sa propre teinte de repos (pas
-              seulement à l'état actif) — toujours les couleurs de marque
-              existantes, pour que la barre d'outils ne soit plus uniforme. */}
-          <button
-            onClick={() => { setShowSettings((v) => !v); setShowBrandKit(false); setShowAiAssistant(false); setActionError(''); }}
-            className={`magnetic-btn flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-semibold border ${showSettings ? 'bg-surface/15 border-surface/30 text-surface' : 'bg-surface/5 border-surface/10 text-surface/70'}`}
-          >
-            <Settings className="w-4 h-4" /> Réglages
-          </button>
-          <button
-            onClick={() => { setShowBrandKit((v) => !v); setShowSettings(false); setShowAiAssistant(false); setShowPageSettings(false); setActionError(''); }}
-            className={`magnetic-btn flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-semibold border ${showBrandKit ? 'bg-accent/15 border-accent text-accent' : 'bg-accent/5 border-accent/15 text-accent/80'}`}
-          >
-            <Palette className="w-4 h-4" /> Design
-          </button>
-          <button
-            onClick={() => { setShowPageSettings((v) => !v); setShowSettings(false); setShowBrandKit(false); setShowAiAssistant(false); setActionError(''); }}
-            className={`magnetic-btn flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-semibold border ${showPageSettings ? 'bg-primary/15 border-primary/40 text-primary' : 'bg-primary/5 border-primary/15 text-primary/70'}`}
-          >
-            <Megaphone className="w-4 h-4" /> Page
-          </button>
+          {/* Les 3 panneaux de réglages (Général/Design/Page) partageaient
+              chacun leur propre bouton toggle en permanence visible — fusionnés
+              en un seul bouton + menu déroulant pour désencombrer la barre
+              d'outils (retour utilisateur : "trop d'onglets en haut"). */}
+          <div className="relative">
+            <button
+              onClick={() => setShowSettingsMenu((v) => !v)}
+              className={`magnetic-btn flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-semibold border ${showSettings || showBrandKit || showPageSettings ? 'bg-surface/15 border-surface/30 text-surface' : 'bg-surface/5 border-surface/10 text-surface/70'}`}
+            >
+              <Settings className="w-4 h-4" /> Réglages
+            </button>
+            {showSettingsMenu && (
+              <div className="absolute z-30 mt-2 right-0 w-56 bg-background border border-surface/10 rounded-2xl shadow-xl p-1.5">
+                <button
+                  onClick={() => selectSettingsPanel('general')}
+                  className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm text-left transition-colors ${showSettings ? 'text-surface bg-surface/10' : 'text-surface/80 hover:bg-surface/5'}`}
+                >
+                  <Settings className="w-4 h-4 shrink-0" /> Général
+                </button>
+                <button
+                  onClick={() => selectSettingsPanel('design')}
+                  className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm text-left transition-colors ${showBrandKit ? 'text-accent bg-accent/10' : 'text-surface/80 hover:bg-accent/5 hover:text-accent'}`}
+                >
+                  <Palette className="w-4 h-4 shrink-0" /> Design
+                </button>
+                <button
+                  onClick={() => selectSettingsPanel('page')}
+                  className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm text-left transition-colors ${showPageSettings ? 'text-primary bg-primary/10' : 'text-surface/80 hover:bg-primary/5 hover:text-primary'}`}
+                >
+                  <Megaphone className="w-4 h-4 shrink-0" /> Page
+                </button>
+              </div>
+            )}
+          </div>
           {plan.aiAccess && (
             <button
               onClick={() => { setShowAiAssistant((v) => !v); setShowSettings(false); setShowBrandKit(false); setActionError(''); }}
@@ -1085,7 +1144,7 @@ export default function FunnelEditorPage() {
       <CountdownBar config={currentStepChrome.countdownBar} />
 
       <div className="max-w-2xl">
-        <HealthScoreCard score={score} checks={checks} />
+        <HealthScoreCard score={score} checks={checks} onNavigate={handleHealthCheckNavigate} />
       </div>
 
       <div

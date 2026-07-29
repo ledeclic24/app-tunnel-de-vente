@@ -5,6 +5,7 @@ import { fetchPublishedSnapshot, insertLead, incrementStepView, fetchLeadStatus 
 import { createMonerooCheckout } from '../../lib/checkoutApi';
 import { brandStyleVars } from '../../lib/colorUtils';
 import { resolveStickyFooterPrice } from '../../lib/currency';
+import { resolvePrimaryOffer, resolveStickyFooterOffer } from '../../lib/primaryOffer';
 import { getExitIntentState } from '../../lib/exitIntentDiscount';
 import { getPaidProof, setPaidProof, getCheckoutCustomer, setCheckoutCustomer } from '../../lib/paymentProof';
 import BlockRenderer from '../../components/blocks/BlockRenderer';
@@ -12,6 +13,7 @@ import CountdownBar from '../../components/public/CountdownBar';
 import PurchaseNotification from '../../components/public/PurchaseNotification';
 import StickyFooterCta from '../../components/public/StickyFooterCta';
 import ExitIntentPopup from '../../components/public/ExitIntentPopup';
+import CheckoutModal from '../../components/public/CheckoutModal';
 
 const META_PIXEL_RE = /^[0-9]{5,20}$/;
 const GA_ID_RE = /^(G|UA|AW)-[A-Z0-9-]{4,20}$/i;
@@ -107,6 +109,11 @@ export default function PublishedFunnelPage({ funnelSlugOverride } = {}) {
   const [notFound, setNotFound] = useState(false);
   const [loading, setLoading] = useState(true);
   const [paymentStatus, setPaymentStatus] = useState(null);
+  // Offre pour laquelle la modale de paiement (CheckoutModal) est ouverte —
+  // portée ici (pas dans PricingBlock) pour que N'IMPORTE QUEL bouton
+  // d'action de la page (Hero, CTA, pied de page collant, bloc Tarifs)
+  // puisse déclencher le même paiement, voir handleOpenCheckout.
+  const [checkoutTarget, setCheckoutTarget] = useState(null);
   const pollingRef = useRef(false);
   // Incrémenté par ExitIntentPopup dès que la réduction est verrouillée
   // (voir markExitIntentShown) — force cette page à relire l'état stocké et
@@ -244,6 +251,19 @@ export default function PublishedFunnelPage({ funnelSlugOverride } = {}) {
   const checkoutPrefill =
     currentStep?.step_type === 'upsell' ? getCheckoutCustomer(funnelSlug) : null;
 
+  const handleOpenCheckout = (blockId, planIndex, link, planName) => {
+    setCheckoutTarget({ blockId, planIndex, link, planName });
+  };
+
+  // Offre principale de la page COURANTE (voir resolvePrimaryOffer) : permet
+  // au Hero et au bloc CTA de mener directement au paiement quand elle est
+  // unique et non ambiguë, sans réglage manuel supplémentaire.
+  const primaryOffer = resolvePrimaryOffer(blocks);
+  // Le pied de page collant peut promouvoir l'offre d'une AUTRE étape que
+  // la page courante (voir PageSettingsPanel) — il lui faut donc les blocs
+  // de tout le tunnel, pas seulement ceux de `blocks`.
+  const allFunnelBlocks = steps.flatMap((s) => s.blocks || []);
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -301,7 +321,8 @@ export default function PublishedFunnelPage({ funnelSlugOverride } = {}) {
             block={block}
             onAdvance={handleAdvance}
             onSubmitLead={handleSubmitLead}
-            onMonerooCheckout={handleMonerooCheckout}
+            onOpenCheckout={handleOpenCheckout}
+            primaryOffer={primaryOffer}
             defaultBg={i % 2 === 0 ? 'primary' : 'primary-alt'}
             currency={funnel.currency || 'XOF'}
             discountPercent={activeDiscountPercent}
@@ -336,15 +357,37 @@ export default function PublishedFunnelPage({ funnelSlugOverride } = {}) {
       <StickyFooterCta
         config={{
           ...chrome.stickyFooterCta,
-          price: resolveStickyFooterPrice(
-            chrome.stickyFooterCta,
-            steps.flatMap((s) => s.blocks || []),
-            funnel.currency || 'XOF',
-          ),
+          price: resolveStickyFooterPrice(chrome.stickyFooterCta, allFunnelBlocks, funnel.currency || 'XOF'),
         }}
+        offer={resolveStickyFooterOffer(chrome.stickyFooterCta, allFunnelBlocks)}
+        onOpenCheckout={handleOpenCheckout}
         onNavigateToStep={handleNavigateToStep}
         onAdvance={handleAdvance}
       />
+      {checkoutTarget && (
+        <CheckoutModal
+          planName={checkoutTarget.planName}
+          orderBump={allFunnelBlocks.find((b) => b.id === checkoutTarget.blockId)?.content?.orderBump}
+          currency={funnel.currency || 'XOF'}
+          initialName={checkoutPrefill?.name}
+          initialEmail={checkoutPrefill?.email}
+          onClose={() => setCheckoutTarget(null)}
+          onSubmit={async ({ name, email, orderBumpTaken }) => {
+            // Le montant réel est recalculé côté serveur à partir du prix
+            // stocké dans CE bloc (blockId + planIndex) — jamais envoyé
+            // depuis ici, pour qu'un appel direct à l'API ne puisse pas
+            // payer un montant différent de celui affiché sur la page.
+            await handleMonerooCheckout({
+              paymentMethodId: checkoutTarget.link.paymentMethodId,
+              blockId: checkoutTarget.blockId,
+              planIndex: checkoutTarget.planIndex,
+              customerEmail: email,
+              customerName: name,
+              orderBumpTaken,
+            });
+          }}
+        />
+      )}
       <ExitIntentPopup
         config={chrome.exitIntent}
         funnelId={funnel.id}
