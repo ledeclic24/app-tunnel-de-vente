@@ -46,6 +46,7 @@ const COMPONENTS = {
 export default function BlockRenderer({
   block, onAdvance, onSubmitLead, onMonerooCheckout, editMode, selectedElement, onSelectElement, onContentChange, userId, defaultBg,
   siblingSteps, onNavigateToStep, currentStepSlug, onGenerateImage, isGeneratingImage, onRegenerateSignatureVisual, isGeneratingSignatureVisual, currency, discountPercent,
+  checkoutPrefill,
 }) {
   const Component = COMPONENTS[block.type];
   // Reçu depuis FunnelEditorPage lié à un blockId générique ; on le relie ici
@@ -98,6 +99,7 @@ export default function BlockRenderer({
           imageGenerating={isGeneratingImage}
           onRegenerateSignatureVisual={regenerateSignatureVisual}
           signatureVisualGenerating={isGeneratingSignatureVisual}
+          checkoutPrefill={checkoutPrefill}
         />
       </div>
     </>

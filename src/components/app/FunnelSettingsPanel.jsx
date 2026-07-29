@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Lock, Check, Globe, RefreshCw, Trash2, Mail, Sparkles } from 'lucide-react';
+import { Lock, Check, Globe, RefreshCw, Trash2, Mail, Sparkles, Store } from 'lucide-react';
 import { fetchDomains, addDomain, checkDomainStatus, removeDomain } from '../../lib/domainsApi';
 import { fetchEbooks } from '../../lib/ebooksApi';
 import { useConfirm } from './ConfirmDialog';
+import PublishTemplateModal from './PublishTemplateModal';
 
 const inputClass = "w-full bg-primary/5 border border-surface/10 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-accent transition-colors text-surface";
 const labelClass = "block text-xs font-semibold text-surface/70 uppercase tracking-wider mb-1";
@@ -196,6 +197,7 @@ export default function FunnelSettingsPanel({ funnel, plan, onSave }) {
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState('');
   const [ebooks, setEbooks] = useState(null);
+  const [showPublishTemplate, setShowPublishTemplate] = useState(false);
 
   useEffect(() => {
     fetchEbooks().then(setEbooks).catch(() => setEbooks([]));
@@ -365,7 +367,33 @@ export default function FunnelSettingsPanel({ funnel, plan, onSave }) {
         </label>
       </div>
 
+      <div className="space-y-3 pt-6 border-t border-surface/10">
+        <div className="flex items-center gap-2">
+          <Store className="w-4 h-4 text-surface/40" />
+          <h3 className="font-sans font-semibold text-surface">Marketplace de modèles</h3>
+        </div>
+        <p className="text-sm text-surface/70">
+          Publie ce tunnel comme modèle réutilisable — d'autres vendeurs pourront le cloner pour démarrer le leur, après validation par un administrateur.
+        </p>
+        <button
+          type="button"
+          onClick={() => setShowPublishTemplate(true)}
+          className="inline-flex items-center gap-2 bg-primary/5 border border-surface/10 text-surface px-4 py-2.5 rounded-full text-sm font-semibold hover:border-accent transition-colors"
+        >
+          <Store className="w-4 h-4" /> Publier comme modèle
+        </button>
+      </div>
+
       <DomainSection funnelId={funnel.id} />
+
+      {showPublishTemplate && (
+        <PublishTemplateModal
+          funnelId={funnel.id}
+          defaultName={funnel.name}
+          defaultCategory={funnel.category}
+          onClose={() => setShowPublishTemplate(false)}
+        />
+      )}
 
       {error && <p className="text-sm text-red-500">{error}</p>}
 

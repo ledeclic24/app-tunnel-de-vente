@@ -677,6 +677,21 @@ export default function FunnelEditorPage() {
     }, 600);
   }, [selectedStepId]);
 
+  // Action discrète (sélection dans un menu déroulant), pas une saisie
+  // continue — enregistrement immédiat, pas besoin du debounce de
+  // handleSaveChrome ci-dessus.
+  const handleChangeStepType = useCallback(async (stepType) => {
+    const stepId = selectedStepId;
+    const before = steps;
+    setSteps((prev) => prev.map((s) => (s.id === stepId ? { ...s, stepType } : s)));
+    try {
+      await updateStep(stepId, { stepType });
+    } catch {
+      setSteps(before);
+      setActionError('Le changement de type de page a échoué. Réessaie.');
+    }
+  }, [selectedStepId, steps]);
+
   const reconcileToSnapshot = useCallback(async (snapshot) => {
     const currentIds = new Set(blocks.map((b) => b.id));
     const snapshotIds = new Set(snapshot.map((b) => b.id));
@@ -994,6 +1009,7 @@ export default function FunnelEditorPage() {
             steps={steps}
             plan={plan}
             onSave={handleSaveChrome}
+            onChangeStepType={handleChangeStepType}
             blocksByStepId={blocksByStepId}
             currency={effectiveProfile?.currency || 'XOF'}
           />

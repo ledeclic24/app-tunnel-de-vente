@@ -6,7 +6,7 @@ import { createMonerooCheckout } from '../../lib/checkoutApi';
 import { brandStyleVars } from '../../lib/colorUtils';
 import { resolveStickyFooterPrice } from '../../lib/currency';
 import { getExitIntentState } from '../../lib/exitIntentDiscount';
-import { getPaidProof, setPaidProof } from '../../lib/paymentProof';
+import { getPaidProof, setPaidProof, getCheckoutCustomer, setCheckoutCustomer } from '../../lib/paymentProof';
 import BlockRenderer from '../../components/blocks/BlockRenderer';
 import CountdownBar from '../../components/public/CountdownBar';
 import PurchaseNotification from '../../components/public/PurchaseNotification';
@@ -216,6 +216,9 @@ export default function PublishedFunnelPage({ funnelSlugOverride } = {}) {
   };
 
   const handleMonerooCheckout = async ({ paymentMethodId, blockId, planIndex, customerEmail, customerName, orderBumpTaken }) => {
+    // Mémorisé pour pré-remplir une éventuelle offre upsell atteinte juste
+    // après ce paiement — voir getCheckoutCustomer/checkoutPrefill plus bas.
+    setCheckoutCustomer(funnelSlug, { name: customerName, email: customerEmail });
     const { checkoutUrl } = await createMonerooCheckout({
       funnelId: funnel.id,
       stepId: currentStep.id,
@@ -228,10 +231,18 @@ export default function PublishedFunnelPage({ funnelSlugOverride } = {}) {
       // Le pourcentage n'est jamais envoyé : le serveur relit lui-même
       // celui configuré sur cette étape (voir resolveCheckoutAmount).
       exitIntentStepId: exitIntentState?.discountStepId || undefined,
+      // Uniquement sur une étape "upsell" : lie cet achat complémentaire à
+      // la vente principale qui a débloqué son accès (même preuve que le
+      // gating, voir getPaidProof) — jamais envoyé pour un achat normal.
+      parentLeadId:
+        currentStep?.step_type === 'upsell' ? getPaidProof(funnelSlug) || undefined : undefined,
       returnUrl: window.location.href,
     });
     window.location.href = checkoutUrl;
   };
+
+  const checkoutPrefill =
+    currentStep?.step_type === 'upsell' ? getCheckoutCustomer(funnelSlug) : null;
 
   if (loading) {
     return (
@@ -297,8 +308,24 @@ export default function PublishedFunnelPage({ funnelSlugOverride } = {}) {
             siblingSteps={steps}
             onNavigateToStep={handleNavigateToStep}
             currentStepSlug={currentStep?.slug}
+            checkoutPrefill={checkoutPrefill}
           />
         ))}
+        {currentStep?.step_type === 'upsell' && chrome.upsellDecline?.enabled && (
+          <div className="text-center">
+            <button
+              type="button"
+              onClick={() =>
+                chrome.upsellDecline.targetStepSlug
+                  ? handleNavigateToStep(chrome.upsellDecline.targetStepSlug)
+                  : handleAdvance()
+              }
+              className="text-sm text-surface/40 hover:text-surface/70 underline transition-colors"
+            >
+              {chrome.upsellDecline.buttonText || 'Non merci, continuer'}
+            </button>
+          </div>
+        )}
       </div>
       {funnel.show_branding && (
         <footer className="text-center py-8 text-xs text-surface/30">

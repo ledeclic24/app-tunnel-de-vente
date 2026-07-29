@@ -28,7 +28,7 @@ function Toggle({ label, checked, onChange, children }) {
 // Réglages d'habillage de page à position fixe (barre de countdown,
 // notification d'achat, pied de page collant) — un réglage par étape,
 // jamais un bloc de contenu (voir PublishedFunnelPage.jsx pour le rendu).
-export default function PageSettingsPanel({ step, steps, plan, onSave, blocksByStepId, currency }) {
+export default function PageSettingsPanel({ step, steps, plan, onSave, onChangeStepType, blocksByStepId, currency }) {
   if (!step) return null;
 
   if (!plan.pageChrome) {
@@ -48,6 +48,8 @@ export default function PageSettingsPanel({ step, steps, plan, onSave, blocksByS
   const purchaseNotification = chrome.purchaseNotification || {};
   const stickyFooterCta = chrome.stickyFooterCta || {};
   const exitIntent = chrome.exitIntent || {};
+  const upsellDecline = chrome.upsellDecline || {};
+  const isUpsell = step.stepType === 'upsell';
 
   // Toutes les offres (bloc Tarifs) du tunnel entier, pas seulement de cette
   // page — le pied de page collant peut très bien promouvoir l'offre d'une
@@ -77,6 +79,57 @@ export default function PageSettingsPanel({ step, steps, plan, onSave, blocksByS
       <p className="text-xs text-surface/40">
         Réglages propres à cette page ({step.name}) — chaque page du tunnel a les siens.
       </p>
+
+      <div>
+        <label className={labelClass}>Type de page</label>
+        <select
+          className={inputClass}
+          value={isUpsell ? 'upsell' : ''}
+          onChange={(e) => onChangeStepType?.(e.target.value === 'upsell' ? 'upsell' : 'custom')}
+        >
+          <option value="">Page standard</option>
+          <option value="upsell">Upsell — offre complémentaire après achat</option>
+        </select>
+        {isUpsell && (
+          <p className="text-xs text-surface/40 mt-1">
+            Cette page n'est accessible que juste après un paiement confirmé sur ce tunnel (même protection que le reste du contenu post-achat) — jamais en navigation normale.
+          </p>
+        )}
+      </div>
+
+      {isUpsell && (
+        <Toggle
+          label="Bouton de refus"
+          checked={Boolean(upsellDecline.enabled)}
+          onChange={(enabled) => setChrome({ upsellDecline: { ...upsellDecline, enabled } })}
+        >
+          <p className="text-xs text-surface/40">
+            Permet au client de refuser cette offre complémentaire et de continuer sans payer une seconde fois.
+          </p>
+          <div>
+            <label className={labelClass}>Texte du bouton</label>
+            <input
+              className={inputClass}
+              placeholder="Non merci, continuer"
+              value={upsellDecline.buttonText || ''}
+              onChange={(e) => setChrome({ upsellDecline: { ...upsellDecline, buttonText: e.target.value } })}
+            />
+          </div>
+          <div>
+            <label className={labelClass}>Page vers laquelle renvoie le refus</label>
+            <select
+              className={inputClass}
+              value={upsellDecline.targetStepSlug || ''}
+              onChange={(e) => setChrome({ upsellDecline: { ...upsellDecline, targetStepSlug: e.target.value || null } })}
+            >
+              <option value="">Étape suivante (par défaut)</option>
+              {(steps || []).map((s) => (
+                <option key={s.id} value={s.slug}>{s.name}</option>
+              ))}
+            </select>
+          </div>
+        </Toggle>
+      )}
 
       <Toggle
         label="Barre de compte à rebours"

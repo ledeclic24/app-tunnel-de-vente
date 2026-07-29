@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { NavLink, Link, Outlet, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, User, LogOut, Menu, X, Shield, Mail, BarChart3, Lock, Sparkles, ArrowRight,
-  Search, Bell, Building2, Webhook, Megaphone, Image as ImageIcon, BookOpen, Gem, CreditCard, Compass, MailWarning,
+  Search, Bell, Building2, Webhook, Megaphone, Image as ImageIcon, BookOpen, Gem, CreditCard, Compass, MailWarning, Store,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { getPlan, PLAN_ORDER } from '../../lib/plans';
@@ -18,6 +18,7 @@ const NAV_GROUPS = [
       { to: '/app/images', label: 'Visuels IA', icon: ImageIcon, requires: 'imageGeneration' },
       { to: '/app/ebooks', label: 'Ebooks', icon: BookOpen, requires: 'ebookAccess' },
       { to: '/app/gallery', label: 'Inspiration', icon: Compass },
+      { to: '/app/templates', label: 'Modèles', icon: Store },
     ],
   },
   {

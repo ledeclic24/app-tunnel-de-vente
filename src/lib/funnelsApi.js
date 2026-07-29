@@ -51,6 +51,7 @@ function normalizeLead(l) {
     order_bump_taken: l.orderBumpTaken,
     order_bump_amount: l.orderBumpAmount,
     refunded_at: l.refundedAt,
+    parent_lead_id: l.parentLeadId,
   };
 }
 

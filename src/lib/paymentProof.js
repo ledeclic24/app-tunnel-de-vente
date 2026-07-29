@@ -26,3 +26,33 @@ export function setPaidProof(funnelSlug, leadId) {
     // masqué pour ce visiteur (repli sûr, jamais l'inverse).
   }
 }
+
+// Mémorise nom/email saisis au premier paiement, pour pré-remplir le
+// formulaire d'une éventuelle offre upsell juste après (voir PricingBlock/
+// MonerooCheckoutModal) — jamais transmis au serveur comme preuve de quoi
+// que ce soit, uniquement un confort pour ne pas les re-demander deux fois
+// de suite au même visiteur.
+const CUSTOMER_KEY_PREFIX = 'vk_customer_';
+
+export function getCheckoutCustomer(funnelSlug) {
+  if (!funnelSlug) return null;
+  try {
+    const raw = globalThis.localStorage.getItem(CUSTOMER_KEY_PREFIX + funnelSlug);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+export function setCheckoutCustomer(funnelSlug, { name, email }) {
+  if (!funnelSlug || !email) return;
+  try {
+    globalThis.localStorage.setItem(
+      CUSTOMER_KEY_PREFIX + funnelSlug,
+      JSON.stringify({ name: name || '', email }),
+    );
+  } catch {
+    // localStorage indisponible — repli silencieux, le champ sera juste
+    // redemandé au visiteur.
+  }
+}

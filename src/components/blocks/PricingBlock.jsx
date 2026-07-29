@@ -14,9 +14,12 @@ import FloatingOrbs from './FloatingOrbs';
 // L'order bump (offre complémentaire optionnelle, jamais cochée par
 // défaut) s'affiche ici, juste avant la redirection : c'est le seul moment
 // où l'acheteur est déjà engagé dans l'achat sans avoir encore payé.
-function MonerooCheckoutModal({ planName, orderBump, currency, onClose, onSubmit }) {
-  const [name, setName] = React.useState('');
-  const [email, setEmail] = React.useState('');
+function MonerooCheckoutModal({ planName, orderBump, currency, initialName, initialEmail, onClose, onSubmit }) {
+  // Pré-rempli quand ces infos sont déjà connues (ex. offre upsell juste
+  // après un premier achat, voir checkoutPrefill/getCheckoutCustomer) —
+  // jamais autre chose qu'un confort, le visiteur reste libre de modifier.
+  const [name, setName] = React.useState(initialName || '');
+  const [email, setEmail] = React.useState(initialEmail || '');
   const [bumpChecked, setBumpChecked] = React.useState(false);
   const [submitting, setSubmitting] = React.useState(false);
   const [error, setError] = React.useState('');
@@ -125,7 +128,7 @@ function isSlotsValid(slots, itemCount) {
   return fieldSlots.length === itemCount;
 }
 
-export default function PricingBlock({ content, blockId, onAdvance, onMonerooCheckout, editMode, selectedElement, onSelectElement, onContentChange, userId, defaultBg, currency, discountPercent }) {
+export default function PricingBlock({ content, blockId, onAdvance, onMonerooCheckout, editMode, selectedElement, onSelectElement, onContentChange, userId, defaultBg, currency, discountPercent, checkoutPrefill }) {
   const { heading, plans = [], layout, comparisonRows, slots } = content;
   const isComparison = layout === 'comparison' && (comparisonRows || []).length > 0;
   const gridClass = GRID_COLS_CLASS[Math.min(plans.length, 3)] || '';
@@ -321,6 +324,8 @@ export default function PricingBlock({ content, blockId, onAdvance, onMonerooChe
           planName={checkoutTarget.plan.name}
           orderBump={content.orderBump}
           currency={currency}
+          initialName={checkoutPrefill?.name}
+          initialEmail={checkoutPrefill?.email}
           onClose={() => setCheckoutTarget(null)}
           onSubmit={async ({ name, email, orderBumpTaken }) => {
             // Le montant réel est recalculé côté serveur à partir du prix

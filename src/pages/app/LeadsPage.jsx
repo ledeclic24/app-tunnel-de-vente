@@ -199,6 +199,14 @@ export default function LeadsPage() {
                         </span>
                       )}
                       {!lead.payment_status && <span className="text-surface/30 text-xs">—</span>}
+                      {lead.parent_lead_id && (
+                        <span
+                          className="block mt-1 text-[10px] font-mono uppercase tracking-wider text-accent/70"
+                          title="Achat complémentaire (upsell) lié à une vente principale"
+                        >
+                          Vente complémentaire
+                        </span>
+                      )}
                     </td>
                     <td className="px-6 py-4">
                       {lead.email_status === 'sent' && (

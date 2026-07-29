@@ -25,6 +25,7 @@ const DashboardPage = lazy(() => import('./pages/app/DashboardPage'));
 const NewFunnelPage = lazy(() => import('./pages/app/NewFunnelPage'));
 const AIGeneratorPage = lazy(() => import('./pages/app/AIGeneratorPage'));
 const GalleryPage = lazy(() => import('./pages/app/GalleryPage'));
+const TemplatesMarketplacePage = lazy(() => import('./pages/app/TemplatesMarketplacePage'));
 const FunnelEditorPage = lazy(() => import('./pages/app/FunnelEditorPage'));
 const BillingPage = lazy(() => import('./pages/app/BillingPage'));
 const AccountPage = lazy(() => import('./pages/app/AccountPage'));
@@ -43,6 +44,7 @@ const AdminFunnelsPage = lazy(() => import('./pages/app/admin/AdminFunnelsPage')
 const AdminPlansPage = lazy(() => import('./pages/app/admin/AdminPlansPage'));
 const AdminAnalyticsPage = lazy(() => import('./pages/app/admin/AdminAnalyticsPage'));
 const AdminAuditLogPage = lazy(() => import('./pages/app/admin/AdminAuditLogPage'));
+const AdminTemplatesPage = lazy(() => import('./pages/app/admin/AdminTemplatesPage'));
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -141,6 +143,7 @@ function App() {
                 <Route path="funnels/new" element={<NewFunnelPage />} />
                 <Route path="funnels/ai" element={<AIGeneratorPage />} />
                 <Route path="gallery" element={<GalleryPage />} />
+                <Route path="templates" element={<TemplatesMarketplacePage />} />
                 <Route path="funnels/:funnelId/edit" element={<FunnelEditorPage />} />
                 <Route path="leads" element={<LeadsPage />} />
                 <Route path="analytics" element={<AnalyticsPage />} />
@@ -162,6 +165,7 @@ function App() {
                   <Route path="plans" element={<AdminPlansPage />} />
                   <Route path="analytics" element={<AdminAnalyticsPage />} />
                   <Route path="audit" element={<AdminAuditLogPage />} />
+                  <Route path="templates" element={<AdminTemplatesPage />} />
                 </Route>
               </Route>
             </Route>
