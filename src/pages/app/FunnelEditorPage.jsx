@@ -30,6 +30,7 @@ import RechargeCreditsButton from '../../components/app/RechargeCreditsButton';
 import { fetchCreditCosts } from '../../lib/creditsApi';
 import Spinner from '../../components/app/Spinner';
 import { useClickOutside } from '../../lib/useClickOutside';
+import { useAnchoredPosition } from '../../lib/useAnchoredPosition';
 import { editFunnelWithAI, regenerateBlockWithAI, generateBlockImageWithAI, regenerateSignatureVisualWithAI, improveElementWithAI } from '../../lib/aiApi';
 import BlockRenderer from '../../components/blocks/BlockRenderer';
 import BlockEditorPanel from '../../components/blocks/BlockEditorPanel';
@@ -245,6 +246,8 @@ export default function FunnelEditorPage() {
   const [showPageSettings, setShowPageSettings] = useState(false);
   const [showSettingsMenu, setShowSettingsMenu] = useState(false);
   const settingsMenuRef = useClickOutside(showSettingsMenu, () => setShowSettingsMenu(false));
+  const settingsMenuTriggerRef = useRef(null);
+  const settingsMenuPos = useAnchoredPosition(showSettingsMenu, settingsMenuTriggerRef, 224);
   const paletteRef = useClickOutside(showPalette, () => setShowPalette(false));
   const [showPreview, setShowPreview] = useState(false);
   const [showAiAssistant, setShowAiAssistant] = useState(false);
@@ -1019,13 +1022,17 @@ export default function FunnelEditorPage() {
               d'outils (retour utilisateur : "trop d'onglets en haut"). */}
           <div ref={settingsMenuRef} className="relative">
             <button
+              ref={settingsMenuTriggerRef}
               onClick={() => setShowSettingsMenu((v) => !v)}
               className={`magnetic-btn flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-semibold border ${showSettings || showBrandKit || showPageSettings ? 'bg-surface/15 border-surface/30 text-surface' : 'bg-surface/5 border-surface/10 text-surface/70'}`}
             >
               <Settings className="w-4 h-4" /> Réglages
             </button>
-            {showSettingsMenu && (
-              <div className="absolute z-30 mt-2 right-0 w-56 bg-background border border-surface/10 rounded-2xl shadow-xl p-1.5">
+            {showSettingsMenu && settingsMenuPos && (
+              <div
+                style={{ position: 'fixed', top: settingsMenuPos.top, left: settingsMenuPos.left, width: 224, maxHeight: settingsMenuPos.maxHeight }}
+                className="z-30 bg-background border border-surface/10 rounded-2xl shadow-xl p-1.5 overflow-y-auto"
+              >
                 <button
                   onClick={() => selectSettingsPanel('general')}
                   className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm text-left transition-colors ${showSettings ? 'text-surface bg-surface/10' : 'text-surface/80 hover:bg-surface/5'}`}
