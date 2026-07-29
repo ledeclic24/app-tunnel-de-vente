@@ -1,6 +1,9 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { Calendar } from 'lucide-react';
 import { useClickOutside } from '../../lib/useClickOutside';
+import { useAnchoredPosition } from '../../lib/useAnchoredPosition';
+
+const PANEL_WIDTH = 256;
 
 export const DATE_PRESETS = [
   { key: 'all', label: 'Toute la période' },
@@ -80,6 +83,8 @@ const TONE_CLASSES = {
 export default function DateRangeFilter({ preset, onPresetChange, customStart, customEnd, onCustomChange, tone = 'default' }) {
   const [open, setOpen] = useState(false);
   const containerRef = useClickOutside(open, () => setOpen(false));
+  const triggerRef = useRef(null);
+  const pos = useAnchoredPosition(open, triggerRef, PANEL_WIDTH);
   const current = DATE_PRESETS.find((p) => p.key === preset) || DATE_PRESETS[0];
   const t = TONE_CLASSES[tone] || TONE_CLASSES.default;
   const label = preset === 'custom' && customStart && customEnd
@@ -89,14 +94,17 @@ export default function DateRangeFilter({ preset, onPresetChange, customStart, c
   return (
     <div ref={containerRef} className="relative shrink-0">
       <button
+        ref={triggerRef}
         type="button"
         onClick={() => setOpen((v) => !v)}
         className={`magnetic-btn flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-semibold border ${t.button}`}
       >
         <Calendar className="w-3.5 h-3.5 shrink-0" /> {label}
       </button>
-      {open && (
-        <div className={`absolute z-30 mt-2 right-0 w-64 border rounded-2xl shadow-xl p-1.5 ${t.menu}`}>
+      {open && pos && (
+        <div
+          style={{ position: 'fixed', top: pos.top, left: pos.left, width: PANEL_WIDTH, maxHeight: pos.maxHeight }}
+          className={`z-30 border rounded-2xl shadow-xl p-1.5 overflow-y-auto ${t.menu}`}>
           {DATE_PRESETS.map((p) => (
             <button
               key={p.key}
