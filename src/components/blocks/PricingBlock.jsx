@@ -96,6 +96,11 @@ export default function PricingBlock({ content, blockId, onAdvance, onOpenChecko
     if (!plan) return null;
     const cardProps = editable(`plan-${i}`, 'card', `Carte "${plan.name || i + 1}"`);
     const buttonProps = editable(`plan-${i}-button`, 'button', `Bouton "${plan.name || i + 1}"`);
+    // Un lien ajouté manuellement puis jamais rempli (voir "Ajouter un lien
+    // manuellement" dans BlockEditorPanel) reste dans le tableau avec ni URL
+    // ni prestataire — sans ce filtre, un second bouton "Payer" s'affichait
+    // sans jamais rien faire au clic.
+    const usableLinks = (plan.paymentLinks || []).filter((l) => (l.provider === 'moneroo' ? Boolean(l.paymentMethodId) : Boolean(l.url)));
     return (
       <div
         className={cx(
@@ -136,9 +141,9 @@ export default function PricingBlock({ content, blockId, onAdvance, onOpenChecko
             🎉 Réduction de {discountPercent}% appliquée : {formatPrice(applyDiscount(parsePriceAmount(plan.price), discountPercent), currency)}
           </p>
         )}
-        {(plan.paymentLinks || []).length > 0 ? (
+        {usableLinks.length > 0 ? (
           <div className="space-y-2 mb-6">
-            {plan.paymentLinks.map((link, j) => {
+            {usableLinks.map((link, j) => {
               const sharedClassName = cx(
                 `magnetic-btn block w-full text-center py-3 rounded-full font-semibold ${j === 0 ? (plan.highlight ? 'bg-accent text-background' : 'bg-primary text-background') : 'border border-background/30 text-background'}`,
                 j === 0 ? buttonProps.className : undefined,
