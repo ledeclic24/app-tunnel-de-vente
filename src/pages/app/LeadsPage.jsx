@@ -42,8 +42,13 @@ function exportToCsv(leads) {
     l.name || '', l.email, l.funnelName, new Date(l.created_at).toLocaleString('fr-FR'),
     l.payment_status || '', l.paid_amount || '', l.paid_currency || '',
   ]);
-  const csv = [header, ...rows].map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n');
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  // Excel en français utilise ";" comme séparateur de colonnes (la virgule
+  // sert de séparateur décimal) — avec une virgule, Excel ne découpe rien
+  // et met toute la ligne dans la colonne A. Le BOM UTF-8 en tête est requis
+  // pour qu'Excel affiche correctement les caractères accentués (é, è...)
+  // au lieu de les corrompre (sinon "payé" devient "payÃ©").
+  const csv = [header, ...rows].map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(';')).join('\r\n');
+  const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
