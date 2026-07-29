@@ -81,3 +81,8 @@ export async function setTemplateFeatured(id, featured) {
   const row = await apiPatch(`/admin/templates/${id}/featured`, { featured });
   return normalizeTemplate(row);
 }
+
+export async function unpublishTemplate(id, reason) {
+  const row = await apiPatch(`/admin/templates/${id}/unpublish`, { reason });
+  return normalizeTemplate(row);
+}

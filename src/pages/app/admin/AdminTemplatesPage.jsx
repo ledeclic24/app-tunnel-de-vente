@@ -1,14 +1,34 @@
 import React, { useEffect, useState } from 'react';
-import { Check, X, Star } from 'lucide-react';
-import { fetchPendingTemplates, reviewTemplate, fetchApprovedTemplatesForAdmin, setTemplateFeatured } from '../../../lib/templatesApi';
+import { Link } from 'react-router-dom';
+import { Check, X, Star, Eye, EyeOff, ExternalLink } from 'lucide-react';
+import { fetchPendingTemplates, reviewTemplate, fetchApprovedTemplatesForAdmin, setTemplateFeatured, unpublishTemplate } from '../../../lib/templatesApi';
 import { useToast } from '../../../components/app/Toast';
+import { useConfirm } from '../../../components/app/ConfirmDialog';
 import Spinner from '../../../components/app/Spinner';
+import FunnelPreviewModal from '../../../components/app/FunnelPreviewModal';
+
+// Le contenu d'un modèle est un instantané JSON sans id persisté (voir
+// TemplatesService.publishFromFunnel) — FunnelPreviewModal a besoin d'un id
+// stable par étape/bloc pour sa navigation interne : générés ici, jamais
+// envoyés au serveur. Aucune palette de marque n'est capturée à la
+// publication du modèle, l'aperçu retombe donc sur les couleurs par
+// défaut plutôt que sur celles du tunnel d'origine.
+function buildTemplatePreviewData(template) {
+  const rawSteps = template.content?.steps || [];
+  const steps = rawSteps.map((s, i) => ({ id: `s${i}`, name: s.name, slug: s.slug, stepType: s.stepType, chrome: null }));
+  const blocksByStepId = {};
+  rawSteps.forEach((s, i) => {
+    blocksByStepId[`s${i}`] = (s.blocks || []).map((b, j) => ({ id: `s${i}-b${j}`, type: b.type, content: b.content }));
+  });
+  return { funnel: { name: template.name, brand: {} }, steps, blocksByStepId };
+}
 
 // Avantage non-monétaire pour le créateur d'un modèle déjà approuvé — le
 // marketplace reste gratuit (voir TemplatesService.setFeatured), la mise
 // en avant n'est qu'un badge de visibilité côté public.
-function ApprovedTemplatesSection() {
+function ApprovedTemplatesSection({ onPreview }) {
   const toast = useToast();
+  const confirm = useConfirm();
   const [templates, setTemplates] = useState(null);
   const [busyId, setBusyId] = useState(null);
 
@@ -25,6 +45,20 @@ function ApprovedTemplatesSection() {
       await load();
     } catch (err) {
       toast.error(err.message || "La mise à jour a échoué.");
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const handleUnpublish = async (t) => {
+    if (!(await confirm(`Retirer "${t.name}" du marketplace ? Le créateur en sera notifié par e-mail.`))) return;
+    setBusyId(t.id);
+    try {
+      await unpublishTemplate(t.id);
+      toast.success(`"${t.name}" retiré du marketplace.`);
+      await load();
+    } catch (err) {
+      toast.error(err.message || "Le retrait a échoué.");
     } finally {
       setBusyId(null);
     }
@@ -54,16 +88,31 @@ function ApprovedTemplatesSection() {
             <p className="font-medium text-zinc-100 truncate">{t.name}</p>
             <p className="text-xs text-zinc-500">{t.category} · {t.usage_count} utilisation{t.usage_count > 1 ? 's' : ''}</p>
           </div>
-          <button
-            onClick={() => toggleFeatured(t)}
-            disabled={busyId === t.id}
-            className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold transition-colors disabled:opacity-40 shrink-0 ${
-              t.featured ? 'bg-amber-500/10 text-amber-400 hover:bg-amber-500/20' : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'
-            }`}
-          >
-            <Star className={`w-4 h-4 ${t.featured ? 'fill-amber-400' : ''}`} />
-            {t.featured ? 'Mis en avant' : 'Mettre en avant'}
-          </button>
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              onClick={() => onPreview(t)}
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold bg-zinc-800 text-zinc-300 hover:bg-zinc-700 transition-colors"
+            >
+              <Eye className="w-4 h-4" /> Aperçu
+            </button>
+            <button
+              onClick={() => toggleFeatured(t)}
+              disabled={busyId === t.id}
+              className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold transition-colors disabled:opacity-40 ${
+                t.featured ? 'bg-amber-500/10 text-amber-400 hover:bg-amber-500/20' : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'
+              }`}
+            >
+              <Star className={`w-4 h-4 ${t.featured ? 'fill-amber-400' : ''}`} />
+              {t.featured ? 'Mis en avant' : 'Mettre en avant'}
+            </button>
+            <button
+              onClick={() => handleUnpublish(t)}
+              disabled={busyId === t.id}
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-colors disabled:opacity-40"
+            >
+              <EyeOff className="w-4 h-4" /> Dépublier
+            </button>
+          </div>
         </div>
       ))}
     </div>
@@ -77,6 +126,7 @@ export default function AdminTemplatesPage() {
   const [rejectingId, setRejectingId] = useState(null);
   const [rejectionReason, setRejectionReason] = useState('');
   const [tab, setTab] = useState('pending');
+  const [previewTemplate, setPreviewTemplate] = useState(null);
 
   const load = async () => {
     setTemplates(await fetchPendingTemplates());
@@ -112,23 +162,33 @@ export default function AdminTemplatesPage() {
 
   return (
     <div>
-      <div className="flex items-center gap-2 mb-5">
-        <button
-          onClick={() => setTab('pending')}
-          className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-colors ${tab === 'pending' ? 'bg-zinc-100 text-zinc-900' : 'bg-zinc-900 text-zinc-500 hover:text-zinc-300'}`}
+      <div className="flex items-center justify-between gap-3 mb-5">
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setTab('pending')}
+            className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-colors ${tab === 'pending' ? 'bg-zinc-100 text-zinc-900' : 'bg-zinc-900 text-zinc-500 hover:text-zinc-300'}`}
+          >
+            En attente
+          </button>
+          <button
+            onClick={() => setTab('approved')}
+            className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-colors ${tab === 'approved' ? 'bg-zinc-100 text-zinc-900' : 'bg-zinc-900 text-zinc-500 hover:text-zinc-300'}`}
+          >
+            Approuvés — mise en avant
+          </button>
+        </div>
+        <Link
+          to="/app/templates"
+          target="_blank"
+          rel="noreferrer"
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-zinc-400 hover:text-zinc-100 transition-colors shrink-0"
         >
-          En attente
-        </button>
-        <button
-          onClick={() => setTab('approved')}
-          className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-colors ${tab === 'approved' ? 'bg-zinc-100 text-zinc-900' : 'bg-zinc-900 text-zinc-500 hover:text-zinc-300'}`}
-        >
-          Approuvés — mise en avant
-        </button>
+          <ExternalLink className="w-3.5 h-3.5" /> Voir le marketplace
+        </Link>
       </div>
 
       {tab === 'approved' ? (
-        <ApprovedTemplatesSection />
+        <ApprovedTemplatesSection onPreview={setPreviewTemplate} />
       ) : !templates ? (
         <div className="flex items-center justify-center py-16">
           <Spinner size="lg" tone="admin" />
@@ -158,6 +218,12 @@ export default function AdminTemplatesPage() {
                     <p className="text-xs text-zinc-600 mt-2">{(t.content?.steps || []).length} page(s)</p>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
+                    <button
+                      onClick={() => setPreviewTemplate(t)}
+                      className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold bg-zinc-800 text-zinc-300 hover:bg-zinc-700 transition-colors"
+                    >
+                      <Eye className="w-4 h-4" /> Aperçu
+                    </button>
                     <button
                       onClick={() => handleApprove(t)}
                       disabled={busyId === t.id}
@@ -195,6 +261,13 @@ export default function AdminTemplatesPage() {
             ))}
           </div>
         </>
+      )}
+
+      {previewTemplate && (
+        <FunnelPreviewModal
+          {...buildTemplatePreviewData(previewTemplate)}
+          onClose={() => setPreviewTemplate(null)}
+        />
       )}
     </div>
   );

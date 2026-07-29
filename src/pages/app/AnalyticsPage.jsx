@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Lock, TrendingUp, ArrowRight } from 'lucide-react';
+import { Link, useSearchParams } from 'react-router-dom';
+import { Lock, TrendingUp, ArrowRight, Search } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { fetchUserFunnels, fetchFunnelStepsAnalytics, fetchUpsellAnalytics } from '../../lib/funnelsApi';
 import { fetchCategoryBenchmark } from '../../lib/growthApi';
@@ -236,82 +236,132 @@ function BenchmarkCard({ funnel }) {
   );
 }
 
+// Choix du tunnel AVANT tout affichage de statistiques — l'ancienne version
+// chargeait et affichait le parcours + benchmark de TOUS les tunnels d'un
+// coup (jusqu'à un appel réseau par tunnel, rendu simultanément) : avec
+// quelques dizaines de tunnels la page devenait illisible, et avec des
+// centaines, quasi inutilisable pour retrouver un tunnel précis. La
+// recherche filtre côté client (liste déjà chargée en entier, même
+// principe que le tableau de bord).
+function FunnelPicker({ funnels, selectedId, onSelect }) {
+  const [search, setSearch] = useState('');
+  const filtered = search.trim()
+    ? funnels.filter((f) => f.name.toLowerCase().includes(search.trim().toLowerCase()))
+    : funnels;
+
+  return (
+    <div className="bg-background border border-surface/10 rounded-[2rem] p-3 shadow-soft lg:sticky lg:top-24">
+      <div className="relative mb-2">
+        <Search className="w-3.5 h-3.5 text-surface/30 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+        <input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Rechercher un tunnel..."
+          className="w-full bg-surface/5 border border-transparent rounded-full pl-8 pr-3 py-2 text-sm focus:outline-none focus:border-accent/30 transition-colors text-surface"
+        />
+      </div>
+      <div className="max-h-[28rem] overflow-y-auto divide-y divide-surface/5">
+        {filtered.length === 0 && (
+          <p className="text-sm text-surface/40 text-center py-6">Aucun tunnel ne correspond à cette recherche.</p>
+        )}
+        {filtered.map((f) => {
+          const cat = getCategory(f.category);
+          return (
+            <button
+              key={f.id}
+              type="button"
+              onClick={() => onSelect(f.id)}
+              className={`w-full flex items-center justify-between gap-3 px-3 py-3 text-left rounded-xl transition-colors ${selectedId === f.id ? 'bg-accent/10' : 'hover:bg-surface/5'}`}
+            >
+              <div className="min-w-0">
+                <p className={`text-sm font-medium truncate ${selectedId === f.id ? 'text-accent' : 'text-surface'}`}>{f.name}</p>
+                <p className="text-xs text-surface/40">{cat.label}</p>
+              </div>
+              <span className={`shrink-0 text-[10px] font-mono uppercase tracking-wider px-2 py-1 rounded-full ${f.is_published ? 'bg-green-500/10 text-green-600' : 'bg-surface/10 text-surface/50'}`}>
+                {f.is_published ? 'Publié' : 'Brouillon'}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 export default function AnalyticsPage() {
   const { effectiveOwnerId, effectiveProfile } = useAuth();
   const [funnels, setFunnels] = useState(null);
   const plan = getPlan(effectiveProfile?.plan);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const selectedId = searchParams.get('tunnel') || '';
 
   useEffect(() => {
     if (!effectiveOwnerId) return;
     fetchUserFunnels(effectiveOwnerId).then(setFunnels).catch(() => setFunnels([]));
   }, [effectiveOwnerId]);
 
-  const publishedFunnels = funnels ? funnels.filter((f) => f.is_published) : null;
+  const handleSelect = (id) => setSearchParams(id ? { tunnel: id } : {}, { replace: true });
+  const selectedFunnel = funnels ? funnels.find((f) => f.id === selectedId) || null : null;
+  const hasAccess = plan.analytics || plan.benchmark;
 
   return (
     <div>
       <GradientBanner
         icon={TrendingUp}
         title="Analytique"
-        description="Le parcours de tes visiteurs, et la performance de tes tunnels comparée à leur secteur."
+        description="Sélectionne un tunnel pour voir son parcours client et sa performance comparée à son secteur."
         className="mb-10"
       />
 
-      <section className="mb-12">
-        <h2 className="text-lg font-sans font-bold text-surface mb-1">Parcours client</h2>
-        <p className="text-surface/50 text-sm mb-6">
-          Le nombre de vues à chaque étape, et le pourcentage de visiteurs perdus d'une étape à l'autre.
-        </p>
+      {!hasAccess && (
+        <LockedSection
+          title="Statistiques réservées aux plans Pro et Entreprise"
+          description="Suis le taux de conversion de chacune de tes pages et compare-le à la moyenne de ton secteur, à partir du plan Pro."
+        />
+      )}
 
-        {!plan.analytics && (
-          <LockedSection
-            title="Statistiques réservées au plan Entreprise"
-            description="Suis le taux de conversion de chacune de tes pages, tunnel par tunnel, avec le plan Entreprise."
-          />
-        )}
+      {hasAccess && funnels === null && <CenteredSpinner />}
 
-        {plan.analytics && funnels === null && <CenteredSpinner />}
+      {hasAccess && funnels && funnels.length === 0 && (
+        <div className="text-center py-16 border border-dashed border-surface/20 rounded-[2rem]">
+          <p className="text-surface/60">Crée un tunnel pour voir apparaître ses statistiques ici.</p>
+        </div>
+      )}
 
-        {plan.analytics && funnels && funnels.length === 0 && (
-          <div className="text-center py-16 border border-dashed border-surface/20 rounded-[2rem]">
-            <p className="text-surface/60">Crée un tunnel pour voir apparaître ses statistiques ici.</p>
-          </div>
-        )}
+      {hasAccess && funnels && funnels.length > 0 && (
+        <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-6 items-start">
+          <FunnelPicker funnels={funnels} selectedId={selectedId} onSelect={handleSelect} />
 
-        {plan.analytics && funnels && funnels.length > 0 && (
-          <div className="space-y-6">
-            {funnels.map((funnel) => <FunnelJourney key={funnel.id} funnel={funnel} />)}
-          </div>
-        )}
-      </section>
+          {!selectedFunnel && (
+            <div className="text-center py-16 border border-dashed border-surface/20 rounded-[2rem]">
+              <p className="text-surface/60">Sélectionne un tunnel dans la liste pour voir ses statistiques.</p>
+            </div>
+          )}
 
-      <section>
-        <h2 className="text-lg font-sans font-bold text-surface mb-1">Benchmark sectoriel</h2>
-        <p className="text-surface/50 text-sm mb-6">
-          Compare le taux de conversion de tes tunnels publiés à la moyenne anonymisée de leur catégorie.
-        </p>
+          {selectedFunnel && (
+            <div key={selectedFunnel.id} className="space-y-6">
+              {plan.analytics ? (
+                <FunnelJourney funnel={selectedFunnel} />
+              ) : (
+                <LockedSection
+                  title="Parcours client réservé au plan Entreprise"
+                  description="Suis le taux de conversion de chacune des pages de ce tunnel avec le plan Entreprise."
+                />
+              )}
 
-        {!plan.benchmark && (
-          <LockedSection
-            title="Benchmark réservé aux plans Pro et Entreprise"
-            description="Compare la conversion de tes tunnels à la moyenne anonymisée de leur catégorie, avec le plan Pro ou Entreprise."
-          />
-        )}
-
-        {plan.benchmark && funnels === null && <CenteredSpinner />}
-
-        {plan.benchmark && publishedFunnels && publishedFunnels.length === 0 && (
-          <div className="text-center py-16 border border-dashed border-surface/20 rounded-[2rem]">
-            <p className="text-surface/60">Publie un tunnel pour comparer sa conversion à la moyenne du secteur.</p>
-          </div>
-        )}
-
-        {plan.benchmark && publishedFunnels && publishedFunnels.length > 0 && (
-          <div className="space-y-6">
-            {publishedFunnels.map((funnel) => <BenchmarkCard key={funnel.id} funnel={funnel} />)}
-          </div>
-        )}
-      </section>
+              {plan.benchmark && (
+                selectedFunnel.is_published ? (
+                  <BenchmarkCard funnel={selectedFunnel} />
+                ) : (
+                  <div className="text-center py-10 border border-dashed border-surface/20 rounded-[2rem]">
+                    <p className="text-surface/60 text-sm">Publie ce tunnel pour comparer sa conversion à la moyenne de son secteur.</p>
+                  </div>
+                )
+              )}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
