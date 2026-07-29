@@ -41,10 +41,10 @@ function StepArrow({ fromViews, toViews }) {
   const hasData = fromViews > 0;
   const dropPct = hasData ? Math.round((1 - toViews / fromViews) * 100) : null;
   return (
-    <div className="flex-shrink-0 flex flex-col items-center justify-center w-16 px-1">
+    <div className="flex-shrink-0 flex flex-col items-center justify-center w-20 px-1">
       {hasData && (
-        <span className={`text-[10px] font-mono mb-1 whitespace-nowrap ${dropPct > 0 ? 'text-surface/50' : 'text-accent'}`}>
-          {dropPct > 0 ? `-${dropPct}%` : 'stable'}
+        <span className={`text-[10px] font-mono mb-1 whitespace-nowrap ${dropPct > 0 ? 'text-red-500/70' : 'text-accent'}`}>
+          {dropPct > 0 ? `-${dropPct}% perdus` : 'personne perdu'}
         </span>
       )}
       <ArrowRight className="w-5 h-5 text-surface/20" />
@@ -67,7 +67,10 @@ function UpsellSection({ funnelId, currency }) {
 
   return (
     <div className="mt-6 pt-6 border-t border-surface/10 space-y-4">
-      <p className="text-xs font-mono uppercase tracking-wider text-surface/40">Acceptation upsell</p>
+      <div>
+        <p className="text-xs font-mono uppercase tracking-wider text-surface/40">Acceptation upsell</p>
+        <p className="text-xs text-surface/40 mt-0.5">Sur les visiteurs qui ont vu cette offre complémentaire après leur achat, combien l'ont acceptée.</p>
+      </div>
       {rows.map((r) => (
         <div key={r.stepId} className="flex items-center justify-between gap-4 text-sm">
           <span className="text-surface/80 truncate">{r.stepName}</span>
@@ -100,15 +103,21 @@ function FunnelJourney({ funnel }) {
   }, [funnel.id]);
 
   const totalViews = steps ? steps.reduce((sum, s) => sum + s.views, 0) : 0;
+  const firstStepViews = steps && steps.length > 0 ? steps[0].views : 0;
+  const totalLeads = steps ? steps.reduce((sum, s) => sum + s.leadCount, 0) : 0;
+  const conversionRate = firstStepViews > 0 ? (totalLeads / firstStepViews) * 100 : null;
 
   return (
     <div className="bg-background border border-surface/10 rounded-[2rem] p-6 md:p-8 shadow-soft">
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-1">
         <h3 className="font-sans font-semibold text-surface">{funnel.name}</h3>
         <span className={`text-[10px] font-mono uppercase tracking-wider px-2 py-1 rounded-full ${funnel.is_published ? 'bg-accent/10 text-accent' : 'bg-surface/10 text-surface/50'}`}>
           {funnel.is_published ? 'Publié' : 'Brouillon'}
         </span>
       </div>
+      <p className="text-xs text-surface/40 mb-6">
+        <span className="font-semibold">Vue</span> = un visiteur a ouvert la page · <span className="font-semibold">Lead</span> = un visiteur a rempli un formulaire ou payé
+      </p>
 
       {steps === null && (
         <div className="h-16 flex items-center justify-center">
@@ -122,21 +131,31 @@ function FunnelJourney({ funnel }) {
 
       {steps && steps.length > 0 && totalViews === 0 && (
         <p className="text-surface/60 text-sm">
-          Ce tunnel n'a pas encore reçu de visite. Reviens ici une fois que tu auras partagé son lien.
+          Ce tunnel n'a pas encore reçu de visite. Reviens ici une fois que tu auras partagé son lien — les statistiques se rempliront automatiquement.
         </p>
       )}
 
       {steps && steps.length > 0 && totalViews > 0 && (
-        <div className="overflow-x-auto pb-2">
-          <div className="flex items-center w-max">
-            {steps.map((step, i) => (
-              <React.Fragment key={step.id}>
-                <StepNode step={step} />
-                {i < steps.length - 1 && <StepArrow fromViews={step.views} toViews={steps[i + 1].views} />}
-              </React.Fragment>
-            ))}
+        <>
+          {conversionRate !== null && (
+            <div className="flex items-baseline gap-3 mb-6 pb-6 border-b border-surface/10">
+              <span className="text-3xl font-sans font-bold text-accent">{conversionRate.toFixed(1)}%</span>
+              <span className="text-sm text-surface/60">
+                de tes {firstStepViews} visiteur{firstStepViews > 1 ? 's' : ''} {firstStepViews > 1 ? 'sont devenus' : 'est devenu'} un lead (formulaire rempli ou achat) — le détail page par page ci-dessous.
+              </span>
+            </div>
+          )}
+          <div className="overflow-x-auto pb-2">
+            <div className="flex items-center w-max">
+              {steps.map((step, i) => (
+                <React.Fragment key={step.id}>
+                  <StepNode step={step} />
+                  {i < steps.length - 1 && <StepArrow fromViews={step.views} toViews={steps[i + 1].views} />}
+                </React.Fragment>
+              ))}
+            </div>
           </div>
-        </div>
+        </>
       )}
 
       {steps && steps.length > 0 && <UpsellSection funnelId={funnel.id} currency={funnel.currency} />}
@@ -202,9 +221,12 @@ function BenchmarkCard({ funnel }) {
 
       {data && data.ownRate !== null && (
         <div className="space-y-5">
+          <p className="text-xs text-surface/40 -mt-2">
+            Compare le pourcentage de tes visiteurs qui deviennent des leads à la moyenne des autres tunnels « {category.label} » de TonTunnel.
+          </p>
           <div>
             <div className="flex justify-between text-sm mb-1.5">
-              <span className="text-surface/80">Votre tunnel</span>
+              <span className="text-surface/80">Ton tunnel</span>
               <span className="font-mono text-xs text-accent">{(data.ownRate * 100).toFixed(1)}%</span>
             </div>
             <div className="h-2.5 bg-surface/5 rounded-full overflow-hidden">
@@ -217,18 +239,32 @@ function BenchmarkCard({ funnel }) {
               Pas encore assez de données dans la catégorie « {category.label} » pour un comparatif fiable.
             </p>
           ) : (
-            <div>
-              <div className="flex justify-between text-sm mb-1.5">
-                <span className="text-surface/80">Moyenne du secteur « {category.label} »</span>
-                <span className="font-mono text-xs text-surface/50">{(data.benchmark.avg_conversion * 100).toFixed(1)}%</span>
+            <>
+              <div>
+                <div className="flex justify-between text-sm mb-1.5">
+                  <span className="text-surface/80">Moyenne du secteur « {category.label} »</span>
+                  <span className="font-mono text-xs text-surface/50">{(data.benchmark.avg_conversion * 100).toFixed(1)}%</span>
+                </div>
+                <div className="h-2.5 bg-surface/5 rounded-full overflow-hidden">
+                  <div className="h-full bg-surface/30 rounded-full transition-all" style={{ width: `${Math.min(data.benchmark.avg_conversion * 100, 100)}%` }} />
+                </div>
+                <p className="text-[11px] text-surface/40 mt-1.5">
+                  Basé sur {data.benchmark.sample_size} tunnel(s) publié(s) de cette catégorie.
+                </p>
               </div>
-              <div className="h-2.5 bg-surface/5 rounded-full overflow-hidden">
-                <div className="h-full bg-surface/30 rounded-full transition-all" style={{ width: `${Math.min(data.benchmark.avg_conversion * 100, 100)}%` }} />
-              </div>
-              <p className="text-[11px] text-surface/40 mt-1.5">
-                Basé sur {data.benchmark.sample_size} tunnel(s) publié(s) de cette catégorie.
-              </p>
-            </div>
+              {(() => {
+                const diff = data.ownRate - data.benchmark.avg_conversion;
+                const diffPct = Math.abs(diff * 100);
+                if (diffPct < 1) {
+                  return <p className="text-sm text-surface/70">Tu es dans la moyenne du secteur.</p>;
+                }
+                return diff > 0 ? (
+                  <p className="text-sm text-accent">Tu convertis {diffPct.toFixed(1)} points de plus que la moyenne du secteur — continue ainsi.</p>
+                ) : (
+                  <p className="text-sm text-surface/70">Tu convertis {diffPct.toFixed(1)} points de moins que la moyenne du secteur — il y a une marge de progression.</p>
+                );
+              })()}
+            </>
           )}
         </div>
       )}

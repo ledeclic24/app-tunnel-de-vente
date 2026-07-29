@@ -1308,6 +1308,7 @@ export default function FunnelEditorPage() {
         }}
         onNavigateToStep={() => {}}
         onAdvance={() => {}}
+        editMode
       />
       {/* ExitIntentPopup n'est délibérément PAS rendu ici : il écoute le
           mouseleave du curseur vers le haut de la fenêtre, exactement ce que

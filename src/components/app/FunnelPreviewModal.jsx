@@ -7,6 +7,7 @@ import PurchaseNotification from '../public/PurchaseNotification';
 import StickyFooterCta from '../public/StickyFooterCta';
 import ExitIntentPopup from '../public/ExitIntentPopup';
 import { brandStyleVars } from '../../lib/colorUtils';
+import { resolveStickyFooterPrice } from '../../lib/currency';
 
 // Un simple conteneur rétréci en CSS ne suffit pas à simuler un téléphone : les classes
 // Tailwind `md:` évaluent la largeur RÉELLE de la fenêtre du navigateur, pas celle d'une
@@ -57,6 +58,16 @@ export default function FunnelPreviewModal({ funnel, steps, blocksByStepId, onCl
   const goTo = (i) => { if (i >= 0 && i < steps.length) setStepId(steps[i].id); };
 
   const chrome = currentStep?.chrome || {};
+  // chrome.stickyFooterCta ne stocke jamais de prix résolu (juste
+  // priceBlockId/planIndex, voir PageSettingsPanel) — sans ce calcul, la
+  // ligne de prix du pied de page collant restait vide dans CET aperçu,
+  // quelle que soit l'offre choisie (même mécanisme déjà utilisé dans
+  // FunnelEditorPage pour l'aperçu live pendant l'édition).
+  const allBlocks = Object.values(blocksByStepId).flat();
+  const stickyFooterConfig = chrome.stickyFooterCta && {
+    ...chrome.stickyFooterCta,
+    price: resolveStickyFooterPrice(chrome.stickyFooterCta, allBlocks, funnel.currency || 'XOF'),
+  };
 
   const content = (
     <div style={brandStyleVars(funnel.brand)}>
@@ -74,7 +85,7 @@ export default function FunnelPreviewModal({ funnel, steps, blocksByStepId, onCl
         )}
       </div>
       <PurchaseNotification config={chrome.purchaseNotification} liftForFooter={Boolean(chrome.stickyFooterCta?.enabled)} />
-      <StickyFooterCta config={chrome.stickyFooterCta} onNavigateToStep={() => {}} onAdvance={() => goTo(idx + 1)} />
+      <StickyFooterCta config={stickyFooterConfig} onNavigateToStep={() => {}} onAdvance={() => goTo(idx + 1)} editMode />
       <ExitIntentPopup config={chrome.exitIntent} onNavigateToStep={() => {}} onAdvance={() => goTo(idx + 1)} />
     </div>
   );

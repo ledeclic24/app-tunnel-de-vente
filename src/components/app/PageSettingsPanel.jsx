@@ -199,6 +199,11 @@ export default function PageSettingsPanel({ step, steps, plan, onSave, onChangeS
               {stickyFooterResolvedPrice && (
                 <p className="text-xs text-surface/40 mt-1">Prix affiché : {stickyFooterResolvedPrice}</p>
               )}
+              {stickyFooterCta.priceBlockId && !stickyFooterResolvedPrice && (
+                <p className="text-xs text-red-500 mt-1">
+                  Cette offre n'existe plus (bloc Tarifs supprimé ou modifié) — choisis-en une autre.
+                </p>
+              )}
             </>
           )}
         </div>

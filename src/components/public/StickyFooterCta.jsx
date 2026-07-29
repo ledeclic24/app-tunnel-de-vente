@@ -9,8 +9,15 @@ import { ArrowRight } from 'lucide-react';
 // lieu de simplement naviguer. Sinon, cible : soit l'étape "page de
 // commande" désignée une fois par le créateur (targetStepSlug), soit une
 // URL externe, soit — à défaut de tout — l'étape suivante du tunnel (repli).
-export default function StickyFooterCta({ config, offer, onOpenCheckout, onNavigateToStep, onAdvance }) {
+export default function StickyFooterCta({ config, offer, onOpenCheckout, onNavigateToStep, onAdvance, editMode }) {
   if (!config?.enabled) return null;
+
+  // Une offre a été choisie (priceBlockId) mais son prix ne se résout plus
+  // (bloc Tarifs supprimé ou modifié depuis) — le bouton reste fonctionnel
+  // (repli sur targetStepSlug/étape suivante), mais côté CRÉATEUR seulement
+  // (editMode) on signale clairement le problème plutôt que de laisser un
+  // vide silencieux qui ressemble à un bug d'affichage.
+  const brokenOffer = editMode && config.priceBlockId && !config.price;
 
   const handleClick = () => {
     if (offer) {
@@ -36,6 +43,11 @@ export default function StickyFooterCta({ config, offer, onOpenCheckout, onNavig
     <div className="fixed bottom-0 inset-x-0 z-40 bg-background/95 backdrop-blur border-t border-surface/10 px-4 py-3 flex items-center justify-between gap-4">
       <div className="min-w-0">
         {config.price && <p className="font-sans font-bold text-lg text-surface truncate">{config.price}</p>}
+        {brokenOffer && (
+          <p className="text-xs text-red-500 truncate">
+            Offre introuvable — vérifie la sélection dans Réglages → Page
+          </p>
+        )}
       </div>
       <button
         onClick={handleClick}
