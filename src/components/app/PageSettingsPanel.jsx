@@ -172,7 +172,7 @@ export default function PageSettingsPanel({ step, steps, plan, onSave, onChangeS
         onChange={(enabled) => setChrome({ stickyFooterCta: { ...stickyFooterCta, enabled } })}
       >
         <div>
-          <label className={labelClass}>Offre affichée (le prix vient directement du bloc Tarifs, toujours à jour)</label>
+          <label className={labelClass}>Offre affichée (prix toujours à jour, et le bouton fait payer directement cette offre au clic)</label>
           {offerOptions.length === 0 ? (
             <p className="text-xs text-surface/50 bg-surface/5 rounded-xl px-4 py-2.5">
               Ajoute d'abord un bloc Tarifs à ce tunnel pour pouvoir afficher un prix ici.
@@ -191,7 +191,7 @@ export default function PageSettingsPanel({ step, steps, plan, onSave, onChangeS
                   });
                 }}
               >
-                <option value="">Aucune (n'affiche pas de prix)</option>
+                <option value="">Aucune (le bouton renvoie vers une page à la place)</option>
                 {offerOptions.map((o) => (
                   <option key={`${o.blockId}:${o.planIndex}`} value={`${o.blockId}:${o.planIndex}`}>{o.label}</option>
                 ))}
@@ -203,15 +203,16 @@ export default function PageSettingsPanel({ step, steps, plan, onSave, onChangeS
           )}
         </div>
         <div>
+          <label className={labelClass}>Texte du bouton</label>
           <input
             className={inputClass}
-            placeholder="Texte du bouton"
+            placeholder="Commander (valeur par défaut si laissé vide)"
             value={stickyFooterCta.buttonText || ''}
             onChange={(e) => setChrome({ stickyFooterCta: { ...stickyFooterCta, buttonText: e.target.value } })}
           />
         </div>
         <div>
-          <label className={labelClass}>Page de commande (vers laquelle renvoie le bouton, depuis n'importe quelle page)</label>
+          <label className={labelClass}>Page de commande (si aucune offre n'est choisie ci-dessus)</label>
           <select
             className={inputClass}
             value={stickyFooterCta.targetStepSlug || ''}
@@ -222,6 +223,9 @@ export default function PageSettingsPanel({ step, steps, plan, onSave, onChangeS
               <option key={s.id} value={s.slug}>{s.name}</option>
             ))}
           </select>
+          {stickyFooterCta.priceBlockId && (
+            <p className="text-xs text-surface/40 mt-1">Une offre est sélectionnée ci-dessus : le bouton paiera directement, ce réglage ne sera pas utilisé.</p>
+          )}
         </div>
       </Toggle>
 
