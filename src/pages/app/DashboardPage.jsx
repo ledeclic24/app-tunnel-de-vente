@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import {
   Plus, ExternalLink, Pencil, Trash2, Rocket, Mail, Eye, Layers, CheckCircle2, Circle, LayoutDashboard, Wallet,
-  MoreHorizontal, EyeOff, Copy, Store, Search,
+  MoreHorizontal, EyeOff, Copy, Store, Search, ChevronLeft, ChevronRight,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import {
@@ -41,11 +41,18 @@ const STATUS_OPTIONS = [
   { value: 'draft', label: 'Brouillons' },
 ];
 
+// La pagination (comme le tri et les filtres) reste purement côté client :
+// la liste complète est chargée en une fois (pas de pagination côté API),
+// seul l'AFFICHAGE est découpé en pages — évite de tout montrer d'un coup
+// dès qu'un vendeur a beaucoup de tunnels, surtout pénible à faire défiler
+// sur mobile.
+const PAGE_SIZE = 9;
+
 // Tri entièrement côté client : la liste des tunnels est déjà chargée en
-// entier (pas de pagination), donc rien à demander au serveur. La valeur
-// par défaut ('created_desc') reproduit exactement l'ordre déjà renvoyé
-// par l'API (voir FunnelsService.listOwn, order: createdAt DESC) — aucun
-// changement visible tant que le vendeur ne touche pas au menu.
+// entier, donc rien à demander au serveur. La valeur par défaut
+// ('created_desc') reproduit exactement l'ordre déjà renvoyé par l'API
+// (voir FunnelsService.listOwn, order: createdAt DESC) — aucun changement
+// visible tant que le vendeur ne touche pas au menu.
 function sortFunnels(list, sortBy) {
   const key = sortBy.startsWith('created') ? 'created_at' : 'updated_at';
   const dir = sortBy.endsWith('desc') ? -1 : 1;
@@ -282,6 +289,10 @@ export default function DashboardPage() {
   const [customEnd, setCustomEnd] = useState(() => searchParams.get('to') || '');
   const [categoryFilter, setCategoryFilter] = useState(() => searchParams.get('category') || '');
   const [statusFilter, setStatusFilter] = useState(() => searchParams.get('status') || 'all');
+  // Page courante (persistée dans l'URL comme les autres filtres) — plutôt
+  // que d'afficher tous les tunnels d'un coup, ingérable dès qu'il y en a
+  // beaucoup et particulièrement pénible à faire défiler sur mobile.
+  const [page, setPage] = useState(() => Number(searchParams.get('page')) || 1);
   const [busyId, setBusyId] = useState(null);
   const [busyAction, setBusyAction] = useState(null);
   const [templateModalFunnel, setTemplateModalFunnel] = useState(null);
@@ -338,6 +349,14 @@ export default function DashboardPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [effectiveOwnerId]);
 
+  // Revient à la page 1 dès qu'un filtre change — rester sur la page 3
+  // après avoir tapé une recherche qui ne renvoie qu'une page de résultats
+  // afficherait "aucun tunnel ne correspond" à tort.
+  useEffect(() => {
+    setPage(1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search, sortBy, datePreset, customStart, customEnd, categoryFilter, statusFilter]);
+
   useEffect(() => {
     const next = {};
     if (search.trim()) next.q = search.trim();
@@ -347,9 +366,10 @@ export default function DashboardPage() {
     if (customEnd) next.to = customEnd;
     if (categoryFilter) next.category = categoryFilter;
     if (statusFilter !== 'all') next.status = statusFilter;
+    if (page > 1) next.page = String(page);
     setSearchParams(next, { replace: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [search, sortBy, datePreset, customStart, customEnd, categoryFilter, statusFilter]);
+  }, [search, sortBy, datePreset, customStart, customEnd, categoryFilter, statusFilter, page]);
 
   const handleDelete = async (funnel) => {
     if (!(await confirm(`Supprimer le tunnel "${funnel.name}" ? Cette action est irréversible.`))) return;
@@ -456,6 +476,9 @@ export default function DashboardPage() {
   if (statusFilter !== 'all') visibleFunnels = visibleFunnels.filter((f) => (statusFilter === 'published' ? f.is_published : !f.is_published));
   visibleFunnels = filterByDateRange(visibleFunnels, 'created_at', dateRange);
   const sortedFunnels = funnels ? sortFunnels(visibleFunnels, sortBy) : null;
+  const totalPages = sortedFunnels ? Math.max(1, Math.ceil(sortedFunnels.length / PAGE_SIZE)) : 1;
+  const currentPage = Math.min(page, totalPages);
+  const pagedFunnels = sortedFunnels ? sortedFunnels.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE) : null;
 
   return (
     <div>
@@ -572,7 +595,7 @@ export default function DashboardPage() {
           )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {sortedFunnels.map((funnel, i) => (
+            {pagedFunnels.map((funnel, i) => (
               // Une fine barre de couleur en tête de carte, alternée entre
               // accent/primary/surface selon l'index — repère visuel rapide
               // dans une grille de plusieurs tunnels, mêmes couleurs de marque.
@@ -594,6 +617,28 @@ export default function DashboardPage() {
               />
             ))}
           </div>
+
+          {totalPages > 1 && (
+            <div className="flex items-center justify-center gap-3 mt-6">
+              <button
+                type="button"
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={currentPage <= 1}
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-surface/10 text-sm text-surface/70 disabled:opacity-30"
+              >
+                <ChevronLeft className="w-4 h-4" /> Précédent
+              </button>
+              <span className="text-xs text-surface/40 font-mono">Page {currentPage} / {totalPages}</span>
+              <button
+                type="button"
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                disabled={currentPage >= totalPages}
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-surface/10 text-sm text-surface/70 disabled:opacity-30"
+              >
+                Suivant <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+          )}
         </>
       )}
 

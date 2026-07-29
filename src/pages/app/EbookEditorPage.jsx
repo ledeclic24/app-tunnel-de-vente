@@ -362,6 +362,11 @@ export default function EbookEditorPage() {
     navigate('/app/funnels/ai', {
       state: {
         fromEbook: {
+          // Sert à lier automatiquement CET ebook comme livrable du tunnel
+          // créé (voir AIGeneratorPage.jsx) — sans ça, le vendeur devait
+          // penser à aller le sélectionner lui-même dans Réglages ensuite,
+          // facile à oublier alors que c'était déjà évident en arrivant ici.
+          id: ebook.id,
           title: ebook.title,
           subtitle: ebook.subtitle,
           coverImageUrl: ebook.coverImageUrl,

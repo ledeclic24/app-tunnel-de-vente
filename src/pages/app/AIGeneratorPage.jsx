@@ -6,7 +6,7 @@ import { getPlan } from '../../lib/plans';
 import { CATEGORIES } from '../../lib/funnelTemplates';
 import { generateTunnelWithAI } from '../../lib/aiApi';
 import { fetchCreditsBalance, fetchCreditCosts } from '../../lib/creditsApi';
-import { createFunnelFromAI } from '../../lib/funnelsApi';
+import { createFunnelFromAI, updateFunnel } from '../../lib/funnelsApi';
 import MultiImageUpload from '../../components/app/MultiImageUpload';
 import { useToast } from '../../components/app/Toast';
 import RechargeCreditsButton from '../../components/app/RechargeCreditsButton';
@@ -66,6 +66,7 @@ export default function AIGeneratorPage() {
   const [error, setError] = useState('');
   const [errorCode, setErrorCode] = useState('');
   const [saving, setSaving] = useState(false);
+  const [sourceEbookId, setSourceEbookId] = useState(null);
   const scrollRef = useRef(null);
   const toast = useToast();
 
@@ -85,6 +86,7 @@ export default function AIGeneratorPage() {
   useEffect(() => {
     const fromEbook = location.state?.fromEbook;
     if (!fromEbook) return;
+    setSourceEbookId(fromEbook.id || null);
     setName(fromEbook.title || '');
     if (fromEbook.coverImageUrl) setImages([fromEbook.coverImageUrl]);
     if (fromEbook.brand?.primaryColor || fromEbook.brand?.accentColor) {
@@ -189,6 +191,15 @@ export default function AIGeneratorPage() {
         showBranding: plan.showBranding,
         category: categoryKey || 'personnalise',
       });
+      // Tunnel créé depuis "Créer un tunnel pour cet ebook" (EbookEditorPage) :
+      // relie automatiquement CET ebook comme livrable — sans ça, le champ
+      // resterait vide et bloquerait la publication (voir FunnelsService.
+      // publish) alors que le choix était évident dès le départ. Best effort :
+      // un échec ici ne doit jamais empêcher d'arriver dans l'éditeur, le
+      // vendeur peut toujours le régler à la main dans Réglages.
+      if (sourceEbookId) {
+        updateFunnel(funnel.id, { deliverable_ebook_id: sourceEbookId }).catch(() => {});
+      }
       navigate(`/app/funnels/${funnel.id}/edit`);
     } catch (err) {
       setError(ERROR_MESSAGES.server_error);
