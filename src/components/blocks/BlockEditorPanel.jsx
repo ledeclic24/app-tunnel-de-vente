@@ -7,6 +7,12 @@ import { TRUST_BADGE_ICONS } from './TrustBadgesBlock';
 const inputClass = "w-full bg-primary/5 border border-surface/10 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-accent transition-colors text-surface";
 const labelClass = "block text-xs font-semibold text-surface/70 uppercase tracking-wider mb-1";
 
+// Texte du bouton vu par le CLIENT final quand on rattache un moyen de
+// paiement en un clic — jamais le nom interne donné au moyen de paiement
+// (ex. "Moneroo — compte perso"), qui n'a aucun sens pour un acheteur. Le
+// vendeur peut toujours le personnaliser ensuite via le champ "Nom affiché".
+const DEFAULT_PAYMENT_BUTTON_TEXT = 'Payer maintenant';
+
 // Menu de type pour la génération d'image d'un bloc hero/image (Image, Box,
 // Ebook, Mockup, Mockup écran) — un choix de formulation de prompt côté
 // serveur (voir tunnel-image-prompts.ts), pas un nouveau type de bloc.
@@ -311,6 +317,11 @@ function BlockFields({ type, content, set, userId, blockId, onGenerateImage, ima
                     <label className="block text-xs text-surface/50 mb-1.5">
                       Moyens de paiement (optionnel — sans lien, le bouton avance simplement à l'étape suivante)
                     </label>
+                    {savedPaymentMethods?.length === 1 && (plan.paymentLinks || []).some((l) => l.paymentMethodId === savedPaymentMethods[0].id || l.url === savedPaymentMethods[0].url) && (
+                      <p className="text-xs text-surface/40 mb-2">
+                        Ton moyen de paiement "{savedPaymentMethods[0].label}" a été relié automatiquement à cette offre.
+                      </p>
+                    )}
                     {(plan.paymentLinks || []).some((l) => l.provider !== 'moneroo') && (
                       <p className="text-xs text-orange-500 bg-orange-500/10 border border-orange-500/20 rounded-lg px-3 py-2 mb-2">
                         ⚠️ Un lien de paiement externe (Wave, Orange Money, lien manuel...) ne livre jamais automatiquement le produit : TonTunnel ne peut pas savoir qu'un client a payé sur un site externe. Pour ces ventes-là, pense à vérifier ton compte de paiement toi-même et à livrer le produit manuellement.
@@ -321,8 +332,8 @@ function BlockFields({ type, content, set, userId, blockId, onGenerateImage, ima
                         {savedPaymentMethods.map((m) => {
                           const already = (plan.paymentLinks || []).some((l) => (m.provider === 'moneroo' ? l.paymentMethodId === m.id : l.url === m.url));
                           const entry = m.provider === 'moneroo'
-                            ? { method: m.label, provider: 'moneroo', paymentMethodId: m.id }
-                            : { method: m.label, url: m.url };
+                            ? { method: DEFAULT_PAYMENT_BUTTON_TEXT, provider: 'moneroo', paymentMethodId: m.id }
+                            : { method: DEFAULT_PAYMENT_BUTTON_TEXT, url: m.url };
                           return (
                             <button
                               key={m.id}
