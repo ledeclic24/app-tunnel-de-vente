@@ -7,11 +7,11 @@ import {
 import { useAuth } from '../../context/AuthContext';
 import {
   fetchUserFunnels, deleteFunnel, fetchLeadsForUser, fetchTotalViewsForOwner,
-  publishFunnel, unpublishFunnel, duplicateFunnel,
+  publishFunnel, unpublishFunnel, duplicateFunnel, fetchSteps, fetchAllBlocksForFunnel,
 } from '../../lib/funnelsApi';
 import { getPlan } from '../../lib/plans';
 import { formatPrice } from '../../lib/currency';
-import { getCategory } from '../../lib/funnelTemplates';
+import { getCategory, CATEGORIES } from '../../lib/funnelTemplates';
 import { useConfirm } from '../../components/app/ConfirmDialog';
 import { useToast } from '../../components/app/Toast';
 import GradientBanner from '../../components/ui/GradientBanner';
@@ -19,12 +19,24 @@ import Spinner from '../../components/app/Spinner';
 import SortMenu from '../../components/app/SortMenu';
 import DateRangeFilter, { resolveDateRange, filterByDateRange } from '../../components/app/DateRangeFilter';
 import PublishTemplateModal from '../../components/app/PublishTemplateModal';
+import FunnelPreviewModal from '../../components/app/FunnelPreviewModal';
 
 const SORT_OPTIONS = [
   { value: 'created_desc', label: 'Création (récent)' },
   { value: 'created_asc', label: 'Création (ancien)' },
   { value: 'updated_desc', label: 'Modification (récent)' },
   { value: 'updated_asc', label: 'Modification (ancien)' },
+];
+
+const CATEGORY_OPTIONS = [
+  { value: '', label: 'Toutes les catégories' },
+  ...CATEGORIES.map((c) => ({ value: c.key, label: c.label })),
+];
+
+const STATUS_OPTIONS = [
+  { value: 'all', label: 'Tous les statuts' },
+  { value: 'published', label: 'Publiés' },
+  { value: 'draft', label: 'Brouillons' },
 ];
 
 // Tri entièrement côté client : la liste des tunnels est déjà chargée en
@@ -139,8 +151,10 @@ function OnboardingChecklist({ funnels, profileId }) {
 // de surcharger la carte à mesure que ses possibilités augmentent — même
 // principe que le menu "Réglages" de l'éditeur, consolidé plus tôt cette
 // session pour la même raison.
-function FunnelCard({ funnel, index, busy, onDelete, onTogglePublish, onDuplicate, onPublishAsTemplate }) {
-  const [menuOpen, setMenuOpen] = useState(false);
+function FunnelCard({
+  funnel, index, busy, isSelected, onToggleSelect, isMenuOpen, onOpenMenu, onCloseMenu,
+  onDelete, onTogglePublish, onDuplicate, onPublishAsTemplate, onPreview,
+}) {
   const category = getCategory(funnel.category);
 
   return (
@@ -149,17 +163,24 @@ function FunnelCard({ funnel, index, busy, onDelete, onTogglePublish, onDuplicat
     // via l'automatisation mais rien à voir pour un vrai visiteur — bug
     // trouvé après coup). La barre de couleur se charge elle-même de
     // respecter l'arrondi du haut de la carte (rounded-t-[2rem]).
-    <div className="bg-background border border-surface/10 rounded-[2rem] shadow-soft flex flex-col">
+    <div className={`bg-background border rounded-[2rem] shadow-soft flex flex-col ${isSelected ? 'border-accent' : 'border-surface/10'}`}>
       <div className={`h-1.5 rounded-t-[2rem] ${['bg-accent', 'bg-primary', 'bg-surface/30'][index % 3]}`} />
       <div className="p-6 flex flex-col flex-1">
-        <div className="flex items-start justify-between mb-3">
-          <h3 className="font-sans font-semibold text-surface pr-2">{funnel.name}</h3>
+        <div className="flex items-start gap-2.5 mb-3">
+          <input
+            type="checkbox"
+            checked={isSelected}
+            onChange={() => onToggleSelect(funnel.id)}
+            className="w-4 h-4 mt-1 rounded cursor-pointer accent-accent shrink-0"
+            aria-label="Sélectionner ce tunnel"
+          />
+          <h3 className="font-sans font-semibold text-surface pr-2 flex-1 min-w-0 truncate">{funnel.name}</h3>
           <span className={`shrink-0 text-[10px] font-mono uppercase tracking-wider px-2 py-1 rounded-full ${funnel.is_published ? 'bg-green-500/10 text-green-600' : 'bg-surface/10 text-surface/50'}`}>
             {funnel.is_published ? 'Publié' : 'Brouillon'}
           </span>
         </div>
-        <p className="text-xs text-surface/40 font-mono mb-2">/{funnel.slug}</p>
-        <div className="flex items-center gap-2 mb-6 text-xs text-surface/40">
+        <p className="text-xs text-surface/40 font-mono mb-2 pl-[26px]">/{funnel.slug}</p>
+        <div className="flex items-center gap-2 mb-6 text-xs text-surface/40 pl-[26px]">
           <span className="px-2 py-0.5 rounded-full bg-surface/5 text-surface/50">{category.label}</span>
           <span>Modifié {formatRelativeDate(funnel.updated_at)}</span>
         </div>
@@ -169,17 +190,29 @@ function FunnelCard({ funnel, index, busy, onDelete, onTogglePublish, onDuplicat
             <Pencil className="w-3.5 h-3.5" /> Modifier
           </Link>
           <div className="relative shrink-0">
-            <button type="button" onClick={() => setMenuOpen((v) => !v)} className="hover-lift p-2.5 rounded-xl border border-surface/10 text-surface/60" aria-label="Plus d'actions">
+            <button
+              type="button"
+              onClick={() => (isMenuOpen ? onCloseMenu() : onOpenMenu(funnel.id))}
+              className="hover-lift p-2.5 rounded-xl border border-surface/10 text-surface/60"
+              aria-label="Plus d'actions"
+            >
               <MoreHorizontal className="w-4 h-4" />
             </button>
-            {menuOpen && (
+            {isMenuOpen && (
               <div className="absolute z-30 mt-2 right-0 w-56 bg-background border border-surface/10 rounded-2xl shadow-xl p-1.5">
+                <button
+                  type="button"
+                  onClick={() => { onCloseMenu(); onPreview(funnel); }}
+                  className="w-full flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm text-surface/80 hover:bg-surface/5 text-left"
+                >
+                  <Eye className="w-4 h-4 shrink-0" /> Aperçu
+                </button>
                 {funnel.is_published && (
                   <a
                     href={`/f/${funnel.slug}`}
                     target="_blank"
                     rel="noreferrer"
-                    onClick={() => setMenuOpen(false)}
+                    onClick={onCloseMenu}
                     className="w-full flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm text-surface/80 hover:bg-surface/5 text-left"
                   >
                     <ExternalLink className="w-4 h-4 shrink-0" /> Voir la page publique
@@ -187,7 +220,7 @@ function FunnelCard({ funnel, index, busy, onDelete, onTogglePublish, onDuplicat
                 )}
                 <button
                   type="button"
-                  onClick={() => { setMenuOpen(false); onTogglePublish(funnel); }}
+                  onClick={() => { onCloseMenu(); onTogglePublish(funnel); }}
                   disabled={busy === 'publish'}
                   className="w-full flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm text-surface/80 hover:bg-surface/5 text-left disabled:opacity-50"
                 >
@@ -196,7 +229,7 @@ function FunnelCard({ funnel, index, busy, onDelete, onTogglePublish, onDuplicat
                 </button>
                 <button
                   type="button"
-                  onClick={() => { setMenuOpen(false); onDuplicate(funnel); }}
+                  onClick={() => { onCloseMenu(); onDuplicate(funnel); }}
                   disabled={busy === 'duplicate'}
                   className="w-full flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm text-surface/80 hover:bg-surface/5 text-left disabled:opacity-50"
                 >
@@ -204,7 +237,7 @@ function FunnelCard({ funnel, index, busy, onDelete, onTogglePublish, onDuplicat
                 </button>
                 <button
                   type="button"
-                  onClick={() => { setMenuOpen(false); onPublishAsTemplate(funnel); }}
+                  onClick={() => { onCloseMenu(); onPublishAsTemplate(funnel); }}
                   className="w-full flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm text-surface/80 hover:bg-surface/5 text-left"
                 >
                   <Store className="w-4 h-4 shrink-0" /> Publier comme modèle
@@ -212,7 +245,7 @@ function FunnelCard({ funnel, index, busy, onDelete, onTogglePublish, onDuplicat
                 <div className="my-1 border-t border-surface/10" />
                 <button
                   type="button"
-                  onClick={() => { setMenuOpen(false); onDelete(funnel); }}
+                  onClick={() => { onCloseMenu(); onDelete(funnel); }}
                   className="w-full flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm text-red-500 hover:bg-red-500/5 text-left"
                 >
                   <Trash2 className="w-4 h-4 shrink-0" /> Supprimer
@@ -237,9 +270,19 @@ export default function DashboardPage() {
   const [datePreset, setDatePreset] = useState('all');
   const [customStart, setCustomStart] = useState('');
   const [customEnd, setCustomEnd] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
   const [busyId, setBusyId] = useState(null);
   const [busyAction, setBusyAction] = useState(null);
   const [templateModalFunnel, setTemplateModalFunnel] = useState(null);
+  // Un seul menu ⋯ ouvert à la fois (id du tunnel concerné, ou null) — avant,
+  // chaque carte gérait son propre état local, donc ouvrir un second menu
+  // laissait le premier ouvert (plusieurs menus superposés visibles à la fois).
+  const [openMenuId, setOpenMenuId] = useState(null);
+  const [previewFunnel, setPreviewFunnel] = useState(null);
+  const [previewData, setPreviewData] = useState(null);
+  const [selectedIds, setSelectedIds] = useState(() => new Set());
+  const [bulkBusy, setBulkBusy] = useState(false);
   const confirm = useConfirm();
   const toast = useToast();
 
@@ -322,10 +365,70 @@ export default function DashboardPage() {
     setBusyAction(null);
   };
 
+  const handlePreview = async (funnel) => {
+    setPreviewFunnel(funnel);
+    setPreviewData(null);
+    try {
+      const [steps, blocksByStepId] = await Promise.all([
+        fetchSteps(funnel.id),
+        fetchAllBlocksForFunnel(funnel.id),
+      ]);
+      setPreviewData({ steps, blocksByStepId });
+    } catch {
+      toast.error("Impossible de charger l'aperçu. Réessaie.");
+      setPreviewFunnel(null);
+    }
+  };
+
+  const toggleSelect = (id) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const handleBulkDelete = async () => {
+    if (!(await confirm(`Supprimer ${selectedIds.size} tunnel${selectedIds.size > 1 ? 's' : ''} ? Cette action est irréversible.`))) return;
+    setBulkBusy(true);
+    const ids = Array.from(selectedIds);
+    for (const id of ids) {
+      try {
+        // eslint-disable-next-line no-await-in-loop
+        await deleteFunnel(id);
+        setFunnels((prev) => prev.filter((f) => f.id !== id));
+      } catch {
+        toast.error('Une suppression a échoué. Les autres tunnels sélectionnés ont été traités.');
+        break;
+      }
+    }
+    setSelectedIds(new Set());
+    setBulkBusy(false);
+  };
+
+  const handleBulkPublishToggle = async (publish) => {
+    setBulkBusy(true);
+    const ids = Array.from(selectedIds);
+    for (const id of ids) {
+      try {
+        // eslint-disable-next-line no-await-in-loop
+        const updated = publish ? await publishFunnel(id) : await unpublishFunnel(id);
+        setFunnels((prev) => prev.map((f) => (f.id === id ? { ...f, ...updated } : f)));
+      } catch {
+        toast.error('Une action a échoué. Les autres tunnels sélectionnés ont été traités.');
+        break;
+      }
+    }
+    setSelectedIds(new Set());
+    setBulkBusy(false);
+  };
+
   const dateRange = resolveDateRange(datePreset, customStart, customEnd);
-  const sortedFunnels = funnels
-    ? sortFunnels(filterByDateRange(funnels, 'created_at', dateRange), sortBy)
-    : null;
+  let visibleFunnels = funnels || [];
+  if (categoryFilter) visibleFunnels = visibleFunnels.filter((f) => f.category === categoryFilter);
+  if (statusFilter !== 'all') visibleFunnels = visibleFunnels.filter((f) => (statusFilter === 'published' ? f.is_published : !f.is_published));
+  visibleFunnels = filterByDateRange(visibleFunnels, 'created_at', dateRange);
+  const sortedFunnels = funnels ? sortFunnels(visibleFunnels, sortBy) : null;
 
   return (
     <div>
@@ -382,7 +485,20 @@ export default function DashboardPage() {
         <>
           <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
             <h2 className="font-sans font-semibold text-surface">Tes tunnels</h2>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="flex items-center gap-1 bg-surface/5 rounded-full p-1">
+                {STATUS_OPTIONS.map((o) => (
+                  <button
+                    key={o.value}
+                    type="button"
+                    onClick={() => setStatusFilter(o.value)}
+                    className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${statusFilter === o.value ? 'bg-primary text-background' : 'text-surface/60'}`}
+                  >
+                    {o.label}
+                  </button>
+                ))}
+              </div>
+              <SortMenu value={categoryFilter} onChange={setCategoryFilter} options={CATEGORY_OPTIONS} />
               <DateRangeFilter
                 preset={datePreset}
                 onPresetChange={setDatePreset}
@@ -394,9 +510,27 @@ export default function DashboardPage() {
             </div>
           </div>
 
+          {selectedIds.size > 0 && (
+            <div className="flex flex-wrap items-center gap-3 bg-accent/5 border border-accent/20 rounded-2xl px-4 py-3 mb-4">
+              <span className="text-xs font-semibold text-surface/60">{selectedIds.size} sélectionné{selectedIds.size > 1 ? 's' : ''}</span>
+              <button onClick={() => handleBulkPublishToggle(true)} disabled={bulkBusy} className="inline-flex items-center gap-1.5 text-xs font-semibold text-accent disabled:opacity-50">
+                <Rocket className="w-3.5 h-3.5" /> Publier
+              </button>
+              <button onClick={() => handleBulkPublishToggle(false)} disabled={bulkBusy} className="inline-flex items-center gap-1.5 text-xs font-semibold text-surface/60 disabled:opacity-50">
+                <EyeOff className="w-3.5 h-3.5" /> Dépublier
+              </button>
+              <button onClick={handleBulkDelete} disabled={bulkBusy} className="inline-flex items-center gap-1.5 text-xs font-semibold text-red-500 disabled:opacity-50">
+                <Trash2 className="w-3.5 h-3.5" /> Supprimer
+              </button>
+              <button onClick={() => setSelectedIds(new Set())} className="ml-auto text-xs text-surface/50 hover:text-surface">
+                Tout désélectionner
+              </button>
+            </div>
+          )}
+
           {sortedFunnels.length === 0 && (
             <div className="text-center py-16 border border-dashed border-surface/20 rounded-[2rem]">
-              <p className="text-surface/60">Aucun tunnel créé sur cette période.</p>
+              <p className="text-surface/60">Aucun tunnel ne correspond à ces filtres.</p>
             </div>
           )}
 
@@ -410,10 +544,16 @@ export default function DashboardPage() {
                 funnel={funnel}
                 index={i}
                 busy={busyId === funnel.id ? busyAction : null}
+                isSelected={selectedIds.has(funnel.id)}
+                onToggleSelect={toggleSelect}
+                isMenuOpen={openMenuId === funnel.id}
+                onOpenMenu={setOpenMenuId}
+                onCloseMenu={() => setOpenMenuId(null)}
                 onDelete={handleDelete}
                 onTogglePublish={handleTogglePublish}
                 onDuplicate={handleDuplicate}
                 onPublishAsTemplate={setTemplateModalFunnel}
+                onPreview={handlePreview}
               />
             ))}
           </div>
@@ -426,6 +566,20 @@ export default function DashboardPage() {
           defaultName={templateModalFunnel.name}
           defaultCategory={templateModalFunnel.category}
           onClose={() => setTemplateModalFunnel(null)}
+        />
+      )}
+
+      {previewFunnel && !previewData && (
+        <div className="fixed inset-0 z-50 bg-background flex items-center justify-center">
+          <Spinner size="lg" />
+        </div>
+      )}
+      {previewFunnel && previewData && (
+        <FunnelPreviewModal
+          funnel={previewFunnel}
+          steps={previewData.steps}
+          blocksByStepId={previewData.blocksByStepId}
+          onClose={() => { setPreviewFunnel(null); setPreviewData(null); }}
         />
       )}
     </div>
