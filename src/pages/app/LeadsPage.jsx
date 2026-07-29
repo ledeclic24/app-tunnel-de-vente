@@ -9,6 +9,7 @@ import { useToast } from '../../components/app/Toast';
 import GradientBanner from '../../components/ui/GradientBanner';
 import Spinner from '../../components/app/Spinner';
 import SortMenu from '../../components/app/SortMenu';
+import DateRangeFilter, { resolveDateRange, filterByDateRange } from '../../components/app/DateRangeFilter';
 
 const SORT_OPTIONS = [
   { value: 'created_desc', label: 'Plus récent' },
@@ -64,6 +65,9 @@ export default function LeadsPage() {
   const [resendingId, setResendingId] = useState(null);
   const [refundingId, setRefundingId] = useState(null);
   const [sortBy, setSortBy] = useState('created_desc');
+  const [datePreset, setDatePreset] = useState('all');
+  const [customStart, setCustomStart] = useState('');
+  const [customEnd, setCustomEnd] = useState('');
   const plan = getPlan(effectiveProfile?.plan);
 
   useEffect(() => {
@@ -112,14 +116,21 @@ export default function LeadsPage() {
   }
 
   const visibleLimit = plan.leadsHistoryLimit ?? Infinity;
-  const sortedLeads = sortLeads(leads, sortBy);
+  const dateRange = resolveDateRange(datePreset, customStart, customEnd);
+  const filteredLeads = filterByDateRange(leads, 'created_at', dateRange);
+  const sortedLeads = sortLeads(filteredLeads, sortBy);
   const visibleLeads = sortedLeads.slice(0, visibleLimit === Infinity ? sortedLeads.length : visibleLimit);
-  const hiddenCount = leads.length - visibleLeads.length;
-  const revenueByCurrency = computeRevenueByCurrency(leads);
+  const hiddenCount = filteredLeads.length - visibleLeads.length;
+  // Reflète la période filtrée (pas l'historique complet) — c'est tout
+  // l'intérêt du filtre : répondre à "combien j'ai vendu cette semaine ?".
+  const revenueByCurrency = computeRevenueByCurrency(filteredLeads);
   // Exclut les leads remboursés, comme le total du revenu juste à côté —
   // sinon "2 ventes payées : 5 000 FCFA" semblerait incohérent si l'une
   // des deux a été remboursée entre-temps.
-  const paidCount = leads.filter((l) => l.payment_status === 'paid' && !l.refunded_at).length;
+  const paidCount = filteredLeads.filter((l) => l.payment_status === 'paid' && !l.refunded_at).length;
+  // "au total" induirait en erreur dès qu'un filtre de période est actif —
+  // le résumé porte alors sur la période choisie, pas sur tout l'historique.
+  const periodSuffix = datePreset === 'all' ? 'au total' : 'sur cette période';
 
   return (
     <div>
@@ -128,14 +139,14 @@ export default function LeadsPage() {
         title="Tes leads"
         description={
           revenueByCurrency.length > 0
-            ? `${leads.length} prospect(s) capturé(s) — ${paidCount} vente(s) payée(s) : ${revenueByCurrency.map(([currency, total]) => formatPrice(total, currency)).join(' + ')}`
-            : `${leads.length} prospect(s) capturé(s) au total.`
+            ? `${filteredLeads.length} prospect(s) capturé(s) ${periodSuffix} — ${paidCount} vente(s) payée(s) : ${revenueByCurrency.map(([currency, total]) => formatPrice(total, currency)).join(' + ')}`
+            : `${filteredLeads.length} prospect(s) capturé(s) ${periodSuffix}.`
         }
         actions={
           plan.leadsExport ? (
             <button
-              onClick={() => exportToCsv(leads)}
-              disabled={leads.length === 0}
+              onClick={() => exportToCsv(sortedLeads)}
+              disabled={sortedLeads.length === 0}
               className="magnetic-btn inline-flex items-center gap-2 bg-background text-primary px-5 py-3 rounded-full text-sm font-semibold disabled:opacity-40"
             >
               <Download className="w-4 h-4" /> Exporter en CSV
@@ -157,9 +168,24 @@ export default function LeadsPage() {
 
       {leads.length > 0 && (
         <>
-          <div className="flex justify-end mb-4">
+          <div className="flex justify-end items-center gap-2 mb-4">
+            <DateRangeFilter
+              preset={datePreset}
+              onPresetChange={setDatePreset}
+              customStart={customStart}
+              customEnd={customEnd}
+              onCustomChange={(start, end) => { setCustomStart(start); setCustomEnd(end); }}
+            />
             <SortMenu value={sortBy} onChange={setSortBy} options={SORT_OPTIONS} />
           </div>
+
+          {filteredLeads.length === 0 && (
+            <div className="text-center py-16 border border-dashed border-surface/20 rounded-[2rem]">
+              <p className="text-surface/60">Aucun lead sur cette période.</p>
+            </div>
+          )}
+
+          {filteredLeads.length > 0 && (
           <div className="bg-background border border-surface/10 rounded-[2rem] overflow-hidden shadow-soft">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -275,6 +301,7 @@ export default function LeadsPage() {
             </div>
           )}
           </div>
+          )}
         </>
       )}
     </div>

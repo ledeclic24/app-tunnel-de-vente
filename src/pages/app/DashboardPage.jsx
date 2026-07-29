@@ -17,6 +17,7 @@ import { useToast } from '../../components/app/Toast';
 import GradientBanner from '../../components/ui/GradientBanner';
 import Spinner from '../../components/app/Spinner';
 import SortMenu from '../../components/app/SortMenu';
+import DateRangeFilter, { resolveDateRange, filterByDateRange } from '../../components/app/DateRangeFilter';
 import PublishTemplateModal from '../../components/app/PublishTemplateModal';
 
 const SORT_OPTIONS = [
@@ -143,8 +144,13 @@ function FunnelCard({ funnel, index, busy, onDelete, onTogglePublish, onDuplicat
   const category = getCategory(funnel.category);
 
   return (
-    <div className="bg-background border border-surface/10 rounded-[2rem] overflow-hidden shadow-soft flex flex-col">
-      <div className={`h-1.5 ${['bg-accent', 'bg-primary', 'bg-surface/30'][index % 3]}`} />
+    // Pas de overflow-hidden ici : ça clipperait aussi le menu ⋯ en
+    // position absolute (invisible bien que présent dans le DOM, cliquable
+    // via l'automatisation mais rien à voir pour un vrai visiteur — bug
+    // trouvé après coup). La barre de couleur se charge elle-même de
+    // respecter l'arrondi du haut de la carte (rounded-t-[2rem]).
+    <div className="bg-background border border-surface/10 rounded-[2rem] shadow-soft flex flex-col">
+      <div className={`h-1.5 rounded-t-[2rem] ${['bg-accent', 'bg-primary', 'bg-surface/30'][index % 3]}`} />
       <div className="p-6 flex flex-col flex-1">
         <div className="flex items-start justify-between mb-3">
           <h3 className="font-sans font-semibold text-surface pr-2">{funnel.name}</h3>
@@ -228,6 +234,9 @@ export default function DashboardPage() {
   const [revenue30d, setRevenue30d] = useState([]);
   const [error, setError] = useState('');
   const [sortBy, setSortBy] = useState('created_desc');
+  const [datePreset, setDatePreset] = useState('all');
+  const [customStart, setCustomStart] = useState('');
+  const [customEnd, setCustomEnd] = useState('');
   const [busyId, setBusyId] = useState(null);
   const [busyAction, setBusyAction] = useState(null);
   const [templateModalFunnel, setTemplateModalFunnel] = useState(null);
@@ -313,7 +322,10 @@ export default function DashboardPage() {
     setBusyAction(null);
   };
 
-  const sortedFunnels = funnels ? sortFunnels(funnels, sortBy) : null;
+  const dateRange = resolveDateRange(datePreset, customStart, customEnd);
+  const sortedFunnels = funnels
+    ? sortFunnels(filterByDateRange(funnels, 'created_at', dateRange), sortBy)
+    : null;
 
   return (
     <div>
@@ -368,10 +380,26 @@ export default function DashboardPage() {
 
       {funnels && funnels.length > 0 && (
         <>
-          <div className="flex items-center justify-between mb-4">
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
             <h2 className="font-sans font-semibold text-surface">Tes tunnels</h2>
-            <SortMenu value={sortBy} onChange={setSortBy} options={SORT_OPTIONS} />
+            <div className="flex items-center gap-2">
+              <DateRangeFilter
+                preset={datePreset}
+                onPresetChange={setDatePreset}
+                customStart={customStart}
+                customEnd={customEnd}
+                onCustomChange={(start, end) => { setCustomStart(start); setCustomEnd(end); }}
+              />
+              <SortMenu value={sortBy} onChange={setSortBy} options={SORT_OPTIONS} />
+            </div>
           </div>
+
+          {sortedFunnels.length === 0 && (
+            <div className="text-center py-16 border border-dashed border-surface/20 rounded-[2rem]">
+              <p className="text-surface/60">Aucun tunnel créé sur cette période.</p>
+            </div>
+          )}
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             {sortedFunnels.map((funnel, i) => (
               // Une fine barre de couleur en tête de carte, alternée entre
