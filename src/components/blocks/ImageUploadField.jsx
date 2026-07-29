@@ -3,6 +3,7 @@ import { ImageIcon, Upload, Wand2 } from 'lucide-react';
 import { uploadImage } from '../../lib/storage';
 import { cx } from '../../lib/blockStyle';
 import ImagePickerModal from '../app/ImagePickerModal';
+import { useClickOutside } from '../../lib/useClickOutside';
 
 // onGenerate/generating sont optionnels : sans eux, comportement inchangé
 // (upload + bibliothèque uniquement). Avec eux, un 3ᵉ bouton "Générer"
@@ -15,6 +16,7 @@ export default function ImageUploadField({ userId, value, onChange, onGenerate, 
   const [error, setError] = useState('');
   const [showPicker, setShowPicker] = useState(false);
   const [showTypeMenu, setShowTypeMenu] = useState(false);
+  const typeMenuRef = useClickOutside(showTypeMenu, () => setShowTypeMenu(false));
   const fileRef = useRef(null);
 
   const handleFile = async (e) => {
@@ -71,7 +73,7 @@ export default function ImageUploadField({ userId, value, onChange, onGenerate, 
           <ImageIcon className="w-4 h-4" /> Mes visuels
         </button>
         {onGenerate && (
-          <div className="relative shrink-0">
+          <div ref={typeMenuRef} className="relative shrink-0">
             <button
               type="button"
               onClick={() => (generateTypes ? setShowTypeMenu((v) => !v) : onGenerate())}

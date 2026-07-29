@@ -28,6 +28,7 @@ import { useConfirm } from '../../components/app/ConfirmDialog';
 import { useToast } from '../../components/app/Toast';
 import RechargeCreditsButton from '../../components/app/RechargeCreditsButton';
 import Spinner from '../../components/app/Spinner';
+import { useClickOutside } from '../../lib/useClickOutside';
 import { editFunnelWithAI, regenerateBlockWithAI, generateBlockImageWithAI, regenerateSignatureVisualWithAI, improveElementWithAI } from '../../lib/aiApi';
 import BlockRenderer from '../../components/blocks/BlockRenderer';
 import BlockEditorPanel from '../../components/blocks/BlockEditorPanel';
@@ -242,6 +243,8 @@ export default function FunnelEditorPage() {
   const [showSettings, setShowSettings] = useState(false);
   const [showPageSettings, setShowPageSettings] = useState(false);
   const [showSettingsMenu, setShowSettingsMenu] = useState(false);
+  const settingsMenuRef = useClickOutside(showSettingsMenu, () => setShowSettingsMenu(false));
+  const paletteRef = useClickOutside(showPalette, () => setShowPalette(false));
   const [showPreview, setShowPreview] = useState(false);
   const [showAiAssistant, setShowAiAssistant] = useState(false);
   const [aiMessages, setAiMessages] = useState([
@@ -1007,7 +1010,7 @@ export default function FunnelEditorPage() {
               chacun leur propre bouton toggle en permanence visible — fusionnés
               en un seul bouton + menu déroulant pour désencombrer la barre
               d'outils (retour utilisateur : "trop d'onglets en haut"). */}
-          <div className="relative">
+          <div ref={settingsMenuRef} className="relative">
             <button
               onClick={() => setShowSettingsMenu((v) => !v)}
               className={`magnetic-btn flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-semibold border ${showSettings || showBrandKit || showPageSettings ? 'bg-surface/15 border-surface/30 text-surface' : 'bg-surface/5 border-surface/10 text-surface/70'}`}
@@ -1202,7 +1205,7 @@ export default function FunnelEditorPage() {
           </SortableContext>
         </DndContext>
 
-        <div className="relative">
+        <div ref={paletteRef} className="relative">
           <button
             onClick={() => setShowPalette((v) => !v)}
             className="w-full flex items-center justify-center gap-2 py-4 rounded-[2rem] border border-dashed border-surface/20 text-surface/60 hover:border-accent hover:text-accent transition-colors"

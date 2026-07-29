@@ -4,6 +4,7 @@ import { uploadImage } from '../../lib/storage';
 import ImagePickerModal from '../app/ImagePickerModal';
 import { cx } from '../../lib/blockStyle';
 import { useToast } from '../app/Toast';
+import { useClickOutside } from '../../lib/useClickOutside';
 
 // Rend cliquable une image déjà présente dans un bloc (photo d'équipe, logo,
 // visuel de tarif, capture témoignage...) : Importer / Choisir dans ma
@@ -17,6 +18,7 @@ export default function EditableItemImage({
   const [uploading, setUploading] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   const [showPicker, setShowPicker] = useState(false);
+  const menuRef = useClickOutside(showMenu, () => setShowMenu(false));
   const toast = useToast();
   const fileRef = useRef(null);
 
@@ -45,7 +47,7 @@ export default function EditableItemImage({
   };
 
   return (
-    <div className="relative group/edimg inline-block w-full">
+    <div ref={menuRef} className="relative group/edimg inline-block w-full">
       {src ? (
         <img
           src={src}

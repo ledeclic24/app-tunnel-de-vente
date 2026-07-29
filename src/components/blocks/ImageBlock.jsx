@@ -6,6 +6,7 @@ import SlotList from './SlotList';
 import ImagePickerModal from '../app/ImagePickerModal';
 import { TUNNEL_IMAGE_TYPES } from './BlockEditorPanel';
 import { useToast } from '../app/Toast';
+import { useClickOutside } from '../../lib/useClickOutside';
 
 // L'image principale reste hors du système d'emplacements (comme pour
 // Hero) : c'est l'ancrage central du bloc, pas un élément de flux parmi
@@ -28,6 +29,7 @@ export default function ImageBlock({ content, editMode, selectedElement, onSelec
   const [showMenu, setShowMenu] = useState(false);
   const [showPicker, setShowPicker] = useState(false);
   const [showTypeMenu, setShowTypeMenu] = useState(false);
+  const menuRef = useClickOutside(showMenu || showTypeMenu, () => { setShowMenu(false); setShowTypeMenu(false); });
   const toast = useToast();
   const fileRef = useRef(null);
 
@@ -129,7 +131,7 @@ export default function ImageBlock({ content, editMode, selectedElement, onSelec
   return (
     <section className={cx('px-6 py-8 md:px-16 max-w-5xl mx-auto', bg.sectionClassName)}>
       {url ? (
-        <div className="relative group/img overflow-hidden rounded-[2rem]">
+        <div ref={menuRef} className="relative group/img overflow-hidden rounded-[2rem]">
           <img
             src={url}
             alt={alt || caption || ''}
@@ -151,7 +153,7 @@ export default function ImageBlock({ content, editMode, selectedElement, onSelec
         </div>
       ) : (
         editMode && (
-          <div className="relative">
+          <div ref={menuRef} className="relative">
             <button
               type="button"
               onClick={handleImageClick}

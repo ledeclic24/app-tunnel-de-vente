@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Calendar } from 'lucide-react';
+import { useClickOutside } from '../../lib/useClickOutside';
 
 export const DATE_PRESETS = [
   { key: 'all', label: 'Toute la période' },
@@ -78,6 +79,7 @@ const TONE_CLASSES = {
 // de date natifs du navigateur (aucune dépendance calendrier à ajouter).
 export default function DateRangeFilter({ preset, onPresetChange, customStart, customEnd, onCustomChange, tone = 'default' }) {
   const [open, setOpen] = useState(false);
+  const containerRef = useClickOutside(open, () => setOpen(false));
   const current = DATE_PRESETS.find((p) => p.key === preset) || DATE_PRESETS[0];
   const t = TONE_CLASSES[tone] || TONE_CLASSES.default;
   const label = preset === 'custom' && customStart && customEnd
@@ -85,7 +87,7 @@ export default function DateRangeFilter({ preset, onPresetChange, customStart, c
     : current.label;
 
   return (
-    <div className="relative shrink-0">
+    <div ref={containerRef} className="relative shrink-0">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}

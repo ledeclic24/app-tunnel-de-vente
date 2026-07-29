@@ -12,6 +12,7 @@ import {
 import { getPlan } from '../../lib/plans';
 import { formatPrice } from '../../lib/currency';
 import { getCategory, CATEGORIES } from '../../lib/funnelTemplates';
+import { useClickOutside } from '../../lib/useClickOutside';
 import { useConfirm } from '../../components/app/ConfirmDialog';
 import { useToast } from '../../components/app/Toast';
 import GradientBanner from '../../components/ui/GradientBanner';
@@ -156,6 +157,7 @@ function FunnelCard({
   onDelete, onTogglePublish, onDuplicate, onPublishAsTemplate, onPreview,
 }) {
   const category = getCategory(funnel.category);
+  const menuRef = useClickOutside(isMenuOpen, onCloseMenu);
 
   return (
     // Pas de overflow-hidden ici : ça clipperait aussi le menu ⋯ en
@@ -189,7 +191,7 @@ function FunnelCard({
           <Link to={`/app/funnels/${funnel.id}/edit`} className="hover-lift flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-primary text-background text-sm font-medium">
             <Pencil className="w-3.5 h-3.5" /> Modifier
           </Link>
-          <div className="relative shrink-0">
+          <div ref={menuRef} className="relative shrink-0">
             <button
               type="button"
               onClick={() => (isMenuOpen ? onCloseMenu() : onOpenMenu(funnel.id))}

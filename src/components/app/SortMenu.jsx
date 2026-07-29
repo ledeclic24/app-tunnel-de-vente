@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { ArrowUpDown } from 'lucide-react';
+import { useClickOutside } from '../../lib/useClickOutside';
 
 const TONE_CLASSES = {
   default: {
@@ -25,11 +26,12 @@ const TONE_CLASSES = {
 // pour le même principe).
 export default function SortMenu({ value, onChange, options, tone = 'default' }) {
   const [open, setOpen] = useState(false);
+  const containerRef = useClickOutside(open, () => setOpen(false));
   const current = options.find((o) => o.value === value) || options[0];
   const t = TONE_CLASSES[tone] || TONE_CLASSES.default;
 
   return (
-    <div className="relative shrink-0">
+    <div ref={containerRef} className="relative shrink-0">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}

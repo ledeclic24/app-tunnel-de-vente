@@ -13,6 +13,7 @@ import SlotList from './SlotList';
 import ImagePickerModal from '../app/ImagePickerModal';
 import { TUNNEL_IMAGE_TYPES } from './BlockEditorPanel';
 import { useToast } from '../app/Toast';
+import { useClickOutside } from '../../lib/useClickOutside';
 
 // Icônes "élément signature" : l'IA choisit celle la plus proche du sujet
 // précis de l'offre (voir heroIcon dans le schéma) plutôt que d'imposer un
@@ -125,6 +126,7 @@ export default function HeroBlock({ content, onAdvance, onOpenCheckout, primaryO
   const [showMenu, setShowMenu] = useState(false);
   const [showPicker, setShowPicker] = useState(false);
   const [showTypeMenu, setShowTypeMenu] = useState(false);
+  const menuRef = useClickOutside(showMenu || showTypeMenu, () => { setShowMenu(false); setShowTypeMenu(false); });
   const toast = useToast();
   const fileRef = useRef(null);
 
@@ -325,7 +327,7 @@ export default function HeroBlock({ content, onAdvance, onOpenCheckout, primaryO
     return (
       <section className="ambient-glow relative rounded-[2rem] bg-primary text-background overflow-hidden">
         <div className="grid md:grid-cols-2 items-center">
-          <div className="relative group/img aspect-[4/3] md:aspect-auto md:h-full min-h-[280px] bg-primary/60">
+          <div ref={menuRef} className="relative group/img aspect-[4/3] md:aspect-auto md:h-full min-h-[280px] bg-primary/60">
             {imageUrl ? (
               <img
                 src={imageUrl}
@@ -366,7 +368,7 @@ export default function HeroBlock({ content, onAdvance, onOpenCheckout, primaryO
   return (
     <section className="ambient-glow relative overflow-hidden rounded-[2rem] bg-primary text-background">
       {imageUrl ? (
-        <div className="absolute inset-0 group/img">
+        <div ref={menuRef} className="absolute inset-0 group/img">
           <img
             src={imageUrl}
             alt=""
@@ -387,7 +389,7 @@ export default function HeroBlock({ content, onAdvance, onOpenCheckout, primaryO
           {imageMenu}
         </div>
       ) : (
-        <div className="absolute inset-0 group/img">
+        <div ref={menuRef} className="absolute inset-0 group/img">
           <HeroVisualPlaceholder variant="overlay" icon={heroIcon} signatureSvg={heroSignatureSvg} />
           {editMode && (
             <button
