@@ -1,9 +1,11 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { Search, Shield, ShieldOff } from 'lucide-react';
-import { fetchAllProfiles, updateUserPlanAsAdmin, setAdminStatus } from '../../../lib/adminApi';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { Search, Shield, ShieldOff, Coins } from 'lucide-react';
+import { fetchAllProfiles, updateUserPlanAsAdmin, setAdminStatus, grantCreditsAsAdmin } from '../../../lib/adminApi';
 import { useAuth } from '../../../context/AuthContext';
 import { PLAN_ORDER, getPlan } from '../../../lib/plans';
 import { useToast } from '../../../components/app/Toast';
+import { useClickOutside } from '../../../lib/useClickOutside';
+import { useAnchoredPosition } from '../../../lib/useAnchoredPosition';
 import Spinner from '../../../components/app/Spinner';
 import SortMenu from '../../../components/app/SortMenu';
 
@@ -12,11 +14,74 @@ const SORT_OPTIONS = [
   { value: 'created_asc', label: 'Plus ancien' },
 ];
 
+const GRANT_PANEL_WIDTH = 220;
+
 // Tri côté client (liste déjà entièrement chargée) — 'created_desc' par
 // défaut reproduit l'ordre déjà renvoyé par l'API (order: createdAt DESC).
 function sortProfiles(list, sortBy) {
   const dir = sortBy === 'created_desc' ? -1 : 1;
   return [...list].sort((a, b) => dir * (new Date(a.created_at).getTime() - new Date(b.created_at).getTime()));
+}
+
+// Bouton + panneau ancré (même mécanique que SortMenu/DateRangeFilter —
+// useAnchoredPosition, déjà éprouvée contre le débordement mobile) pour
+// ajouter des crédits IA sans construire une nouvelle brique de modale.
+function GrantCreditsMenu({ onGrant, busy }) {
+  const [open, setOpen] = useState(false);
+  const [amount, setAmount] = useState('');
+  const containerRef = useClickOutside(open, () => setOpen(false));
+  const triggerRef = useRef(null);
+  const pos = useAnchoredPosition(open, triggerRef, GRANT_PANEL_WIDTH);
+
+  const submit = async (e) => {
+    e.preventDefault();
+    const value = Math.floor(Number(amount));
+    if (!value || value <= 0) return;
+    await onGrant(value);
+    setAmount('');
+    setOpen(false);
+  };
+
+  return (
+    <div ref={containerRef} className="relative inline-block">
+      <button
+        ref={triggerRef}
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        disabled={busy}
+        title="Ajouter des crédits IA"
+        className="hover-lift p-2 rounded-lg text-background/50 hover:bg-background/10 hover:text-accent transition-colors disabled:opacity-40"
+      >
+        <Coins className="w-4 h-4" />
+      </button>
+      {open && pos && (
+        <form
+          onSubmit={submit}
+          style={{ position: 'fixed', top: pos.top, left: pos.left, width: GRANT_PANEL_WIDTH }}
+          className="dropdown-panel z-30 bg-block-card border border-background/10 rounded-2xl shadow-xl p-3"
+        >
+          <label className="block text-[10px] font-semibold uppercase tracking-wider text-background/50 mb-1.5">Crédits à ajouter</label>
+          <input
+            type="number"
+            min="1"
+            step="1"
+            autoFocus
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            placeholder="ex. 500"
+            className="w-full bg-primary/40 border border-background/10 rounded-lg px-3 py-2 text-sm text-background focus:outline-none focus:border-accent transition-colors mb-2"
+          />
+          <button
+            type="submit"
+            disabled={busy || !amount}
+            className="w-full text-center px-3 py-2 rounded-lg text-sm font-semibold bg-accent text-primary disabled:opacity-40"
+          >
+            Ajouter
+          </button>
+        </form>
+      )}
+    </div>
+  );
 }
 
 export default function AdminUsersPage() {
@@ -67,6 +132,21 @@ export default function AdminUsersPage() {
     }
   };
 
+  const handleGrantCredits = async (profileId, amount) => {
+    setBusyId(profileId);
+    try {
+      // Le journal d'audit ("credits.grant") est géré automatiquement côté
+      // serveur (voir AdminService.grantCredits).
+      await grantCreditsAsAdmin(profileId, amount);
+      toast.success(`${amount.toLocaleString('fr-FR')} crédits ajoutés.`);
+      await load();
+    } catch (err) {
+      toast.error(err.message || "Impossible d'ajouter des crédits.");
+    } finally {
+      setBusyId(null);
+    }
+  };
+
   if (!profiles) {
     return (
       <div className="flex items-center justify-center py-16">
@@ -97,6 +177,7 @@ export default function AdminUsersPage() {
               <tr className="border-b border-background/10 text-left text-background/50 text-xs uppercase tracking-wider">
                 <th className="px-6 py-4 font-medium">Utilisateur</th>
                 <th className="px-6 py-4 font-medium">Plan</th>
+                <th className="px-6 py-4 font-medium">Crédits IA</th>
                 <th className="px-6 py-4 font-medium">Inscrit le</th>
                 <th className="px-6 py-4 font-medium">Admin</th>
               </tr>
@@ -120,6 +201,12 @@ export default function AdminUsersPage() {
                       ))}
                     </select>
                   </td>
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-background/80 font-mono text-sm">{(p.ai_credits_balance ?? 0).toLocaleString('fr-FR')}</span>
+                      <GrantCreditsMenu busy={busyId === p.id} onGrant={(amount) => handleGrantCredits(p.id, amount)} />
+                    </div>
+                  </td>
                   <td className="px-6 py-4 text-background/50">
                     {new Date(p.created_at).toLocaleDateString('fr-FR')}
                   </td>
@@ -139,7 +226,7 @@ export default function AdminUsersPage() {
               ))}
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={4} className="px-6 py-10 text-center text-background/40">Aucun utilisateur trouvé.</td>
+                  <td colSpan={5} className="px-6 py-10 text-center text-background/40">Aucun utilisateur trouvé.</td>
                 </tr>
               )}
             </tbody>

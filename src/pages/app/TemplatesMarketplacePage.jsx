@@ -131,7 +131,7 @@ export default function TemplatesMarketplacePage() {
           {sortTemplates(templates, sortBy).map((t) => {
             const cat = getCategory(t.category);
             return (
-              <div key={t.id} className={`bg-background border rounded-[2rem] overflow-hidden shadow-soft flex flex-col ${t.featured ? 'border-accent/40' : 'border-surface/10'}`}>
+              <div key={t.id} className={`hover-card bg-background border rounded-[2rem] overflow-hidden shadow-soft flex flex-col ${t.featured ? 'border-accent/40' : 'border-surface/10'}`}>
                 <div className="h-24 flex items-center justify-center bg-primary/5 relative">
                   <cat.icon className="w-7 h-7 text-accent/70" />
                   {t.featured && (

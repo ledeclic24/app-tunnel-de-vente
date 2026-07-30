@@ -488,8 +488,8 @@ export default function EbooksPage() {
               className="w-4 h-4 rounded cursor-pointer accent-accent shrink-0"
               aria-label="Sélectionner cet ebook"
             />
-            <button onClick={() => navigate(`/app/ebooks/${ebook.id}`)} className="text-left flex-1 min-w-0">
-              <p className="font-semibold text-surface truncate">{ebook.title}</p>
+            <button onClick={() => navigate(`/app/ebooks/${ebook.id}`)} className="text-left flex-1 min-w-0 group">
+              <p className="font-semibold text-surface truncate transition-colors group-hover:text-accent">{ebook.title}</p>
               {ebook.subtitle && <p className="text-sm text-surface/50 truncate">{ebook.subtitle}</p>}
             </button>
             <div className="flex items-center gap-1 shrink-0">

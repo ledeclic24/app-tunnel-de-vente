@@ -168,7 +168,7 @@ export default function LeadsPage() {
 
       {leads.length > 0 && (
         <>
-          <div className="flex justify-end items-center gap-2 mb-4">
+          <div className="flex flex-wrap justify-end items-center gap-2 mb-4">
             <DateRangeFilter
               preset={datePreset}
               onPresetChange={setDatePreset}

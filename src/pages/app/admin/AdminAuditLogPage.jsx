@@ -9,11 +9,13 @@ const ACTION_LABELS = {
   'admin.revoke': 'Statut administrateur retiré',
   'funnel.delete': 'Suppression de tunnel',
   'account.delete': 'Suppression de compte',
+  'credits.grant': 'Crédits IA ajoutés manuellement',
 };
 
 function describeMeta(action, meta) {
   if (action === 'plan.change' && meta) return `${meta.previous || '—'} → ${meta.next || '—'}`;
   if (action === 'account.delete' && meta?.self_service) return 'Initiée par le titulaire du compte';
+  if (action === 'credits.grant' && meta) return `+${Number(meta.amount).toLocaleString('fr-FR')} crédits`;
   return '';
 }
 

@@ -103,11 +103,11 @@ function SpendLeadsChart({ byDay }) {
       <h3 className="font-sans font-semibold text-surface mb-4">Dépenses vs leads captés</h3>
       <ResponsiveContainer width="100%" height={260}>
         <LineChart data={data}>
-          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
-          <XAxis dataKey="label" tick={{ fontSize: 11, fill: 'rgba(255,255,255,0.4)' }} axisLine={false} tickLine={false} />
-          <YAxis yAxisId="spend" tick={{ fontSize: 11, fill: 'rgba(255,255,255,0.4)' }} axisLine={false} tickLine={false} width={40} />
-          <YAxis yAxisId="leads" orientation="right" allowDecimals={false} tick={{ fontSize: 11, fill: 'rgba(255,255,255,0.4)' }} axisLine={false} tickLine={false} width={30} />
-          <Tooltip contentStyle={{ borderRadius: 12, border: '1px solid #27272a', background: '#18181b', fontSize: 13, color: '#f4f4f5' }} />
+          <CartesianGrid strokeDasharray="3 3" stroke="rgba(11,40,24,0.08)" />
+          <XAxis dataKey="label" tick={{ fontSize: 11, fill: 'rgba(11,40,24,0.4)' }} axisLine={false} tickLine={false} />
+          <YAxis yAxisId="spend" tick={{ fontSize: 11, fill: 'rgba(11,40,24,0.4)' }} axisLine={false} tickLine={false} width={40} />
+          <YAxis yAxisId="leads" orientation="right" allowDecimals={false} tick={{ fontSize: 11, fill: 'rgba(11,40,24,0.4)' }} axisLine={false} tickLine={false} width={30} />
+          <Tooltip contentStyle={{ borderRadius: 12, border: '1px solid rgba(246,249,247,0.1)', background: 'rgb(11,40,24)', fontSize: 13, color: 'rgb(246,249,247)' }} />
           <Legend wrapperStyle={{ fontSize: 12 }} />
           <Line yAxisId="spend" type="monotone" dataKey="spend" name="Dépenses" stroke="#f87171" strokeWidth={2} dot={false} />
           <Line yAxisId="leads" type="monotone" dataKey="leads" name="Leads" stroke="#34d399" strokeWidth={2} dot={false} />

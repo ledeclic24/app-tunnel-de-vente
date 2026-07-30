@@ -12,6 +12,7 @@ function normalizeProfile(u) {
     plan: u.plan,
     is_admin: u.isAdmin,
     created_at: u.createdAt,
+    ai_credits_balance: u.aiCreditsBalance,
   };
 }
 
@@ -48,6 +49,10 @@ export async function updateUserPlanAsAdmin(userId, plan) {
 
 export async function setAdminStatus(userId, isAdmin) {
   await apiPatch(`/admin/users/${userId}/admin-status`, { isAdmin });
+}
+
+export async function grantCreditsAsAdmin(userId, amount) {
+  await apiPatch(`/admin/users/${userId}/credits`, { amount });
 }
 
 export async function deleteFunnelAsAdmin(funnelId) {
