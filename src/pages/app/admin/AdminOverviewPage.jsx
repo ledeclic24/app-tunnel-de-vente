@@ -1,9 +1,31 @@
 import React, { useEffect, useState } from 'react';
-import { Users, Layers, Rocket, Mail, Shield, ArrowRight } from 'lucide-react';
+import { Users, Layers, Rocket, Mail, Shield, ArrowRight, Megaphone } from 'lucide-react';
 import { fetchAllProfiles, fetchAllFunnels, fetchAllLeadCounts, setAdminStatus } from '../../../lib/adminApi';
+import { fetchSocialProof, updateSocialProof } from '../../../lib/socialProofApi';
 import { useAuth } from '../../../context/AuthContext';
 import { PLAN_ORDER, getPlan } from '../../../lib/plans';
 import Spinner from '../../../components/app/Spinner';
+
+function ToggleSwitch({ checked, onChange, disabled }) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      disabled={disabled}
+      onClick={() => onChange(!checked)}
+      className={`relative w-11 h-6 rounded-full shrink-0 transition-colors duration-300 disabled:opacity-50 ${
+        checked ? 'bg-accent' : 'bg-background/15'
+      }`}
+    >
+      <span
+        className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform duration-300 ${
+          checked ? 'translate-x-5' : 'translate-x-0'
+        }`}
+      />
+    </button>
+  );
+}
 
 function StatCard({ icon: Icon, label, value, delay = 0 }) {
   return (
@@ -30,17 +52,37 @@ export default function AdminOverviewPage() {
   const [email, setEmail] = useState('');
   const [message, setMessage] = useState(null);
   const [submitting, setSubmitting] = useState(false);
+  const [socialProofEnabled, setSocialProofEnabled] = useState(false);
+  const [socialProofBusy, setSocialProofBusy] = useState(false);
 
   const load = async () => {
-    const [p, f, l] = await Promise.all([fetchAllProfiles(), fetchAllFunnels(), fetchAllLeadCounts()]);
+    const [p, f, l, sp] = await Promise.all([
+      fetchAllProfiles(),
+      fetchAllFunnels(),
+      fetchAllLeadCounts(),
+      fetchSocialProof(),
+    ]);
     setProfiles(p);
     setFunnels(f);
     setLeadCounts(l);
+    setSocialProofEnabled(Boolean(sp?.enabled));
   };
 
   useEffect(() => {
     load();
   }, []);
+
+  const handleToggleSocialProof = async (next) => {
+    setSocialProofBusy(true);
+    setSocialProofEnabled(next);
+    try {
+      await updateSocialProof(next);
+    } catch {
+      setSocialProofEnabled(!next);
+    } finally {
+      setSocialProofBusy(false);
+    }
+  };
 
   const handlePromote = async (e) => {
     e.preventDefault();
@@ -129,6 +171,21 @@ export default function AdminOverviewPage() {
             <p className={`text-sm mt-3 ${message.type === 'success' ? 'text-accent' : 'text-red-400'}`}>{message.text}</p>
           )}
         </div>
+      </div>
+
+      <div className="fade-in-up bg-admin-card border border-background/10 rounded-2xl p-6 mt-6 flex items-center justify-between gap-6" style={{ animationDelay: '360ms' }}>
+        <div className="flex items-start gap-3">
+          <div className="w-9 h-9 rounded-lg bg-accent/10 flex items-center justify-center shrink-0 mt-0.5">
+            <Megaphone className="w-4 h-4 text-accent" />
+          </div>
+          <div>
+            <h2 className="text-sm font-semibold text-background uppercase tracking-wider">Preuve sociale sur la landing page</h2>
+            <p className="text-xs text-background/50 mt-1 max-w-md">
+              Affiche un toast avec les dernières vraies inscriptions et publications de tunnels. Reste désactivé tant qu'il n'y a pas assez de vendeurs actifs pour que ce soit crédible.
+            </p>
+          </div>
+        </div>
+        <ToggleSwitch checked={socialProofEnabled} onChange={handleToggleSocialProof} disabled={socialProofBusy} />
       </div>
     </div>
   );

@@ -14,6 +14,8 @@ import TrustBar from '../../components/TrustBar';
 import Pricing from '../../components/Pricing';
 import CtaBanner from '../../components/CtaBanner';
 import Footer from '../../components/Footer';
+import SocialProofToast from '../../components/SocialProofToast';
+import StickyMobileCta from '../../components/StickyMobileCta';
 
 export default function LandingPage() {
   return (
@@ -35,6 +37,8 @@ export default function LandingPage() {
         <CtaBanner />
       </main>
       <Footer />
+      <SocialProofToast />
+      <StickyMobileCta />
     </div>
   );
 }
