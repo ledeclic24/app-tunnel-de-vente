@@ -173,7 +173,7 @@ function FunnelCard({
     // via l'automatisation mais rien à voir pour un vrai visiteur — bug
     // trouvé après coup). La barre de couleur se charge elle-même de
     // respecter l'arrondi du haut de la carte (rounded-t-[2rem]).
-    <div className={`bg-background border rounded-[2rem] shadow-soft flex flex-col ${isSelected ? 'border-accent' : 'border-surface/10'}`}>
+    <div className={`hover-card bg-background border rounded-[2rem] shadow-soft flex flex-col ${isSelected ? 'border-accent' : 'border-surface/10'}`}>
       <div className={`h-1.5 rounded-t-[2rem] ${['bg-accent', 'bg-primary', 'bg-surface/30'][index % 3]}`} />
       <div className="p-6 flex flex-col flex-1">
         <div className="flex items-start gap-2.5 mb-3">
@@ -552,7 +552,7 @@ export default function DashboardPage() {
                     key={o.value}
                     type="button"
                     onClick={() => setStatusFilter(o.value)}
-                    className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${statusFilter === o.value ? 'bg-primary text-background' : 'text-surface/60'}`}
+                    className={`hover-lift px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${statusFilter === o.value ? 'bg-primary text-background' : 'text-surface/60'}`}
                   >
                     {o.label}
                   </button>
@@ -573,13 +573,13 @@ export default function DashboardPage() {
           {selectedIds.size > 0 && (
             <div className="flex flex-wrap items-center gap-3 bg-accent/5 border border-accent/20 rounded-2xl px-4 py-3 mb-4">
               <span className="text-xs font-semibold text-surface/60">{selectedIds.size} sélectionné{selectedIds.size > 1 ? 's' : ''}</span>
-              <button onClick={() => handleBulkPublishToggle(true)} disabled={bulkBusy} className="inline-flex items-center gap-1.5 text-xs font-semibold text-accent disabled:opacity-50">
+              <button onClick={() => handleBulkPublishToggle(true)} disabled={bulkBusy} className="hover-lift inline-flex items-center gap-1.5 text-xs font-semibold text-accent disabled:opacity-50">
                 <Rocket className="w-3.5 h-3.5" /> Publier
               </button>
-              <button onClick={() => handleBulkPublishToggle(false)} disabled={bulkBusy} className="inline-flex items-center gap-1.5 text-xs font-semibold text-surface/60 disabled:opacity-50">
+              <button onClick={() => handleBulkPublishToggle(false)} disabled={bulkBusy} className="hover-lift inline-flex items-center gap-1.5 text-xs font-semibold text-surface/60 disabled:opacity-50">
                 <EyeOff className="w-3.5 h-3.5" /> Dépublier
               </button>
-              <button onClick={handleBulkDelete} disabled={bulkBusy} className="inline-flex items-center gap-1.5 text-xs font-semibold text-red-500 disabled:opacity-50">
+              <button onClick={handleBulkDelete} disabled={bulkBusy} className="hover-lift inline-flex items-center gap-1.5 text-xs font-semibold text-red-500 disabled:opacity-50">
                 <Trash2 className="w-3.5 h-3.5" /> Supprimer
               </button>
               <button onClick={() => setSelectedIds(new Set())} className="ml-auto text-xs text-surface/50 hover:text-surface">
@@ -624,7 +624,7 @@ export default function DashboardPage() {
                 type="button"
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={currentPage <= 1}
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-surface/10 text-sm text-surface/70 disabled:opacity-30"
+                className="hover-lift inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-surface/10 text-sm text-surface/70 disabled:opacity-30"
               >
                 <ChevronLeft className="w-4 h-4" /> Précédent
               </button>
@@ -633,7 +633,7 @@ export default function DashboardPage() {
                 type="button"
                 onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                 disabled={currentPage >= totalPages}
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-surface/10 text-sm text-surface/70 disabled:opacity-30"
+                className="hover-lift inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-surface/10 text-sm text-surface/70 disabled:opacity-30"
               >
                 Suivant <ChevronRight className="w-4 h-4" />
               </button>

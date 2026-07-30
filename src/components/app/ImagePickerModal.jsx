@@ -65,7 +65,7 @@ export default function ImagePickerModal({ open, onClose, onConfirm, multiple = 
                     type="button"
                     onClick={() => toggle(img.url)}
                     title={img.prompt || ''}
-                    className={`relative aspect-square rounded-lg overflow-hidden border-2 transition-colors ${isSelected ? 'border-accent' : 'border-transparent'}`}
+                    className={`relative aspect-square rounded-lg overflow-hidden border-2 transition-colors hover:border-accent/40 ${isSelected ? 'border-accent' : 'border-transparent'}`}
                   >
                     <img src={img.url} alt={img.prompt || ''} className="w-full h-full object-cover" />
                     {isSelected && (

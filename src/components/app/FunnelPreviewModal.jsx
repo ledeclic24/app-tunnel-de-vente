@@ -130,19 +130,19 @@ export default function FunnelPreviewModal({ funnel, steps, blocksByStepId, onCl
         <div className="flex items-center gap-1 bg-surface/5 rounded-full p-1 shrink-0">
           <button
             onClick={() => setDevice('desktop')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${device === 'desktop' ? 'bg-primary text-background' : 'text-surface/60'}`}
+            className={`hover-lift flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${device === 'desktop' ? 'bg-primary text-background' : 'text-surface/60'}`}
           >
             <Monitor className="w-4 h-4" /> Ordinateur
           </button>
           <button
             onClick={() => setDevice('tablet')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${device === 'tablet' ? 'bg-primary text-background' : 'text-surface/60'}`}
+            className={`hover-lift flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${device === 'tablet' ? 'bg-primary text-background' : 'text-surface/60'}`}
           >
             <Tablet className="w-4 h-4" /> Tablette
           </button>
           <button
             onClick={() => setDevice('mobile')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${device === 'mobile' ? 'bg-primary text-background' : 'text-surface/60'}`}
+            className={`hover-lift flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${device === 'mobile' ? 'bg-primary text-background' : 'text-surface/60'}`}
           >
             <Smartphone className="w-4 h-4" /> Mobile
           </button>
@@ -181,7 +181,7 @@ export default function FunnelPreviewModal({ funnel, steps, blocksByStepId, onCl
         <button
           disabled={idx <= 0}
           onClick={() => goTo(idx - 1)}
-          className="flex items-center gap-1 px-4 py-2 rounded-full border border-surface/10 text-sm text-surface/70 disabled:opacity-30"
+          className="hover-lift flex items-center gap-1 px-4 py-2 rounded-full border border-surface/10 text-sm text-surface/70 disabled:opacity-30"
         >
           <ChevronLeft className="w-4 h-4" /> Précédent
         </button>
@@ -189,7 +189,7 @@ export default function FunnelPreviewModal({ funnel, steps, blocksByStepId, onCl
         <button
           disabled={idx < 0 || idx >= steps.length - 1}
           onClick={() => goTo(idx + 1)}
-          className="flex items-center gap-1 px-4 py-2 rounded-full border border-surface/10 text-sm text-surface/70 disabled:opacity-30"
+          className="hover-lift flex items-center gap-1 px-4 py-2 rounded-full border border-surface/10 text-sm text-surface/70 disabled:opacity-30"
         >
           Suivant <ChevronRight className="w-4 h-4" />
         </button>

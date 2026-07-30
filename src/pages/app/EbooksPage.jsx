@@ -294,7 +294,7 @@ export default function EbooksPage() {
                     key={t.key}
                     type="button"
                     onClick={() => setTone(t.key)}
-                    className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${tone === t.key ? 'bg-primary text-background' : 'bg-primary/5 text-surface/60'}`}
+                    className={`hover-lift px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${tone === t.key ? 'bg-primary text-background' : 'bg-primary/5 text-surface/60'}`}
                   >
                     {t.label}
                   </button>
@@ -309,7 +309,7 @@ export default function EbooksPage() {
                     key={l.key}
                     type="button"
                     onClick={() => setLanguage(l.key)}
-                    className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${language === l.key ? 'bg-primary text-background' : 'bg-primary/5 text-surface/60'}`}
+                    className={`hover-lift px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${language === l.key ? 'bg-primary text-background' : 'bg-primary/5 text-surface/60'}`}
                   >
                     {l.label}
                   </button>
@@ -394,7 +394,7 @@ export default function EbooksPage() {
                   key={l.key}
                   type="button"
                   onClick={() => setChapterCount(l.chapterCount)}
-                  className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${chapterCount === l.chapterCount ? 'bg-primary text-background' : 'bg-primary/5 text-surface/60'}`}
+                  className={`hover-lift px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${chapterCount === l.chapterCount ? 'bg-primary text-background' : 'bg-primary/5 text-surface/60'}`}
                 >
                   {l.label}
                 </button>
@@ -461,7 +461,7 @@ export default function EbooksPage() {
       {selectedIds.size > 0 && (
         <div className="flex flex-wrap items-center gap-3 bg-accent/5 border border-accent/20 rounded-2xl px-4 py-3 mb-4">
           <span className="text-xs font-semibold text-surface/60">{selectedIds.size} sélectionné{selectedIds.size > 1 ? 's' : ''}</span>
-          <button onClick={handleBulkDelete} disabled={bulkBusy} className="inline-flex items-center gap-1.5 text-xs font-semibold text-red-500 disabled:opacity-50">
+          <button onClick={handleBulkDelete} disabled={bulkBusy} className="hover-lift inline-flex items-center gap-1.5 text-xs font-semibold text-red-500 disabled:opacity-50">
             <Trash2 className="w-3.5 h-3.5" /> Supprimer
           </button>
           <button onClick={() => setSelectedIds(new Set())} className="ml-auto text-xs text-surface/50 hover:text-surface">

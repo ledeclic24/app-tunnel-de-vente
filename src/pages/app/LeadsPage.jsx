@@ -152,7 +152,7 @@ export default function LeadsPage() {
               <Download className="w-4 h-4" /> Exporter en CSV
             </button>
           ) : (
-            <Link to="/app/billing" className="inline-flex items-center gap-2 bg-background/10 text-background px-5 py-3 rounded-full text-sm font-semibold">
+            <Link to="/app/billing" className="magnetic-btn inline-flex items-center gap-2 bg-background/10 text-background px-5 py-3 rounded-full text-sm font-semibold">
               <Lock className="w-4 h-4" /> Export CSV — plan Pro
             </Link>
           )

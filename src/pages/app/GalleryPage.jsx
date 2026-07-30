@@ -29,7 +29,7 @@ export default function GalleryPage() {
       <div className="flex flex-wrap gap-2 mb-8">
         <button
           onClick={() => setActiveCategory('')}
-          className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-colors ${activeCategory === '' ? 'bg-primary text-background' : 'bg-surface/5 text-surface/60'}`}
+          className={`hover-lift px-3.5 py-1.5 rounded-full text-xs font-semibold transition-colors ${activeCategory === '' ? 'bg-primary text-background' : 'bg-surface/5 text-surface/60'}`}
         >
           Toutes les catégories
         </button>
@@ -37,7 +37,7 @@ export default function GalleryPage() {
           <button
             key={c.key}
             onClick={() => setActiveCategory(c.key)}
-            className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-colors ${activeCategory === c.key ? 'bg-primary text-background' : 'bg-surface/5 text-surface/60'}`}
+            className={`hover-lift px-3.5 py-1.5 rounded-full text-xs font-semibold transition-colors ${activeCategory === c.key ? 'bg-primary text-background' : 'bg-surface/5 text-surface/60'}`}
           >
             {c.label}
           </button>

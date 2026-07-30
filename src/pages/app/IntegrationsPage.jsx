@@ -226,7 +226,7 @@ export default function IntegrationsPage() {
                 <div className="flex items-center gap-3">
                   <button
                     onClick={() => handleToggle(w)}
-                    className={`relative w-11 h-6 rounded-full transition-colors ${w.active ? 'bg-accent' : 'bg-surface/20'}`}
+                    className={`relative w-11 h-6 rounded-full transition-colors hover:brightness-110 ${w.active ? 'bg-accent' : 'bg-surface/20'}`}
                     aria-label={w.active ? 'Désactiver ce webhook' : 'Activer ce webhook'}
                   >
                     <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-background rounded-full transition-transform ${w.active ? 'translate-x-5' : ''}`} />

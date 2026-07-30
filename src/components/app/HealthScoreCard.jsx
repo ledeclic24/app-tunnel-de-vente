@@ -26,7 +26,7 @@ export default function HealthScoreCard({ score, checks, onNavigate }) {
 
   return (
     <div className="bg-background border border-surface/10 rounded-[2rem] p-5 mb-4 shadow-soft">
-      <button type="button" onClick={toggle} className="w-full flex items-center gap-4 text-left">
+      <button type="button" onClick={toggle} className="hover-lift w-full flex items-center gap-4 text-left">
         <div
           className="w-14 h-14 rounded-full flex items-center justify-center shrink-0"
           style={{ background: `conic-gradient(${color} ${score * 3.6}deg, rgb(var(--color-surface) / 0.1) 0deg)` }}

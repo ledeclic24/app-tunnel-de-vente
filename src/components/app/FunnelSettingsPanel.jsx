@@ -49,7 +49,7 @@ function DnsRow({ type, name, value }) {
       <button
         type="button"
         onClick={() => { navigator.clipboard.writeText(value); setCopied(true); setTimeout(() => setCopied(false), 1500); }}
-        className="text-accent shrink-0"
+        className="hover-lift text-accent shrink-0"
       >
         {copied ? 'Copié' : 'Copier'}
       </button>

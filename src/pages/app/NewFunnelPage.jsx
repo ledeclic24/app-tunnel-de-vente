@@ -73,7 +73,7 @@ export default function NewFunnelPage() {
 
         <Link
           to={plan.aiAccess ? '/app/funnels/ai' : '/app/billing'}
-          className="relative flex items-center gap-4 p-6 rounded-[2rem] border border-accent/20 bg-gradient-to-br from-accent/10 to-transparent mb-8 hover:border-accent/40 transition-colors"
+          className="hover-card relative flex items-center gap-4 p-6 rounded-[2rem] border border-accent/20 bg-gradient-to-br from-accent/10 to-transparent mb-8 hover:border-accent/40"
         >
           <div className="w-11 h-11 rounded-full gradient-accent flex items-center justify-center shrink-0">
             <Sparkles className="w-5 h-5 text-background" />
@@ -97,7 +97,7 @@ export default function NewFunnelPage() {
               <button
                 key={cat.key}
                 onClick={() => (unlocked ? setSelectedCategory(cat.key) : navigate('/app/billing'))}
-                className={`relative text-left p-6 rounded-[2rem] border transition-colors ${
+                className={`hover-card relative text-left p-6 rounded-[2rem] border ${
                   unlocked ? 'border-surface/10 bg-background hover:border-accent/40' : 'border-surface/10 bg-surface/[0.02] opacity-60 hover:opacity-80'
                 }`}
               >
@@ -149,7 +149,7 @@ export default function NewFunnelPage() {
             <button
               key={tpl.key}
               onClick={() => (unlocked ? setSelectedTemplate(tpl.key) : navigate('/app/billing'))}
-              className={`relative text-left p-6 rounded-[2rem] border transition-colors ${
+              className={`hover-card relative text-left p-6 rounded-[2rem] border ${
                 isSelected ? 'border-accent bg-accent/5' : unlocked ? 'border-surface/10 bg-background hover:border-surface/30' : 'border-surface/10 bg-surface/[0.02] opacity-60 hover:opacity-80'
               }`}
             >

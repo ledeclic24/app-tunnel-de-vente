@@ -27,7 +27,7 @@ function CopyableWebhookUrl({ url }) {
     <button
       type="button"
       onClick={() => { navigator.clipboard.writeText(url); setCopied(true); setTimeout(() => setCopied(false), 1500); }}
-      className="w-full flex items-center justify-between gap-2 bg-primary/5 border border-surface/10 rounded-lg px-3 py-2 text-left"
+      className="hover-lift w-full flex items-center justify-between gap-2 bg-primary/5 border border-surface/10 rounded-lg px-3 py-2 text-left"
     >
       <span className="font-mono text-xs text-surface/70 truncate">{url}</span>
       {copied ? <CheckIcon className="w-3.5 h-3.5 text-accent shrink-0" /> : <Copy className="w-3.5 h-3.5 text-surface/40 shrink-0" />}

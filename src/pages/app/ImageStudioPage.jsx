@@ -483,7 +483,7 @@ export default function ImageStudioPage() {
               <button
                 type="button"
                 onClick={() => setReferenceImageUrl('')}
-                className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-surface/80 text-background flex items-center justify-center"
+                className="hover-lift absolute -top-2 -right-2 w-6 h-6 rounded-full bg-surface/80 text-background flex items-center justify-center"
                 aria-label="Retirer le visuel de référence"
               >
                 <X className="w-3.5 h-3.5" />
@@ -527,7 +527,7 @@ export default function ImageStudioPage() {
             <button
               type="button"
               onClick={() => setImageType('')}
-              className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${imageType === '' ? 'bg-primary text-background' : 'bg-primary/5 text-surface/60'}`}
+              className={`hover-lift px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${imageType === '' ? 'bg-primary text-background' : 'bg-primary/5 text-surface/60'}`}
             >
               Aucun
             </button>
@@ -536,7 +536,7 @@ export default function ImageStudioPage() {
                 key={t.key}
                 type="button"
                 onClick={() => setImageType(t.key)}
-                className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${imageType === t.key ? 'bg-primary text-background' : 'bg-primary/5 text-surface/60'}`}
+                className={`hover-lift px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${imageType === t.key ? 'bg-primary text-background' : 'bg-primary/5 text-surface/60'}`}
               >
                 {t.label}
               </button>
@@ -550,7 +550,7 @@ export default function ImageStudioPage() {
             <button
               type="button"
               onClick={() => setStyle('')}
-              className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${style === '' ? 'bg-primary text-background' : 'bg-primary/5 text-surface/60'}`}
+              className={`hover-lift px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${style === '' ? 'bg-primary text-background' : 'bg-primary/5 text-surface/60'}`}
             >
               Aucun
             </button>
@@ -559,7 +559,7 @@ export default function ImageStudioPage() {
                 key={s.key}
                 type="button"
                 onClick={() => setStyle(s.key)}
-                className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${style === s.key ? 'bg-primary text-background' : 'bg-primary/5 text-surface/60'}`}
+                className={`hover-lift px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${style === s.key ? 'bg-primary text-background' : 'bg-primary/5 text-surface/60'}`}
               >
                 {s.label}
               </button>
@@ -611,10 +611,10 @@ export default function ImageStudioPage() {
       {selectedIds.size > 0 && (
         <div className="flex flex-wrap items-center gap-3 bg-accent/5 border border-accent/20 rounded-2xl px-4 py-3 mb-4">
           <span className="text-xs font-semibold text-surface/60">{selectedIds.size} sélectionné{selectedIds.size > 1 ? 's' : ''}</span>
-          <button onClick={handleBulkDownload} disabled={bulkBusy} className="inline-flex items-center gap-1.5 text-xs font-semibold text-accent disabled:opacity-50">
+          <button onClick={handleBulkDownload} disabled={bulkBusy} className="hover-lift inline-flex items-center gap-1.5 text-xs font-semibold text-accent disabled:opacity-50">
             <Download className="w-3.5 h-3.5" /> Télécharger en ZIP
           </button>
-          <button onClick={handleBulkDelete} disabled={bulkBusy} className="inline-flex items-center gap-1.5 text-xs font-semibold text-red-500 disabled:opacity-50">
+          <button onClick={handleBulkDelete} disabled={bulkBusy} className="hover-lift inline-flex items-center gap-1.5 text-xs font-semibold text-red-500 disabled:opacity-50">
             <Trash2 className="w-3.5 h-3.5" /> Supprimer
           </button>
           <button onClick={() => setSelectedIds(new Set())} className="ml-auto text-xs text-surface/50 hover:text-surface">

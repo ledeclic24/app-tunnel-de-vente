@@ -217,7 +217,7 @@ function SortableStepChip({ step, isSelected, onSelect, onDelete }) {
       >
         <GripVertical className="w-3.5 h-3.5" />
       </button>
-      <button onClick={onSelect} className="text-sm font-medium whitespace-nowrap px-1.5">
+      <button onClick={onSelect} className="hover-lift text-sm font-medium whitespace-nowrap px-1.5">
         {step.name}
       </button>
       <button onClick={onDelete} className="p-1 opacity-50 hover:opacity-100 hover:text-red-400" aria-label="Supprimer cette page">
@@ -1251,13 +1251,13 @@ export default function FunnelEditorPage() {
               <div className="flex items-center gap-1 mb-2 bg-surface/5 rounded-full p-1 w-fit">
                 <button
                   onClick={() => setPaletteTab('new')}
-                  className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${paletteTab === 'new' ? 'bg-primary text-background' : 'text-surface/60'}`}
+                  className={`hover-lift px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${paletteTab === 'new' ? 'bg-primary text-background' : 'text-surface/60'}`}
                 >
                   Nouveau bloc
                 </button>
                 <button
                   onClick={handleOpenLibraryTab}
-                  className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${paletteTab === 'library' ? 'bg-primary text-background' : 'text-surface/60'}`}
+                  className={`hover-lift px-3 py-1.5 rounded-full text-xs font-semibold transition-colors ${paletteTab === 'library' ? 'bg-primary text-background' : 'text-surface/60'}`}
                 >
                   Depuis ma bibliothèque
                 </button>

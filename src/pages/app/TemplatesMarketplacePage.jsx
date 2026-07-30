@@ -90,7 +90,7 @@ export default function TemplatesMarketplacePage() {
       <div className="flex flex-wrap items-center gap-2 mb-8">
         <button
           onClick={() => setActiveCategory('')}
-          className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-colors ${activeCategory === '' ? 'bg-primary text-background' : 'bg-surface/5 text-surface/60'}`}
+          className={`hover-lift px-3.5 py-1.5 rounded-full text-xs font-semibold transition-colors ${activeCategory === '' ? 'bg-primary text-background' : 'bg-surface/5 text-surface/60'}`}
         >
           Toutes les catégories
         </button>
@@ -98,7 +98,7 @@ export default function TemplatesMarketplacePage() {
           <button
             key={c.key}
             onClick={() => setActiveCategory(c.key)}
-            className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-colors ${activeCategory === c.key ? 'bg-primary text-background' : 'bg-surface/5 text-surface/60'}`}
+            className={`hover-lift px-3.5 py-1.5 rounded-full text-xs font-semibold transition-colors ${activeCategory === c.key ? 'bg-primary text-background' : 'bg-surface/5 text-surface/60'}`}
           >
             {c.label}
           </button>
@@ -149,7 +149,7 @@ export default function TemplatesMarketplacePage() {
                     <button
                       onClick={() => handlePreview(t)}
                       disabled={previewingId === t.id}
-                      className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-full text-sm font-semibold border border-surface/10 text-surface/70 disabled:opacity-50 shrink-0"
+                      className="hover-lift inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-full text-sm font-semibold border border-surface/10 text-surface/70 disabled:opacity-50 shrink-0"
                     >
                       <Eye className="w-3.5 h-3.5" /> {previewingId === t.id ? '...' : 'Aperçu'}
                     </button>
