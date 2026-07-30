@@ -2,6 +2,7 @@ import React from 'react';
 import { ShieldCheck, RotateCcw, Headphones, BadgeCheck, Lock, Truck } from 'lucide-react';
 import { getEditableProps, getContentEditableProps, getSectionBackground, cx } from '../../lib/blockStyle';
 import SlotList, { SlotReadOnly } from './SlotList';
+import FloatingOrbs from './FloatingOrbs';
 
 // Icônes limitées à un jeu curaté (pas de champ texte libre pour l'icône) :
 // évite qu'un nom d'icône invalide casse le rendu, et garde le choix
@@ -70,7 +71,8 @@ export default function TrustBadgesBlock({ content, editMode, selectedElement, o
   const effectiveSlots = slots && isSlotsValid(slots, items.length) ? slots : buildDefaultSlots(items.length);
 
   return (
-    <section className={cx('px-6 py-8 md:px-16 md:py-10 max-w-5xl mx-auto', bg.sectionClassName)}>
+    <section className={cx('ambient-glow relative overflow-hidden px-6 py-8 md:px-16 md:py-10 max-w-5xl mx-auto', bg.sectionClassName)}>
+      <FloatingOrbs />
       {heading && (
         <p
           className={cx('text-center text-xs font-semibold uppercase tracking-wider mb-6 outline-none', bg.bodyClassName, headingProps.className)}

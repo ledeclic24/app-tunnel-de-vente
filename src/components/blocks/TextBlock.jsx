@@ -1,6 +1,7 @@
 import React from 'react';
 import { getEditableProps, getContentEditableProps, getSectionBackground, renderRichText, cx } from '../../lib/blockStyle';
 import SlotList from './SlotList';
+import FloatingOrbs from './FloatingOrbs';
 
 const DEFAULT_SLOTS = [
   { id: 'field-heading', kind: 'field', field: 'heading' },
@@ -46,7 +47,8 @@ export default function TextBlock({ content, editMode, selectedElement, onSelect
   };
 
   return (
-    <section className={cx('px-6 py-16 md:px-16 md:py-24 max-w-5xl mx-auto text-center', bg.sectionClassName)}>
+    <section className={cx('ambient-glow relative overflow-hidden px-6 py-16 md:px-16 md:py-24 max-w-5xl mx-auto text-center', bg.sectionClassName)}>
+      <FloatingOrbs />
       <SlotList
         slots={slots || DEFAULT_SLOTS}
         onSlotsChange={(next) => onContentChange?.({ ...content, slots: next })}

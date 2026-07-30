@@ -34,6 +34,8 @@ export const PLANS = {
     benchmark: false,
     adPixels: false,
     adsManagement: false,
+    customDomain: false,
+    gallery: false,
     teamSeats: 1,
     features: [
       '1 tunnel de vente',
@@ -71,6 +73,8 @@ export const PLANS = {
     benchmark: true,
     adPixels: false,
     adsManagement: false,
+    customDomain: true,
+    gallery: true,
     teamSeats: 1,
     features: [
       'Tunnels illimités',
@@ -81,7 +85,8 @@ export const PLANS = {
       'Générateur d\'ebook IA avec export PDF',
       'Brand Kit + bibliothèque de blocs réutilisables',
       'Compte à rebours, notification d\'achat et pied de page collant',
-      'Webhooks vers Zapier, Make, Google Sheets...',
+      'Domaine personnalisé avec SSL automatique',
+      'Galerie d\'inspiration + webhooks vers Zapier, Make, Google Sheets...',
       'Publication planifiée + benchmark sectoriel',
       'Historique complet des leads + export CSV',
     ],
@@ -112,6 +117,8 @@ export const PLANS = {
     benchmark: true,
     adPixels: true,
     adsManagement: true,
+    customDomain: true,
+    gallery: true,
     teamSeats: 5,
     features: [
       'Tout le plan Pro',

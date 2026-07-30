@@ -176,19 +176,22 @@
 
 @keyframes floatOrb {
   0%, 100% { transform: translate(0, 0) scale(1); }
-  33% { transform: translate(24px, -28px) scale(1.08); }
-  66% { transform: translate(-18px, 16px) scale(0.94); }
+  33% { transform: translate(42px, -46px) scale(1.12); }
+  66% { transform: translate(-32px, 30px) scale(0.92); }
 }
 
-/* Décor animé discret (halo flou qui dérive lentement) — renforce le
-   dynamisme des sections clés sans distraire du contenu, toujours en
-   arrière-plan (pointer-events: none, z-index négatif via l'ordre DOM). */
+/* Décor animé (halo flou qui dérive) — renforce le dynamisme des sections,
+   toujours en arrière-plan (pointer-events: none, z-index négatif via
+   l'ordre DOM). Durée volontairement plus courte que la première version
+   (16s) : à ce rythme le mouvement passait inaperçu sur un simple coup
+   d'œil — retour utilisateur direct ("je ne vois aucune animation") après
+   déploiement de la version lente. */
 .floating-orb {
   position: absolute;
   border-radius: 9999px;
   filter: blur(60px);
   pointer-events: none;
-  animation: floatOrb 16s ease-in-out infinite;
+  animation: floatOrb 9s ease-in-out infinite;
 }
 
 .gradient-divider {

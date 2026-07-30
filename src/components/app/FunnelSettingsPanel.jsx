@@ -80,7 +80,7 @@ function DnsInstructions({ verification }) {
   );
 }
 
-function DomainSection({ funnelId }) {
+function DomainSection({ funnelId, canUseCustomDomain }) {
   const [domains, setDomains] = useState(null);
   const [newDomain, setNewDomain] = useState('');
   const [adding, setAdding] = useState(false);
@@ -90,8 +90,9 @@ function DomainSection({ funnelId }) {
   const confirm = useConfirm();
 
   useEffect(() => {
+    if (!canUseCustomDomain) return;
     fetchDomains().then((all) => setDomains(all.filter((d) => d.funnelId === funnelId))).catch(() => setDomains([]));
-  }, [funnelId]);
+  }, [funnelId, canUseCustomDomain]);
 
   const handleAdd = async (e) => {
     e.preventDefault();
@@ -132,6 +133,21 @@ function DomainSection({ funnelId }) {
       setRemovingId(null);
     }
   };
+
+  if (!canUseCustomDomain) {
+    return (
+      <div className="pt-6 border-t border-surface/10">
+        <div className="bg-primary/5 border border-surface/10 rounded-2xl p-6 text-center">
+          <Lock className="w-8 h-8 text-surface/30 mx-auto mb-3" />
+          <h3 className="font-sans font-semibold text-surface mb-1">Domaine personnalisé réservé aux plans payants</h3>
+          <p className="text-sm text-surface/60 mb-4">Connecte un domaine que tu possèdes déjà (ex. masuperoffre.com) avec le plan Pro ou Entreprise.</p>
+          <Link to="/app/billing" className="magnetic-btn inline-flex bg-accent text-background px-5 py-2.5 rounded-full text-sm font-semibold">
+            Voir les offres
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-5 pt-6 border-t border-surface/10">
@@ -474,7 +490,7 @@ export default function FunnelSettingsPanel({ funnel, plan, onSave }) {
           </button>
         </div>
 
-        <DomainSection funnelId={funnel.id} />
+        <DomainSection funnelId={funnel.id} canUseCustomDomain={plan.customDomain} />
       </CollapsibleSection>
 
       {showPublishTemplate && (

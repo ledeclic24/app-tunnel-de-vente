@@ -17,7 +17,7 @@ const NAV_GROUPS = [
       { to: '/app', label: 'Tableau de bord', icon: LayoutDashboard, end: true },
       { to: '/app/images', label: 'Visuels IA', icon: ImageIcon, requires: 'imageGeneration' },
       { to: '/app/ebooks', label: 'Ebooks', icon: BookOpen, requires: 'ebookAccess' },
-      { to: '/app/gallery', label: 'Inspiration', icon: Compass },
+      { to: '/app/gallery', label: 'Inspiration', icon: Compass, requires: 'gallery' },
       { to: '/app/templates', label: 'Modèles', icon: Store },
     ],
   },

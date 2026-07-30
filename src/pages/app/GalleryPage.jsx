@@ -1,20 +1,36 @@
 import React, { useEffect, useState } from 'react';
-import { ExternalLink, Sparkles } from 'lucide-react';
+import { ExternalLink, Lock, Sparkles } from 'lucide-react';
 import { fetchGalleryFunnels } from '../../lib/funnelsApi';
 import { CATEGORIES, getCategory } from '../../lib/funnelTemplates';
+import { useAuth } from '../../context/AuthContext';
+import { getPlan } from '../../lib/plans';
 import Spinner from '../../components/app/Spinner';
 
 export default function GalleryPage() {
+  const { effectiveProfile } = useAuth();
+  const plan = getPlan(effectiveProfile?.plan);
   const [funnels, setFunnels] = useState(null);
   const [activeCategory, setActiveCategory] = useState('');
   const [error, setError] = useState('');
 
   useEffect(() => {
+    if (!plan.gallery) return;
     setFunnels(null);
     fetchGalleryFunnels(activeCategory || undefined)
       .then(setFunnels)
       .catch(() => { setFunnels([]); setError("Impossible de charger la galerie pour l'instant."); });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeCategory]);
+
+  if (!plan.gallery) {
+    return (
+      <div className="max-w-lg mx-auto text-center py-16">
+        <Lock className="w-10 h-10 text-surface/30 mx-auto mb-4" />
+        <h1 className="text-xl font-sans font-bold text-surface mb-2">La galerie d'inspiration est réservée aux plans Pro et Entreprise</h1>
+        <p className="text-surface/60">Parcours des tunnels réels publiés par d'autres créateurs pour t'inspirer avant de démarrer le tien.</p>
+      </div>
+    );
+  }
 
   return (
     <div>

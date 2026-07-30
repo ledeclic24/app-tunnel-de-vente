@@ -2,6 +2,7 @@ import React from 'react';
 import { getEditableProps, getContentEditableProps, getSectionBackground, cx } from '../../lib/blockStyle';
 import SlotList, { SlotReadOnly } from './SlotList';
 import EditableItemImage from './EditableItemImage';
+import FloatingOrbs from './FloatingOrbs';
 
 function buildDefaultSlots(itemCount) {
   const slots = [];
@@ -54,7 +55,8 @@ export default function LogosBlock({ content, editMode, selectedElement, onSelec
   const effectiveSlots = slots && isSlotsValid(slots, items.length) ? slots : buildDefaultSlots(items.length);
 
   return (
-    <section className={cx('px-6 py-10 md:px-16 md:py-12 max-w-5xl mx-auto', bg.sectionClassName)}>
+    <section className={cx('ambient-glow relative overflow-hidden px-6 py-10 md:px-16 md:py-12 max-w-5xl mx-auto', bg.sectionClassName)}>
+      <FloatingOrbs />
       {heading && (
         <p
           className={cx('text-center text-xs font-semibold uppercase tracking-wider mb-8 outline-none', bg.bodyClassName, headingProps.className)}

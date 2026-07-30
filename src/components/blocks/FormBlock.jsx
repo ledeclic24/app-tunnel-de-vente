@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { ArrowRight, CheckCircle2 } from 'lucide-react';
 import { getButtonStyle, getEditableProps, getContentEditableProps, getSectionBackground, cx } from '../../lib/blockStyle';
 import BlockExtras from './BlockExtras';
+import FloatingOrbs from './FloatingOrbs';
 
 export default function FormBlock({ content, onSubmitLead, onAdvance, editMode, selectedElement, onSelectElement, onContentChange, userId, defaultBg }) {
   const { headline, buttonText, successMessage } = content;
@@ -41,7 +42,8 @@ export default function FormBlock({ content, onSubmitLead, onAdvance, editMode, 
   };
 
   return (
-    <section className={cx('px-6 py-16 md:px-16 md:py-24 max-w-5xl mx-auto', bg.sectionClassName)}>
+    <section className={cx('ambient-glow relative overflow-hidden px-6 py-16 md:px-16 md:py-24 max-w-5xl mx-auto', bg.sectionClassName)}>
+      <FloatingOrbs />
       <div className="bg-block-card border border-accent/20 rounded-xl p-8 shadow-sm text-center max-w-lg mx-auto">
         {submitted ? (
           <div className="flex flex-col items-center gap-3 py-4">

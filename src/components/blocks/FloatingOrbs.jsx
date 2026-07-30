@@ -8,13 +8,13 @@ export default function FloatingOrbs() {
   return (
     <>
       <div
-        className="floating-orb w-72 h-72 bg-accent/25"
+        className="floating-orb w-72 h-72 bg-accent/30"
         style={{ top: '-15%', left: '-10%', animationDelay: '0s' }}
         aria-hidden="true"
       />
       <div
-        className="floating-orb w-56 h-56 bg-accent/20"
-        style={{ bottom: '-15%', right: '-8%', animationDelay: '5s' }}
+        className="floating-orb w-56 h-56 bg-accent/25"
+        style={{ bottom: '-15%', right: '-8%', animationDelay: '3s' }}
         aria-hidden="true"
       />
     </>
