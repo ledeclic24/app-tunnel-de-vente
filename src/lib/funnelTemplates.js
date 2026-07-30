@@ -314,6 +314,61 @@ export const FUNNEL_TEMPLATES = [
     ],
   },
 
+  // Seul modèle "Vente" accessible au plan Starter — les 4 autres ci-dessus
+  // et ci-dessous utilisent des blocs (pricing, testimonials, countdown...)
+  // réservés au plan Pro. Uniquement des blocs starter (hero, text, form,
+  // cta, trust-badges) : pas de bloc Tarifs, donc pas de paiement intégré —
+  // la commande se fait via un formulaire simple, le vendeur gère l'encais-
+  // sement lui-même en attendant de passer au plan payant.
+  {
+    key: 'vente-simple',
+    name: 'Offre simple',
+    description: "Présente ton offre et collecte les commandes — le point de départ pour ta toute première vente.",
+    category: 'Vente',
+    categoryKey: 'vente',
+    icon: Rocket,
+    tier: 'starter',
+    steps: [
+      {
+        name: 'Vente',
+        slug: 'vente',
+        step_type: 'sales',
+        blocks: [
+          { type: 'hero', content: {
+            eyebrow: 'Offre', heading: 'Le produit qui va changer la donne',
+            subheading: 'Décris ici la transformation que ton offre apporte à tes clients, et son prix.',
+            imageUrl: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?q=80&w=1600&auto=format&fit=crop',
+            ctaText: 'Je commande', externalUrl: '',
+          } },
+          { type: 'text', content: { heading: 'Ce que tu obtiens', body: 'Décris ici en détail le contenu de ton offre et son prix.' } },
+          { type: 'trust-badges', content: { items: [
+            { icon: 'secure-payment', title: 'Paiement sécurisé' },
+            { icon: 'money-back', title: 'Garantie remboursement' },
+            { icon: 'support', title: 'Support réactif' },
+          ] } },
+          { type: 'cta', content: { heading: 'Prêt à te lancer ?', buttonText: 'Je commande', externalUrl: '' } },
+        ],
+      },
+      {
+        name: 'Commande',
+        slug: 'commande',
+        step_type: 'order',
+        blocks: [
+          { type: 'text', content: { heading: 'Dernière étape', body: 'Renseigne tes informations pour finaliser ta commande.' } },
+          { type: 'form', content: { headline: 'Tes informations', buttonText: 'Confirmer la commande', successMessage: 'Commande reçue ! Tu vas recevoir un email de confirmation.' } },
+        ],
+      },
+      {
+        name: 'Merci',
+        slug: 'merci',
+        step_type: 'thankyou',
+        blocks: [
+          { type: 'text', content: { heading: 'Merci pour ta confiance !', body: 'Tu vas recevoir tous les détails par email dans quelques instants.' } },
+        ],
+      },
+    ],
+  },
+
   {
     key: 'guide-bonus',
     name: 'Guide numérique avec bonus',
