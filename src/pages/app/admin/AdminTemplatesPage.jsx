@@ -68,12 +68,12 @@ function ApprovedTemplatesSection({ onPreview }) {
   return (
     <div className="space-y-3">
       {templates.map((t) => (
-        <div key={t.id} className="bg-zinc-900 border border-zinc-800 rounded-2xl p-4 flex items-center justify-between gap-4">
+        <div key={t.id} className="bg-zinc-900 border border-zinc-800 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div className="min-w-0">
             <p className="font-medium text-zinc-100 truncate">{t.name}</p>
             <p className="text-xs text-zinc-500">{t.category} · {t.usage_count} utilisation{t.usage_count > 1 ? 's' : ''}</p>
           </div>
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-2 flex-wrap sm:shrink-0">
             <button
               onClick={() => onPreview(t)}
               className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold bg-zinc-800 text-zinc-300 hover:bg-zinc-700 transition-colors"
@@ -193,8 +193,8 @@ export default function AdminTemplatesPage() {
           <div className="space-y-4">
             {templates.map((t) => (
               <div key={t.id} className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5">
-                <div className="flex items-start justify-between gap-4">
-                  <div>
+                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                  <div className="min-w-0">
                     <p className="font-medium text-zinc-100">{t.name}</p>
                     <p className="text-xs text-zinc-500 mb-1">
                       Par {t.author?.email || 'utilisateur inconnu'} · {new Date(t.created_at).toLocaleDateString('fr-FR')} · {t.category}
@@ -202,7 +202,7 @@ export default function AdminTemplatesPage() {
                     {t.description && <p className="text-sm text-zinc-400 mt-2 max-w-2xl">{t.description}</p>}
                     <p className="text-xs text-zinc-600 mt-2">{(t.content?.steps || []).length} page(s)</p>
                   </div>
-                  <div className="flex items-center gap-2 shrink-0">
+                  <div className="flex items-center gap-2 flex-wrap sm:shrink-0">
                     <button
                       onClick={() => setPreviewTemplate(t)}
                       className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold bg-zinc-800 text-zinc-300 hover:bg-zinc-700 transition-colors"
