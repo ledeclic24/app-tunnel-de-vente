@@ -144,6 +144,14 @@
   animation-play-state: paused;
 }
 
+@keyframes blink {
+  50% { opacity: 0; }
+}
+
+.blink-cursor {
+  animation: blink 0.9s steps(1) infinite;
+}
+
 @keyframes ambientPulse {
   0%, 100% { transform: scale(1); opacity: 0.6; }
   50% { transform: scale(1.08); opacity: 0.9; }
@@ -313,6 +321,7 @@
   .signature-icon-float,
   .testimonial-marquee-track,
   .template-marquee-track,
+  .blink-cursor,
   .floating-orb,
   .dropdown-panel,
   .fade-in-up,

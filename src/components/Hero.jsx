@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import gsap from 'gsap';
 import { ArrowRight, Sparkles, Lock } from 'lucide-react';
 import ReactiveDotGrid from './ReactiveDotGrid';
+import LiveGenerationDemo from './LiveGenerationDemo';
 
 const ROTATING_WORDS = ['ta formation', 'ton ebook', 'tes séances de coaching', 'tes produits'];
 
@@ -114,14 +115,9 @@ export default function Hero() {
               app.tontunnel.com
             </div>
           </div>
-          <img
-            src="/screenshots/editor-preview.webp"
-            alt="Éditeur de tunnel TonTunnel : blocs Hero, score de santé et assistant IA"
-            className="w-full h-auto block"
-            width="2000"
-            height="1131"
-            loading="eager"
-          />
+          <div className="px-5 py-9 md:px-10 md:py-12">
+            <LiveGenerationDemo />
+          </div>
         </div>
       </div>
     </section>
