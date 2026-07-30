@@ -8,6 +8,8 @@ import StickyFooterCta from '../public/StickyFooterCta';
 import ExitIntentPopup from '../public/ExitIntentPopup';
 import { brandStyleVars } from '../../lib/colorUtils';
 import { resolveStickyFooterPrice } from '../../lib/currency';
+import { resolvePrimaryOffer } from '../../lib/primaryOffer';
+import { useToast } from './Toast';
 
 // Un simple conteneur rétréci en CSS ne suffit pas à simuler un téléphone : les classes
 // Tailwind `md:` évaluent la largeur RÉELLE de la fenêtre du navigateur, pas celle d'une
@@ -48,6 +50,7 @@ function DeviceFrame({ width, children }) {
 }
 
 export default function FunnelPreviewModal({ funnel, steps, blocksByStepId, onClose }) {
+  const toast = useToast();
   const [device, setDevice] = useState('desktop');
   const [stepId, setStepId] = useState(steps[0]?.id || null);
 
@@ -56,6 +59,15 @@ export default function FunnelPreviewModal({ funnel, steps, blocksByStepId, onCl
   const blocks = currentStep ? blocksByStepId[currentStep.id] || [] : [];
 
   const goTo = (i) => { if (i >= 0 && i < steps.length) setStepId(steps[i].id); };
+  const navigateToStep = (slug) => {
+    const i = steps.findIndex((s) => s.slug === slug);
+    if (i >= 0) setStepId(steps[i].id);
+  };
+
+  // Aucune vraie soumission de lead ni vrai paiement Moneroo depuis un
+  // aperçu — mêmes garde-fous que le canvas d'édition (editMode), mais en
+  // gardant le rendu identique à la page publiée plutôt qu'un mode dédié.
+  const handlePreviewAction = () => toast.success("Aperçu — cette action n'a pas d'effet réel ici. Publie le tunnel pour la tester en conditions réelles.");
 
   const chrome = currentStep?.chrome || {};
   // chrome.stickyFooterCta ne stocke jamais de prix résolu (juste
@@ -68,6 +80,10 @@ export default function FunnelPreviewModal({ funnel, steps, blocksByStepId, onCl
     ...chrome.stickyFooterCta,
     price: resolveStickyFooterPrice(chrome.stickyFooterCta, allBlocks, funnel.currency || 'XOF'),
   };
+  // Offre principale de CETTE page (voir resolvePrimaryOffer) — sans ce
+  // calcul, Hero/CTA ne savaient jamais à quelle offre se lier ici, alors
+  // que la page publiée le fait toujours (voir PublishedFunnelPage).
+  const primaryOffer = resolvePrimaryOffer(blocks);
 
   const content = (
     <div style={brandStyleVars(funnel.brand)}>
@@ -79,14 +95,26 @@ export default function FunnelPreviewModal({ funnel, steps, blocksByStepId, onCl
         {blocks.length === 0 ? (
           <p className="text-center text-sm text-surface/40 py-12">Cette page ne contient aucun bloc.</p>
         ) : (
-          blocks.map((block) => (
-            <BlockRenderer key={block.id} block={block} onAdvance={() => goTo(idx + 1)} />
+          blocks.map((block, i) => (
+            <BlockRenderer
+              key={block.id}
+              block={block}
+              onAdvance={() => goTo(idx + 1)}
+              onSubmitLead={handlePreviewAction}
+              onOpenCheckout={handlePreviewAction}
+              primaryOffer={primaryOffer}
+              defaultBg={i % 2 === 0 ? 'primary' : 'primary-alt'}
+              currency={funnel.currency || 'XOF'}
+              siblingSteps={steps}
+              onNavigateToStep={navigateToStep}
+              currentStepSlug={currentStep?.slug}
+            />
           ))
         )}
       </div>
       <PurchaseNotification config={chrome.purchaseNotification} liftForFooter={Boolean(chrome.stickyFooterCta?.enabled)} />
-      <StickyFooterCta config={stickyFooterConfig} onNavigateToStep={() => {}} onAdvance={() => goTo(idx + 1)} editMode />
-      <ExitIntentPopup config={chrome.exitIntent} onNavigateToStep={() => {}} onAdvance={() => goTo(idx + 1)} />
+      <StickyFooterCta config={stickyFooterConfig} onNavigateToStep={navigateToStep} onAdvance={() => goTo(idx + 1)} editMode />
+      <ExitIntentPopup config={chrome.exitIntent} onNavigateToStep={navigateToStep} onAdvance={() => goTo(idx + 1)} />
     </div>
   );
 
