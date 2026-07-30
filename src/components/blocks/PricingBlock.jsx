@@ -145,7 +145,7 @@ export default function PricingBlock({ content, blockId, onAdvance, onOpenChecko
           <div className="space-y-2 mb-6">
             {usableLinks.map((link, j) => {
               const sharedClassName = cx(
-                `magnetic-btn block w-full text-center py-3 rounded-full font-semibold ${j === 0 ? (plan.highlight ? 'bg-accent text-background' : 'bg-primary text-background') : 'border border-background/30 text-background'}`,
+                `magnetic-btn block w-full text-center py-3 rounded-full font-semibold ${j === 0 ? 'btn-brand' : 'border border-background/30 text-background'}`,
                 j === 0 ? buttonProps.className : undefined,
               );
               if (link.provider === 'moneroo') {
@@ -181,7 +181,7 @@ export default function PricingBlock({ content, blockId, onAdvance, onOpenChecko
             onClick={editMode ? buttonProps.onClick : onAdvance}
             style={buttonProps.style}
             className={cx(
-              `magnetic-btn w-full py-3 rounded-full font-semibold mb-6 ${plan.highlight ? 'bg-accent text-background' : 'bg-primary text-background'}`,
+              'magnetic-btn btn-brand w-full py-3 rounded-full font-semibold mb-6',
               buttonProps.className
             )}
           >

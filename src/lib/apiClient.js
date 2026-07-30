@@ -37,6 +37,20 @@ async function rawFetch(path, options) {
   return fetch(`${API_URL}${path}`, { ...options, headers, credentials: 'include' });
 }
 
+// Déclenché quand un token expiré ne peut plus être rafraîchi (cookie de
+// refresh lui-même expiré/absent) — enregistré par AuthContext pour vider
+// le profil React et laisser ProtectedRoute rediriger vers /connexion.
+// Sans ça, l'app restait dans un état à moitié authentifié : le token
+// d'accès était bien vidé (voir refreshSession ci-dessous) mais `user`
+// restait non-null côté React, donc les pages continuaient d'essayer de
+// charger des données qui échouaient silencieusement en 401 — jusqu'à ce
+// qu'un composant tente de rendre des données jamais arrivées et plante.
+let sessionExpiredHandler = null;
+
+export function setSessionExpiredHandler(fn) {
+  sessionExpiredHandler = fn;
+}
+
 // Dédoublonne les rafraîchissements simultanés : si plusieurs requêtes
 // expirent en même temps, une seule vraie requête /auth/refresh part.
 let refreshPromise = null;
@@ -75,6 +89,8 @@ export async function apiFetch(path, options = {}) {
     const refreshed = await refreshSession();
     if (refreshed) {
       res = await rawFetch(path, options);
+    } else {
+      sessionExpiredHandler?.();
     }
   }
 

@@ -58,7 +58,7 @@ export default function ExitIntentPopup({ config, funnelId, stepId, onNavigateTo
         {config.description && <p className="text-sm text-surface/60 mb-6">{config.description}</p>}
         <button
           onClick={handleClick}
-          className="magnetic-btn w-full inline-flex items-center justify-center gap-2 bg-accent text-background px-6 py-3 rounded-full text-sm font-semibold"
+          className="magnetic-btn btn-brand w-full inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full text-sm font-semibold"
         >
           {config.buttonText || "J'en profite"} <ArrowRight className="w-4 h-4" />
         </button>

@@ -123,7 +123,7 @@ function ExtraLeaf({ extra, bg, editable, onUpdate, userId, compact }) {
       <div className={cx(compact && 'flex-1 min-w-0', 'space-y-1.5')}>
         <span
           className={cx(
-            'inline-flex items-center justify-center px-4 py-2 rounded-full font-semibold text-sm outline-none bg-accent text-background',
+            'btn-brand inline-flex items-center justify-center px-4 py-2 rounded-full font-semibold text-sm outline-none',
             props.className,
           )}
           style={props.style}
@@ -374,7 +374,7 @@ export function SlotReadOnly({ slot, renderField, bg }) {
         href={slot.url || undefined}
         target={isInternal || !slot.url ? undefined : '_blank'}
         rel={isInternal || !slot.url ? undefined : 'noreferrer'}
-        className="inline-flex items-center justify-center px-4 py-2 rounded-full font-semibold text-sm bg-accent text-background"
+        className="btn-brand inline-flex items-center justify-center px-4 py-2 rounded-full font-semibold text-sm"
       >
         {slot.label}
       </a>

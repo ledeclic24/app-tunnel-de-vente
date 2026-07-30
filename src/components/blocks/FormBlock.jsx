@@ -80,7 +80,7 @@ export default function FormBlock({ content, onSubmitLead, onAdvance, editMode, 
               type="submit"
               disabled={submitting}
               style={buttonStyle}
-              className={cx('magnetic-btn btn-fill-slide group relative w-full bg-accent text-background px-6 py-3 rounded-xl text-sm font-semibold disabled:opacity-60', buttonProps.className)}
+              className={cx('magnetic-btn btn-fill-slide btn-brand group relative w-full px-6 py-3 rounded-xl text-sm font-semibold disabled:opacity-60', buttonProps.className)}
               onClick={editMode ? buttonProps.onClick : undefined}
             >
               <span className="relative z-10 flex items-center justify-center gap-2">

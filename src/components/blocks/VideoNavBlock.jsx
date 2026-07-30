@@ -53,7 +53,7 @@ export default function VideoNavBlock({
               className={cx(
                 'hover-lift flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-semibold border transition-colors',
                 isActive
-                  ? 'bg-accent text-background border-accent'
+                  ? 'btn-brand border-accent'
                   : bg.isDark
                     ? 'border-background/30 text-background/80 hover:border-background'
                     : 'border-surface/20 text-surface/70 hover:border-accent hover:text-accent',

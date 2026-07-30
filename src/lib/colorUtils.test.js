@@ -37,4 +37,16 @@ describe('brandStyleVars', () => {
   it('ignores unset fields', () => {
     expect(brandStyleVars({})).toEqual({});
   });
+
+  it('maps a dedicated button color and text color to --button-bg/--button-text', () => {
+    const vars = brandStyleVars({ buttonColor: '#FF00FF', buttonTextColor: '#101820' });
+    expect(vars['--button-bg']).toBe('255 0 255');
+    expect(vars['--button-text']).toBe('16 24 32');
+  });
+
+  it('leaves --button-bg/--button-text unset when no dedicated button color is chosen', () => {
+    const vars = brandStyleVars({ primaryColor: '#000000', accentColor: '#22C55E' });
+    expect(vars['--button-bg']).toBeUndefined();
+    expect(vars['--button-text']).toBeUndefined();
+  });
 });

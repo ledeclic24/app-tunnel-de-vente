@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { isApiConfigured, ApiError } from '../lib/apiClient';
+import { isApiConfigured, ApiError, setSessionExpiredHandler } from '../lib/apiClient';
 import * as authApi from '../lib/authApi';
 import { updateOwnProfile, deleteOwnAccount } from '../lib/usersApi';
 
@@ -63,6 +63,16 @@ export function AuthProvider({ children }) {
         if (!cancelled) setLoading(false);
       });
     return () => { cancelled = true; };
+  }, []);
+
+  // Enregistré une seule fois : quand un appel API échoue en 401 sans
+  // pouvoir être rafraîchi (session vraiment expirée), on vide le profil
+  // ici — ProtectedRoute redirige alors automatiquement vers /connexion
+  // au lieu de laisser les pages continuer avec des données jamais
+  // chargées.
+  useEffect(() => {
+    setSessionExpiredHandler(() => setProfile(null));
+    return () => setSessionExpiredHandler(null);
   }, []);
 
   const signUp = async (email, password, fullName) => {

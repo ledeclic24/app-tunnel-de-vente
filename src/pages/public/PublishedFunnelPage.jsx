@@ -88,7 +88,7 @@ function PaymentConfirmationOverlay({ status, onDismiss }) {
       <button
         type="button"
         onClick={onDismiss}
-        className="px-5 py-2.5 rounded-full bg-accent text-background text-sm font-semibold"
+        className="btn-brand px-5 py-2.5 rounded-full text-sm font-semibold"
       >
         Continuer
       </button>
@@ -292,13 +292,13 @@ export default function PublishedFunnelPage({ funnelSlugOverride } = {}) {
     const paymentStepIdx = steps.findIndex((s) => s.id === currentStep.id) - 1;
     const paymentStep = paymentStepIdx >= 0 ? steps[paymentStepIdx] : null;
     return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center text-center p-6">
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center text-center p-6" style={brandStyleVars(funnel.brand)}>
         <h1 className="text-2xl font-sans font-bold text-surface mb-2">Cette page est réservée</h1>
         <p className="text-surface/60 mb-6 max-w-sm">Elle n'est accessible qu'après un paiement confirmé.</p>
         {paymentStep && (
           <button
             onClick={() => handleNavigateToStep(paymentStep.slug)}
-            className="magnetic-btn bg-accent text-background px-6 py-3 rounded-full text-sm font-semibold"
+            className="magnetic-btn btn-brand px-6 py-3 rounded-full text-sm font-semibold"
           >
             Retourner à l'offre
           </button>

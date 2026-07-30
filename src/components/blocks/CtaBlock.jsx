@@ -61,7 +61,7 @@ export default function CtaBlock({ content, onAdvance, onOpenCheckout, primaryOf
           target="_blank"
           rel="noreferrer"
           style={buttonStyle}
-          className={cx('magnetic-btn btn-fill-slide group relative inline-flex items-center gap-2 bg-accent text-background px-10 py-4 rounded-full text-lg font-medium', buttonProps.className)}
+          className={cx('magnetic-btn btn-fill-slide btn-brand group relative inline-flex items-center gap-2 px-10 py-4 rounded-full text-lg font-medium', buttonProps.className)}
           onClick={editMode ? buttonProps.onClick : undefined}
         >
           <span className="relative z-10 outline-none" {...editableText('buttonText')}>{buttonText}</span>
@@ -72,7 +72,7 @@ export default function CtaBlock({ content, onAdvance, onOpenCheckout, primaryOf
         <button
           onClick={editMode ? buttonProps.onClick : handleClick}
           style={buttonStyle}
-          className={cx('magnetic-btn btn-fill-slide group relative inline-flex items-center gap-2 bg-accent text-background px-10 py-4 rounded-full text-lg font-medium', buttonProps.className)}
+          className={cx('magnetic-btn btn-fill-slide btn-brand group relative inline-flex items-center gap-2 px-10 py-4 rounded-full text-lg font-medium', buttonProps.className)}
         >
           <span className="relative z-10 outline-none" {...editableText('buttonText')}>{buttonText}</span>
           <ArrowRight className="relative z-10 w-5 h-5 group-hover:translate-x-1 transition-transform" />

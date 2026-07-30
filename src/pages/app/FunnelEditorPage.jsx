@@ -682,6 +682,14 @@ export default function FunnelEditorPage() {
       setShowBrandKit(false);
       setActionError('');
       setActionErrorCode('');
+      // L'aperçu dans l'éditeur reflète le changement immédiatement, mais la
+      // page publique reste figée sur le dernier snapshot publié (voir
+      // FunnelsService.publish) — sans ce rappel explicite, le changement
+      // avait l'air de "ne plus s'appliquer" pour qui vérifiait la page en
+      // ligne sans avoir republié.
+      if (funnel?.is_published) {
+        toast.success('Brand Kit enregistré. Republie le tunnel pour que tes visiteurs voient ce changement.');
+      }
     } catch {
       setActionError('L\'enregistrement du Brand Kit a échoué. Réessaie.');
     }

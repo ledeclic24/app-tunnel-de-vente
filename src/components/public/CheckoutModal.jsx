@@ -77,7 +77,7 @@ export default function CheckoutModal({ planName, orderBump, currency, initialNa
           <button
             type="submit"
             disabled={submitting}
-            className="magnetic-btn w-full flex items-center justify-center gap-2 bg-accent text-background py-3 rounded-xl text-sm font-semibold disabled:opacity-60"
+            className="magnetic-btn btn-brand w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold disabled:opacity-60"
           >
             {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
             {submitting ? 'Redirection...' : 'Continuer vers le paiement'}

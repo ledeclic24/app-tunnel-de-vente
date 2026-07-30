@@ -13,6 +13,8 @@ export default function BrandKitPanel({ brand, onSave, userId, canUseBrandKit, c
   const [draft, setDraft] = useState({
     primaryColor: brand?.primaryColor || '#0B0B0B',
     accentColor: brand?.accentColor || '#D4AF37',
+    buttonColor: brand?.buttonColor || '',
+    buttonTextColor: brand?.buttonTextColor || '',
     font: brand?.font || 'Sora',
     logoUrl: brand?.logoUrl || '',
     metaPixelId: brand?.metaPixelId || '',
@@ -61,6 +63,34 @@ export default function BrandKitPanel({ brand, onSave, userId, canUseBrandKit, c
           <div className="flex items-center gap-2">
             <input type="color" value={draft.accentColor} onChange={(e) => set({ accentColor: e.target.value })} className="w-10 h-10 rounded-lg border border-surface/10 cursor-pointer" />
             <input className={inputClass} value={draft.accentColor} onChange={(e) => set({ accentColor: e.target.value })} />
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div className="flex items-center justify-between mb-1">
+          <label className={labelClass + ' mb-0'}>Couleur des boutons (tous, en une fois)</label>
+          {(draft.buttonColor || draft.buttonTextColor) && (
+            <button type="button" onClick={() => set({ buttonColor: '', buttonTextColor: '' })} className="text-xs text-surface/40 hover:text-surface underline">
+              Réinitialiser
+            </button>
+          )}
+        </div>
+        <p className="text-xs text-surface/50 mb-3">Par défaut, les boutons reprennent la couleur d'accent. Choisis une couleur dédiée pour tous les boutons du tunnel d'un coup (fond + texte).</p>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-[10px] font-semibold text-surface/50 uppercase tracking-wider mb-1">Fond du bouton</label>
+            <div className="flex items-center gap-2">
+              <input type="color" value={draft.buttonColor || draft.accentColor} onChange={(e) => set({ buttonColor: e.target.value })} className="w-10 h-10 rounded-lg border border-surface/10 cursor-pointer" />
+              <input className={inputClass} placeholder={draft.accentColor} value={draft.buttonColor} onChange={(e) => set({ buttonColor: e.target.value })} />
+            </div>
+          </div>
+          <div>
+            <label className="block text-[10px] font-semibold text-surface/50 uppercase tracking-wider mb-1">Texte du bouton</label>
+            <div className="flex items-center gap-2">
+              <input type="color" value={draft.buttonTextColor || '#FFFFFF'} onChange={(e) => set({ buttonTextColor: e.target.value })} className="w-10 h-10 rounded-lg border border-surface/10 cursor-pointer" />
+              <input className={inputClass} placeholder="#FFFFFF" value={draft.buttonTextColor} onChange={(e) => set({ buttonTextColor: e.target.value })} />
+            </div>
           </div>
         </div>
       </div>

@@ -51,7 +51,7 @@ export default function StickyFooterCta({ config, offer, onOpenCheckout, onNavig
       </div>
       <button
         onClick={handleClick}
-        className="magnetic-btn shrink-0 inline-flex items-center gap-2 bg-accent text-background px-6 py-3 rounded-full text-sm font-semibold"
+        className="magnetic-btn btn-brand shrink-0 inline-flex items-center gap-2 px-6 py-3 rounded-full text-sm font-semibold"
       >
         {config.buttonText || 'Commander'} <ArrowRight className="w-4 h-4" />
       </button>

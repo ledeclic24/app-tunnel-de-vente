@@ -87,7 +87,7 @@ export default function QuizBlock({ content, onAdvance, editMode, selectedElemen
             <button
               onClick={editMode ? buttonProps.onClick : onAdvance}
               style={buttonProps.style}
-              className={cx('magnetic-btn btn-fill-slide group relative inline-flex items-center gap-2 bg-accent text-background px-8 py-4 rounded-full text-base font-medium', buttonProps.className)}
+              className={cx('magnetic-btn btn-fill-slide btn-brand group relative inline-flex items-center gap-2 px-8 py-4 rounded-full text-base font-medium', buttonProps.className)}
             >
               <span className="relative z-10 outline-none" {...editableText('resultButtonText')}>{resultButtonText || 'Voir mon résultat'}</span>
               <ArrowRight className="relative z-10 w-4 h-4 group-hover:translate-x-1 transition-transform" />
