@@ -59,32 +59,36 @@ function ApprovedTemplatesSection({ onPreview }) {
 
   if (templates.length === 0) {
     return (
-      <div className="text-center py-10 border border-dashed border-zinc-800 rounded-2xl">
-        <p className="text-zinc-500">Aucun modèle approuvé pour l'instant.</p>
+      <div className="text-center py-10 border border-dashed border-background/15 rounded-2xl">
+        <p className="text-background/50">Aucun modèle approuvé pour l'instant.</p>
       </div>
     );
   }
 
   return (
     <div className="space-y-3">
-      {templates.map((t) => (
-        <div key={t.id} className="bg-zinc-900 border border-zinc-800 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+      {templates.map((t, i) => (
+        <div
+          key={t.id}
+          className="hover-card fade-in-up bg-block-card border border-background/10 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
+          style={{ animationDelay: `${Math.min(i, 8) * 50}ms` }}
+        >
           <div className="min-w-0">
-            <p className="font-medium text-zinc-100 truncate">{t.name}</p>
-            <p className="text-xs text-zinc-500">{t.category} · {t.usage_count} utilisation{t.usage_count > 1 ? 's' : ''}</p>
+            <p className="font-medium text-background truncate">{t.name}</p>
+            <p className="text-xs text-background/50">{t.category} · {t.usage_count} utilisation{t.usage_count > 1 ? 's' : ''}</p>
           </div>
           <div className="flex items-center gap-2 flex-wrap sm:shrink-0">
             <button
               onClick={() => onPreview(t)}
-              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold bg-zinc-800 text-zinc-300 hover:bg-zinc-700 transition-colors"
+              className="hover-lift inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold bg-background/10 text-background/70 hover:bg-background/15 transition-colors"
             >
               <Eye className="w-4 h-4" /> Aperçu
             </button>
             <button
               onClick={() => toggleFeatured(t)}
               disabled={busyId === t.id}
-              className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold transition-colors disabled:opacity-40 ${
-                t.featured ? 'bg-amber-500/10 text-amber-400 hover:bg-amber-500/20' : 'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'
+              className={`hover-lift inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold transition-colors disabled:opacity-40 ${
+                t.featured ? 'bg-amber-500/10 text-amber-400 hover:bg-amber-500/20' : 'bg-background/10 text-background/60 hover:bg-background/15'
               }`}
             >
               <Star className={`w-4 h-4 ${t.featured ? 'fill-amber-400' : ''}`} />
@@ -93,7 +97,7 @@ function ApprovedTemplatesSection({ onPreview }) {
             <button
               onClick={() => handleUnpublish(t)}
               disabled={busyId === t.id}
-              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-colors disabled:opacity-40"
+              className="hover-lift inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-colors disabled:opacity-40"
             >
               <EyeOff className="w-4 h-4" /> Dépublier
             </button>
@@ -151,13 +155,13 @@ export default function AdminTemplatesPage() {
         <div className="flex items-center gap-2">
           <button
             onClick={() => setTab('pending')}
-            className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-colors ${tab === 'pending' ? 'bg-zinc-100 text-zinc-900' : 'bg-zinc-900 text-zinc-500 hover:text-zinc-300'}`}
+            className={`magnetic-btn px-3.5 py-1.5 rounded-full text-xs font-semibold transition-colors ${tab === 'pending' ? 'bg-accent text-primary' : 'bg-block-card text-background/50 hover:text-background/80'}`}
           >
             En attente
           </button>
           <button
             onClick={() => setTab('approved')}
-            className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition-colors ${tab === 'approved' ? 'bg-zinc-100 text-zinc-900' : 'bg-zinc-900 text-zinc-500 hover:text-zinc-300'}`}
+            className={`magnetic-btn px-3.5 py-1.5 rounded-full text-xs font-semibold transition-colors ${tab === 'approved' ? 'bg-accent text-primary' : 'bg-block-card text-background/50 hover:text-background/80'}`}
           >
             Approuvés — mise en avant
           </button>
@@ -166,7 +170,7 @@ export default function AdminTemplatesPage() {
           to="/app/templates"
           target="_blank"
           rel="noreferrer"
-          className="inline-flex items-center gap-1.5 text-xs font-semibold text-zinc-400 hover:text-zinc-100 transition-colors shrink-0"
+          className="hover-lift inline-flex items-center gap-1.5 text-xs font-semibold text-background/50 hover:text-background transition-colors shrink-0"
         >
           <ExternalLink className="w-3.5 h-3.5" /> Voir le marketplace
         </Link>
@@ -180,58 +184,62 @@ export default function AdminTemplatesPage() {
         </div>
       ) : (
         <>
-          <p className="text-sm text-zinc-500 mb-4">
+          <p className="text-sm text-background/50 mb-4">
             Modèles publiés par des vendeurs, en attente de validation avant d'apparaître dans le marketplace public.
           </p>
 
           {templates.length === 0 && (
-            <div className="text-center py-16 border border-dashed border-zinc-800 rounded-2xl">
-              <p className="text-zinc-500">Aucun modèle en attente.</p>
+            <div className="text-center py-16 border border-dashed border-background/15 rounded-2xl">
+              <p className="text-background/50">Aucun modèle en attente.</p>
             </div>
           )}
 
           <div className="space-y-4">
-            {templates.map((t) => (
-              <div key={t.id} className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5">
+            {templates.map((t, i) => (
+              <div
+                key={t.id}
+                className="hover-card fade-in-up bg-block-card border border-background/10 rounded-2xl p-5"
+                style={{ animationDelay: `${Math.min(i, 8) * 50}ms` }}
+              >
                 <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                   <div className="min-w-0">
-                    <p className="font-medium text-zinc-100">{t.name}</p>
-                    <p className="text-xs text-zinc-500 mb-1">
+                    <p className="font-medium text-background">{t.name}</p>
+                    <p className="text-xs text-background/50 mb-1">
                       Par {t.author?.email || 'utilisateur inconnu'} · {new Date(t.created_at).toLocaleDateString('fr-FR')} · {t.category}
                     </p>
-                    {t.description && <p className="text-sm text-zinc-400 mt-2 max-w-2xl">{t.description}</p>}
-                    <p className="text-xs text-zinc-600 mt-2">{(t.content?.steps || []).length} page(s)</p>
+                    {t.description && <p className="text-sm text-background/60 mt-2 max-w-2xl">{t.description}</p>}
+                    <p className="text-xs text-background/40 mt-2">{(t.content?.steps || []).length} page(s)</p>
                   </div>
                   <div className="flex items-center gap-2 flex-wrap sm:shrink-0">
                     <button
                       onClick={() => setPreviewTemplate(t)}
-                      className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold bg-zinc-800 text-zinc-300 hover:bg-zinc-700 transition-colors"
+                      className="hover-lift inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold bg-background/10 text-background/70 hover:bg-background/15 transition-colors"
                     >
                       <Eye className="w-4 h-4" /> Aperçu
                     </button>
                     <button
                       onClick={() => handleApprove(t)}
                       disabled={busyId === t.id}
-                      className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 transition-colors disabled:opacity-40"
+                      className="hover-lift inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold bg-accent/10 text-accent hover:bg-accent/20 transition-colors disabled:opacity-40"
                     >
                       <Check className="w-4 h-4" /> Approuver
                     </button>
                     <button
                       onClick={() => setRejectingId(rejectingId === t.id ? null : t.id)}
                       disabled={busyId === t.id}
-                      className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-colors disabled:opacity-40"
+                      className="hover-lift inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-colors disabled:opacity-40"
                     >
                       <X className="w-4 h-4" /> Rejeter
                     </button>
                   </div>
                 </div>
                 {rejectingId === t.id && (
-                  <div className="mt-4 flex items-center gap-2">
+                  <div className="dropdown-panel mt-4 flex items-center gap-2">
                     <input
                       value={rejectionReason}
                       onChange={(e) => setRejectionReason(e.target.value)}
                       placeholder="Motif du rejet (optionnel)"
-                      className="flex-1 bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-sm text-zinc-100 focus:outline-none focus:border-red-500 transition-colors"
+                      className="flex-1 bg-primary/40 border border-background/10 rounded-xl px-3 py-2 text-sm text-background focus:outline-none focus:border-red-500 transition-colors"
                     />
                     <button
                       onClick={() => handleReject(t)}

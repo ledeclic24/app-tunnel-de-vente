@@ -5,15 +5,18 @@ import { useAuth } from '../../../context/AuthContext';
 import { PLAN_ORDER, getPlan } from '../../../lib/plans';
 import Spinner from '../../../components/app/Spinner';
 
-function StatCard({ icon: Icon, label, value }) {
+function StatCard({ icon: Icon, label, value, delay = 0 }) {
   return (
-    <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 flex items-center gap-4">
-      <div className="w-12 h-12 rounded-xl bg-emerald-500/10 flex items-center justify-center shrink-0">
-        <Icon className="w-6 h-6 text-emerald-400" />
+    <div
+      className="hover-card fade-in-up bg-block-card border border-background/10 rounded-2xl p-6 flex items-center gap-4"
+      style={{ animationDelay: `${delay}ms` }}
+    >
+      <div className="w-12 h-12 rounded-xl bg-accent/10 flex items-center justify-center shrink-0">
+        <Icon className="w-6 h-6 text-accent" />
       </div>
       <div>
-        <p className="text-2xl font-mono font-bold text-zinc-50">{value}</p>
-        <p className="text-xs text-zinc-500 uppercase tracking-wider font-mono">{label}</p>
+        <p className="text-2xl font-mono font-bold text-background">{value}</p>
+        <p className="text-xs text-background/50 uppercase tracking-wider font-mono">{label}</p>
       </div>
     </div>
   );
@@ -72,15 +75,15 @@ export default function AdminOverviewPage() {
   return (
     <div>
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <StatCard icon={Users} label="Utilisateurs" value={profiles.length} />
-        <StatCard icon={Layers} label="Tunnels" value={funnels.length} />
-        <StatCard icon={Rocket} label="Tunnels publiés" value={publishedCount} />
-        <StatCard icon={Mail} label="Leads capturés" value={totalLeads} />
+        <StatCard icon={Users} label="Utilisateurs" value={profiles.length} delay={0} />
+        <StatCard icon={Layers} label="Tunnels" value={funnels.length} delay={60} />
+        <StatCard icon={Rocket} label="Tunnels publiés" value={publishedCount} delay={120} />
+        <StatCard icon={Mail} label="Leads capturés" value={totalLeads} delay={180} />
       </div>
 
       <div className="grid md:grid-cols-2 gap-6">
-        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6">
-          <h2 className="text-sm font-semibold text-zinc-300 mb-4 uppercase tracking-wider">Répartition par plan</h2>
+        <div className="fade-in-up bg-block-card border border-background/10 rounded-2xl p-6" style={{ animationDelay: '240ms' }}>
+          <h2 className="text-sm font-semibold text-background mb-4 uppercase tracking-wider">Répartition par plan</h2>
           <div className="space-y-3">
             {PLAN_ORDER.map((key) => {
               const count = profiles.filter((p) => (p.plan || 'starter') === key).length;
@@ -88,11 +91,11 @@ export default function AdminOverviewPage() {
               return (
                 <div key={key}>
                   <div className="flex justify-between text-sm mb-1">
-                    <span className="text-zinc-300">{getPlan(key).name}</span>
-                    <span className="text-zinc-500 font-mono text-xs">{count}</span>
+                    <span className="text-background/80">{getPlan(key).name}</span>
+                    <span className="text-background/50 font-mono text-xs">{count}</span>
                   </div>
-                  <div className="h-2 bg-zinc-800 rounded-full overflow-hidden">
-                    <div className="h-full bg-emerald-400 rounded-full transition-all" style={{ width: `${pct}%` }} />
+                  <div className="h-2 bg-background/10 rounded-full overflow-hidden">
+                    <div className="h-full bg-accent rounded-full transition-all duration-500" style={{ width: `${pct}%` }} />
                   </div>
                 </div>
               );
@@ -100,30 +103,30 @@ export default function AdminOverviewPage() {
           </div>
         </div>
 
-        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6">
-          <h2 className="text-sm font-semibold text-zinc-300 mb-1 uppercase tracking-wider flex items-center gap-2">
-            <Shield className="w-4 h-4 text-emerald-400" /> Nommer un administrateur
+        <div className="fade-in-up bg-block-card border border-background/10 rounded-2xl p-6" style={{ animationDelay: '300ms' }}>
+          <h2 className="text-sm font-semibold text-background mb-1 uppercase tracking-wider flex items-center gap-2">
+            <Shield className="w-4 h-4 text-accent" /> Nommer un administrateur
           </h2>
-          <p className="text-xs text-zinc-500 mb-4">La personne doit déjà avoir un compte TonTunnel.</p>
+          <p className="text-xs text-background/50 mb-4">La personne doit déjà avoir un compte TonTunnel.</p>
           <form onSubmit={handlePromote} className="flex gap-2">
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="email@exemple.com"
-              className="flex-1 bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-sm text-zinc-100 focus:outline-none focus:border-emerald-500 transition-colors"
+              className="flex-1 bg-primary/40 border border-background/10 rounded-xl px-4 py-3 text-sm text-background focus:outline-none focus:border-accent transition-colors"
               required
             />
             <button
               type="submit"
               disabled={submitting}
-              className="bg-emerald-500 text-zinc-950 px-4 py-3 rounded-xl text-sm font-semibold disabled:opacity-60 flex items-center gap-1 shrink-0 hover:bg-emerald-400 transition-colors"
+              className="magnetic-btn bg-accent text-primary px-4 py-3 rounded-xl text-sm font-semibold disabled:opacity-60 flex items-center gap-1 shrink-0 hover:brightness-110 transition-colors"
             >
               Nommer <ArrowRight className="w-4 h-4" />
             </button>
           </form>
           {message && (
-            <p className={`text-sm mt-3 ${message.type === 'success' ? 'text-emerald-400' : 'text-red-400'}`}>{message.text}</p>
+            <p className={`text-sm mt-3 ${message.type === 'success' ? 'text-accent' : 'text-red-400'}`}>{message.text}</p>
           )}
         </div>
       </div>

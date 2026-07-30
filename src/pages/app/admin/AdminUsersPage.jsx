@@ -79,22 +79,22 @@ export default function AdminUsersPage() {
     <div>
       <div className="flex items-center gap-3 mb-4">
         <div className="relative max-w-sm flex-1">
-          <Search className="w-4 h-4 text-zinc-500 absolute left-4 top-1/2 -translate-y-1/2" />
+          <Search className="w-4 h-4 text-background/40 absolute left-4 top-1/2 -translate-y-1/2" />
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Rechercher par email ou nom..."
-            className="w-full bg-zinc-900 border border-zinc-800 rounded-xl pl-10 pr-4 py-3 text-sm text-zinc-100 focus:outline-none focus:border-emerald-500 transition-colors"
+            className="w-full bg-block-card border border-background/10 rounded-xl pl-10 pr-4 py-3 text-sm text-background focus:outline-none focus:border-accent transition-colors"
           />
         </div>
         <SortMenu value={sortBy} onChange={setSortBy} options={SORT_OPTIONS} tone="admin" />
       </div>
 
-      <div className="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden">
+      <div className="fade-in-up bg-block-card border border-background/10 rounded-2xl overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-zinc-800 text-left text-zinc-500 text-xs uppercase tracking-wider">
+              <tr className="border-b border-background/10 text-left text-background/50 text-xs uppercase tracking-wider">
                 <th className="px-6 py-4 font-medium">Utilisateur</th>
                 <th className="px-6 py-4 font-medium">Plan</th>
                 <th className="px-6 py-4 font-medium">Inscrit le</th>
@@ -103,24 +103,24 @@ export default function AdminUsersPage() {
             </thead>
             <tbody>
               {filtered.map((p) => (
-                <tr key={p.id} className="border-b border-zinc-800/60 last:border-0">
+                <tr key={p.id} className="border-b border-background/5 last:border-0 hover:bg-background/5 transition-colors">
                   <td className="px-6 py-4">
-                    <p className="font-medium text-zinc-100">{p.full_name || '—'}</p>
-                    <p className="text-zinc-500 text-xs">{p.email}</p>
+                    <p className="font-medium text-background">{p.full_name || '—'}</p>
+                    <p className="text-background/50 text-xs">{p.email}</p>
                   </td>
                   <td className="px-6 py-4">
                     <select
                       value={p.plan || 'starter'}
                       onChange={(e) => handlePlanChange(p.id, e.target.value)}
                       disabled={busyId === p.id}
-                      className="bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-sm text-zinc-100 focus:outline-none focus:border-emerald-500 disabled:opacity-60"
+                      className="bg-primary/40 border border-background/10 rounded-lg px-3 py-2 text-sm text-background focus:outline-none focus:border-accent disabled:opacity-60"
                     >
                       {PLAN_ORDER.map((key) => (
                         <option key={key} value={key}>{getPlan(key).name}</option>
                       ))}
                     </select>
                   </td>
-                  <td className="px-6 py-4 text-zinc-500">
+                  <td className="px-6 py-4 text-background/50">
                     {new Date(p.created_at).toLocaleDateString('fr-FR')}
                   </td>
                   <td className="px-6 py-4">
@@ -128,8 +128,8 @@ export default function AdminUsersPage() {
                       onClick={() => handleToggleAdmin(p)}
                       disabled={busyId === p.id || p.id === user?.id}
                       title={p.id === user?.id ? 'Tu ne peux pas modifier ton propre statut' : undefined}
-                      className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-colors disabled:opacity-40 disabled:cursor-not-allowed
-                        ${p.is_admin ? 'bg-emerald-500/10 text-emerald-400' : 'bg-zinc-800/60 text-zinc-400 hover:bg-zinc-800'}`}
+                      className={`hover-lift flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-colors disabled:opacity-40 disabled:cursor-not-allowed
+                        ${p.is_admin ? 'bg-accent/10 text-accent' : 'bg-background/10 text-background/50 hover:bg-background/15'}`}
                     >
                       {p.is_admin ? <Shield className="w-3.5 h-3.5" /> : <ShieldOff className="w-3.5 h-3.5" />}
                       {p.is_admin ? 'Administrateur' : 'Utilisateur'}
@@ -139,7 +139,7 @@ export default function AdminUsersPage() {
               ))}
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={4} className="px-6 py-10 text-center text-zinc-600">Aucun utilisateur trouvé.</td>
+                  <td colSpan={4} className="px-6 py-10 text-center text-background/40">Aucun utilisateur trouvé.</td>
                 </tr>
               )}
             </tbody>

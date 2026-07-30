@@ -13,10 +13,10 @@ const TONE_CLASSES = {
     itemActive: 'text-accent bg-accent/10',
   },
   admin: {
-    button: 'bg-zinc-900 border-zinc-800 text-zinc-300',
-    menu: 'bg-zinc-900 border-zinc-800',
-    item: 'text-zinc-300 hover:bg-zinc-800',
-    itemActive: 'text-emerald-400 bg-emerald-500/10',
+    button: 'bg-background/5 border-background/10 text-background/70',
+    menu: 'bg-block-card border-background/10',
+    item: 'text-background/80 hover:bg-background/5',
+    itemActive: 'text-accent bg-accent/10',
   },
 };
 
@@ -24,9 +24,8 @@ const TONE_CLASSES = {
 // bouton "Réglages" de FunnelEditorPage.jsx (pas de nouvelle dépendance,
 // pas de nouveau pattern d'interaction à apprendre). Le tri lui-même se
 // fait côté appelant (liste déjà entièrement chargée en mémoire) : ce
-// composant ne fait que piloter le choix. `tone="admin"` reprend la
-// palette zinc/emerald déjà utilisée par les pages admin (voir Spinner.jsx
-// pour le même principe).
+// composant ne fait que piloter le choix. `tone="admin"` reprend la même
+// palette dark premium que le reste du panneau admin (voir AdminShell.jsx).
 export default function SortMenu({ value, onChange, options, tone = 'default' }) {
   const [open, setOpen] = useState(false);
   const containerRef = useClickOutside(open, () => setOpen(false));

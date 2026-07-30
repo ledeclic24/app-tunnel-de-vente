@@ -84,22 +84,22 @@ export default function AdminFunnelsPage() {
     <div>
       <div className="flex items-center gap-3 mb-4">
         <div className="relative max-w-sm flex-1">
-          <Search className="w-4 h-4 text-zinc-500 absolute left-4 top-1/2 -translate-y-1/2" />
+          <Search className="w-4 h-4 text-background/40 absolute left-4 top-1/2 -translate-y-1/2" />
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Rechercher par nom ou email propriétaire..."
-            className="w-full bg-zinc-900 border border-zinc-800 rounded-xl pl-10 pr-4 py-3 text-sm text-zinc-100 focus:outline-none focus:border-emerald-500 transition-colors"
+            className="w-full bg-block-card border border-background/10 rounded-xl pl-10 pr-4 py-3 text-sm text-background focus:outline-none focus:border-accent transition-colors"
           />
         </div>
         <SortMenu value={sortBy} onChange={setSortBy} options={SORT_OPTIONS} tone="admin" />
       </div>
 
-      <div className="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden">
+      <div className="fade-in-up bg-block-card border border-background/10 rounded-2xl overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-zinc-800 text-left text-zinc-500 text-xs uppercase tracking-wider">
+              <tr className="border-b border-background/10 text-left text-background/50 text-xs uppercase tracking-wider">
                 <th className="px-6 py-4 font-medium">Tunnel</th>
                 <th className="px-6 py-4 font-medium">Propriétaire</th>
                 <th className="px-6 py-4 font-medium">Statut</th>
@@ -112,19 +112,19 @@ export default function AdminFunnelsPage() {
               {filtered.map((f) => {
                 const owner = profileById.get(f.user_id);
                 return (
-                  <tr key={f.id} className="border-b border-zinc-800/60 last:border-0">
+                  <tr key={f.id} className="border-b border-background/5 last:border-0 hover:bg-background/5 transition-colors">
                     <td className="px-6 py-4">
-                      <p className="font-medium text-zinc-100">{f.name}</p>
-                      <p className="text-zinc-500 text-xs font-mono">{f.template}</p>
+                      <p className="font-medium text-background">{f.name}</p>
+                      <p className="text-background/50 text-xs font-mono">{f.template}</p>
                     </td>
-                    <td className="px-6 py-4 text-zinc-400">{owner?.email || '—'}</td>
+                    <td className="px-6 py-4 text-background/60">{owner?.email || '—'}</td>
                     <td className="px-6 py-4">
-                      <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${f.is_published ? 'bg-emerald-500/10 text-emerald-400' : 'bg-zinc-800 text-zinc-500'}`}>
+                      <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${f.is_published ? 'bg-accent/10 text-accent' : 'bg-background/10 text-background/50'}`}>
                         {f.is_published ? 'Publié' : 'Brouillon'}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-zinc-400">{leadCounts[f.id] || 0}</td>
-                    <td className="px-6 py-4 text-zinc-500">{new Date(f.created_at).toLocaleDateString('fr-FR')}</td>
+                    <td className="px-6 py-4 text-background/60">{leadCounts[f.id] || 0}</td>
+                    <td className="px-6 py-4 text-background/50">{new Date(f.created_at).toLocaleDateString('fr-FR')}</td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2 justify-end">
                         {f.is_published && (
@@ -132,7 +132,7 @@ export default function AdminFunnelsPage() {
                             href={`/f/${f.slug}`}
                             target="_blank"
                             rel="noreferrer"
-                            className="p-2 rounded-lg text-zinc-500 hover:bg-zinc-800 hover:text-emerald-400 transition-colors"
+                            className="hover-lift p-2 rounded-lg text-background/50 hover:bg-background/10 hover:text-accent transition-colors"
                             title="Voir la page publique"
                           >
                             <ExternalLink className="w-4 h-4" />
@@ -141,7 +141,7 @@ export default function AdminFunnelsPage() {
                         <button
                           onClick={() => handleDelete(f)}
                           disabled={busyId === f.id}
-                          className="p-2 rounded-lg text-zinc-500 hover:bg-red-500/10 hover:text-red-400 transition-colors disabled:opacity-40"
+                          className="hover-lift p-2 rounded-lg text-background/50 hover:bg-red-500/10 hover:text-red-400 transition-colors disabled:opacity-40"
                           title="Supprimer"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -153,7 +153,7 @@ export default function AdminFunnelsPage() {
               })}
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="px-6 py-10 text-center text-zinc-600">Aucun tunnel trouvé.</td>
+                  <td colSpan={6} className="px-6 py-10 text-center text-background/40">Aucun tunnel trouvé.</td>
                 </tr>
               )}
             </tbody>

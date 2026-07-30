@@ -40,16 +40,16 @@ export default function AdminAuditLogPage() {
   return (
     <div>
       <div className="flex items-center gap-2 mb-1">
-        <ScrollText className="w-5 h-5 text-emerald-400" />
-        <h1 className="text-xl font-sans font-bold text-zinc-50">Journal d'audit</h1>
+        <ScrollText className="w-5 h-5 text-accent" />
+        <h1 className="text-xl font-sans font-bold text-background">Journal d'audit</h1>
       </div>
-      <p className="text-zinc-500 text-sm mb-6">Trace des actions sensibles : changement de plan, statut administrateur, suppression de tunnel ou de compte.</p>
+      <p className="text-background/50 text-sm mb-6">Trace des actions sensibles : changement de plan, statut administrateur, suppression de tunnel ou de compte.</p>
 
-      <div className="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden">
+      <div className="fade-in-up bg-block-card border border-background/10 rounded-2xl overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-zinc-800 text-left text-zinc-500 text-xs uppercase tracking-wider">
+              <tr className="border-b border-background/10 text-left text-background/50 text-xs uppercase tracking-wider">
                 <th className="px-6 py-4 font-medium">Date</th>
                 <th className="px-6 py-4 font-medium">Action</th>
                 <th className="px-6 py-4 font-medium">Cible</th>
@@ -58,16 +58,16 @@ export default function AdminAuditLogPage() {
             </thead>
             <tbody>
               {events.map((e) => (
-                <tr key={e.id} className="border-b border-zinc-800/60 last:border-0">
-                  <td className="px-6 py-4 text-zinc-500 whitespace-nowrap">{new Date(e.created_at).toLocaleString('fr-FR')}</td>
-                  <td className="px-6 py-4 text-zinc-100 font-medium">{ACTION_LABELS[e.action] || e.action}</td>
-                  <td className="px-6 py-4 text-zinc-400">{e.target || '—'}</td>
-                  <td className="px-6 py-4 text-zinc-500">{describeMeta(e.action, e.meta)}</td>
+                <tr key={e.id} className="border-b border-background/5 last:border-0 hover:bg-background/5 transition-colors">
+                  <td className="px-6 py-4 text-background/50 whitespace-nowrap">{new Date(e.created_at).toLocaleString('fr-FR')}</td>
+                  <td className="px-6 py-4 text-background font-medium">{ACTION_LABELS[e.action] || e.action}</td>
+                  <td className="px-6 py-4 text-background/60">{e.target || '—'}</td>
+                  <td className="px-6 py-4 text-background/50">{describeMeta(e.action, e.meta)}</td>
                 </tr>
               ))}
               {events.length === 0 && (
                 <tr>
-                  <td colSpan={4} className="px-6 py-10 text-center text-zinc-600">Aucun évènement enregistré pour l'instant.</td>
+                  <td colSpan={4} className="px-6 py-10 text-center text-background/40">Aucun évènement enregistré pour l'instant.</td>
                 </tr>
               )}
             </tbody>

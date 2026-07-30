@@ -69,11 +69,11 @@ const TONE_CLASSES = {
     input: 'bg-primary/5 border-surface/10 text-surface focus:border-accent',
   },
   admin: {
-    button: 'bg-zinc-900 border-zinc-800 text-zinc-300',
-    menu: 'bg-zinc-900 border-zinc-800',
-    item: 'text-zinc-300 hover:bg-zinc-800',
-    itemActive: 'text-emerald-400 bg-emerald-500/10',
-    input: 'bg-zinc-950 border-zinc-800 text-zinc-100 focus:border-emerald-500',
+    button: 'bg-background/5 border-background/10 text-background/70',
+    menu: 'bg-block-card border-background/10',
+    item: 'text-background/80 hover:bg-background/5',
+    itemActive: 'text-accent bg-accent/10',
+    input: 'bg-primary/40 border-background/10 text-background focus:border-accent',
   },
 };
 

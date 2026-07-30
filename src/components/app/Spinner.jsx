@@ -8,7 +8,7 @@ const SIZE_CLASSES = {
 
 const TONE_CLASSES = {
   default: 'border-surface/20 border-t-accent',
-  admin: 'border-zinc-700 border-t-emerald-400',
+  admin: 'border-background/20 border-t-accent',
 };
 
 // Indicateur de chargement animé unique, réutilisé partout au lieu d'un
