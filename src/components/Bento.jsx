@@ -6,7 +6,7 @@ import ReactiveDotGrid from './ReactiveDotGrid';
 gsap.registerPlugin(ScrollTrigger);
 
 const STATS = [
-  { id: 'models', value: 19, numeric: true, label: "Modèles prêts à l'emploi" },
+  { id: 'models', value: 37, numeric: true, label: "Modèles prêts à l'emploi" },
   { id: 'click', value: '1 clic', numeric: false, label: 'Pour générer un tunnel complet' },
   { id: 'code', value: 0, numeric: true, label: 'Ligne de code requise' },
   { id: 'time', value: '5 min', numeric: false, label: 'Pour publier ta première page' },

@@ -1,13 +1,13 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import gsap from 'gsap';
-import { ArrowRight, Sparkles } from 'lucide-react';
+import { ArrowRight, Sparkles, Lock } from 'lucide-react';
 import ReactiveDotGrid from './ReactiveDotGrid';
 
 const ROTATING_WORDS = ['ta formation', 'ton ebook', 'tes séances de coaching', 'tes produits'];
 
 const STATS = [
-  { value: '19', label: 'modèles' },
+  { value: '37', label: 'modèles' },
   { value: '0', label: 'ligne de code' },
   { value: '5 min', label: 'pour publier' },
 ];
@@ -44,6 +44,7 @@ export default function Hero() {
   const subRef = useRef(null);
   const btnRef = useRef(null);
   const statsRef = useRef(null);
+  const previewRef = useRef(null);
 
   useEffect(() => {
     let ctx = gsap.context(() => {
@@ -52,12 +53,17 @@ export default function Hero() {
         { y: 24, opacity: 0 },
         { y: 0, opacity: 1, stagger: 0.08, duration: 0.9, ease: 'power3.out', delay: 0.1 }
       );
+      gsap.fromTo(
+        previewRef.current,
+        { y: 48, opacity: 0, scale: 0.97 },
+        { y: 0, opacity: 1, scale: 1, duration: 1.1, ease: 'power3.out', delay: 0.55 }
+      );
     }, containerRef);
     return () => ctx.revert();
   }, []);
 
   return (
-    <section ref={containerRef} className="relative w-full pt-36 pb-24 md:pt-44 md:pb-28 px-6 md:px-10 bg-primary overflow-hidden text-center">
+    <section ref={containerRef} className="relative w-full pt-36 pb-24 md:pt-44 md:pb-0 px-6 md:px-10 bg-primary overflow-hidden text-center">
       <ReactiveDotGrid color="34,197,94" />
       <div className="max-w-3xl mx-auto relative z-10">
         <div ref={badgeRef} className="inline-flex items-center gap-2 bg-accent/10 text-accent px-3.5 py-1.5 rounded-full text-sm font-semibold mb-7">
@@ -93,6 +99,29 @@ export default function Hero() {
               {s.label}
             </div>
           ))}
+        </div>
+      </div>
+
+      <div ref={previewRef} className="relative z-10 max-w-5xl mx-auto mt-16 md:mt-20 px-2 md:px-0">
+        <div className="absolute inset-x-8 -top-6 h-24 bg-accent/25 blur-[80px] rounded-full" aria-hidden="true" />
+        <div className="relative rounded-t-2xl border border-background/10 bg-surface shadow-2xl shadow-black/40 overflow-hidden">
+          <div className="flex items-center gap-2 px-4 py-3 border-b border-background/10 bg-background/[0.04]">
+            <span className="w-2.5 h-2.5 rounded-full bg-background/20" />
+            <span className="w-2.5 h-2.5 rounded-full bg-background/20" />
+            <span className="w-2.5 h-2.5 rounded-full bg-background/20" />
+            <div className="mx-auto flex items-center gap-1.5 bg-background/5 rounded-full px-4 py-1 text-[11px] font-mono text-background/40">
+              <Lock className="w-3 h-3" />
+              app.tontunnel.com
+            </div>
+          </div>
+          <img
+            src="/screenshots/editor-preview.webp"
+            alt="Éditeur de tunnel TonTunnel : blocs Hero, score de santé et assistant IA"
+            className="w-full h-auto block"
+            width="2000"
+            height="1131"
+            loading="eager"
+          />
         </div>
       </div>
     </section>
