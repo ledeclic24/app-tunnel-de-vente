@@ -680,6 +680,8 @@ export default function FunnelEditorPage() {
       await updateFunnel(funnelId, { brand });
       setFunnel((f) => ({ ...f, brand }));
       setShowBrandKit(false);
+      setActionError('');
+      setActionErrorCode('');
     } catch {
       setActionError('L\'enregistrement du Brand Kit a échoué. Réessaie.');
     }
@@ -689,6 +691,13 @@ export default function FunnelEditorPage() {
     try {
       await updateFunnel(funnelId, patch);
       setFunnel((f) => ({ ...f, ...patch }));
+      // Un enregistrement réussi vient peut-être de corriger CE qui causait
+      // une erreur précédente (ex. "aucun livrable configuré" avant de
+      // publier) — sans ça, le message restait affiché tel quel après
+      // correction, comme si rien n'avait changé alors que republier
+      // fonctionnerait maintenant.
+      setActionError('');
+      setActionErrorCode('');
     } catch {
       setActionError('L\'enregistrement des réglages a échoué. Réessaie.');
     }
@@ -713,6 +722,8 @@ export default function FunnelEditorPage() {
       delete chromeSaveTimers.current[stepId];
       try {
         await updateStep(stepId, { chrome });
+        setActionError('');
+        setActionErrorCode('');
       } catch {
         setActionError('L\'enregistrement des réglages de page a échoué. Réessaie.');
       }
@@ -1031,7 +1042,7 @@ export default function FunnelEditorPage() {
             {showSettingsMenu && settingsMenuPos && (
               <div
                 style={{ position: 'fixed', top: settingsMenuPos.top, left: settingsMenuPos.left, width: 224, maxHeight: settingsMenuPos.maxHeight }}
-                className="z-30 bg-background border border-surface/10 rounded-2xl shadow-xl p-1.5 overflow-y-auto"
+                className="dropdown-panel z-30 bg-background border border-surface/10 rounded-2xl shadow-xl p-1.5 overflow-y-auto"
               >
                 <button
                   onClick={() => selectSettingsPanel('general')}
@@ -1228,7 +1239,7 @@ export default function FunnelEditorPage() {
             <Plus className="w-4 h-4" /> Ajouter un bloc
           </button>
           {showPalette && (
-            <div className="absolute z-20 mt-2 w-full bg-background border border-surface/10 rounded-2xl shadow-xl p-3">
+            <div className="dropdown-panel absolute z-20 mt-2 w-full bg-background border border-surface/10 rounded-2xl shadow-xl p-3">
               <div className="flex items-center gap-1 mb-2 bg-surface/5 rounded-full p-1 w-fit">
                 <button
                   onClick={() => setPaletteTab('new')}

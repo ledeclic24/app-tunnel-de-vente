@@ -48,7 +48,7 @@ export default function SortMenu({ value, onChange, options, tone = 'default' })
       {open && pos && (
         <div
           style={{ position: 'fixed', top: pos.top, left: pos.left, width: PANEL_WIDTH, maxHeight: pos.maxHeight }}
-          className={`z-30 border rounded-2xl shadow-xl p-1.5 overflow-y-auto ${t.menu}`}
+          className={`dropdown-panel z-30 border rounded-2xl shadow-xl p-1.5 overflow-y-auto ${t.menu}`}
         >
           {options.map((o) => (
             <button

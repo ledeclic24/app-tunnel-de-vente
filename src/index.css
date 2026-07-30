@@ -222,6 +222,20 @@
 .stagger-children > *:nth-child(7) { transition-delay: 540ms; }
 .stagger-children > *:nth-child(8) { transition-delay: 630ms; }
 
+@keyframes dropdownIn {
+  from { opacity: 0; transform: scale(0.96) translateY(-4px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* Ouverture des menus déroulants (tri, filtres, réglages...) — jusqu'ici
+   ils apparaissaient d'un coup sec, seul point du système d'interaction
+   sans la moindre transition alors que le reste de l'appli en a une
+   partout (hover-lift, magnetic-btn, hover-card...). */
+.dropdown-panel {
+  transform-origin: top;
+  animation: dropdownIn 0.15s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .magnetic-btn,
   .hover-lift,
@@ -232,7 +246,8 @@
   .ambient-pulse,
   .signature-icon-float,
   .testimonial-marquee-track,
-  .floating-orb {
+  .floating-orb,
+  .dropdown-panel {
     transition: none !important;
     animation: none !important;
   }

@@ -27,6 +27,8 @@ function normalizeFunnel(f) {
     publish_at: f.publishAt,
     unpublish_at: f.unpublishAt,
     deliverable_ebook_id: f.deliverableEbookId,
+    deliverable_file_url: f.deliverableFileUrl,
+    deliverable_file_name: f.deliverableFileName,
     post_purchase_instructions: f.postPurchaseInstructions,
     created_at: f.createdAt,
     updated_at: f.updatedAt,
@@ -67,6 +69,8 @@ const FUNNEL_PATCH_KEY_MAP = {
   publish_at: 'publishAt',
   unpublish_at: 'unpublishAt',
   deliverable_ebook_id: 'deliverableEbookId',
+  deliverable_file_url: 'deliverableFileUrl',
+  deliverable_file_name: 'deliverableFileName',
   post_purchase_instructions: 'postPurchaseInstructions',
 };
 

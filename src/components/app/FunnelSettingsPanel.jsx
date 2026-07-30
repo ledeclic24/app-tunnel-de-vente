@@ -1,8 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Lock, Check, Globe, RefreshCw, Trash2, Mail, Sparkles, Store } from 'lucide-react';
+import { Lock, Check, Globe, RefreshCw, Trash2, Mail, Sparkles, Store, Upload, FileText, X } from 'lucide-react';
 import { fetchDomains, addDomain, checkDomainStatus, removeDomain } from '../../lib/domainsApi';
 import { fetchEbooks } from '../../lib/ebooksApi';
+import { uploadDeliverableFile } from '../../lib/storage';
+import { useToast } from './Toast';
 import { useConfirm } from './ConfirmDialog';
 import PublishTemplateModal from './PublishTemplateModal';
 import CollapsibleSection from './CollapsibleSection';
@@ -191,6 +193,8 @@ export default function FunnelSettingsPanel({ funnel, plan, onSave }) {
     publish_at: toDatetimeLocalValue(funnel.publish_at),
     unpublish_at: toDatetimeLocalValue(funnel.unpublish_at),
     deliverable_ebook_id: funnel.deliverable_ebook_id || '',
+    deliverable_file_url: funnel.deliverable_file_url || '',
+    deliverable_file_name: funnel.deliverable_file_name || '',
     post_purchase_instructions: funnel.post_purchase_instructions || '',
     is_gallery_opt_in: Boolean(funnel.is_gallery_opt_in),
   });
@@ -199,12 +203,48 @@ export default function FunnelSettingsPanel({ funnel, plan, onSave }) {
   const [error, setError] = useState('');
   const [ebooks, setEbooks] = useState(null);
   const [showPublishTemplate, setShowPublishTemplate] = useState(false);
+  const [uploadingFile, setUploadingFile] = useState(false);
+  const fileInputRef = useRef(null);
+  const toast = useToast();
 
   useEffect(() => {
     fetchEbooks().then(setEbooks).catch(() => setEbooks([]));
   }, []);
 
   const set = (patch) => { setSaved(false); setDraft((d) => ({ ...d, ...patch })); };
+
+  // Enregistré immédiatement (pas via le bouton "Enregistrer" plus bas,
+  // contrairement au reste du panneau) : un import de fichier est une
+  // action déjà complète en soi (le fichier existe bel et bien dans le
+  // stockage dès l'upload terminé) — exiger un clic supplémentaire pour
+  // qu'il soit réellement pris en compte est exactement le genre de piège
+  // qui a fait croire à un bug ("j'ai choisi un livrable mais ça dit qu'il
+  // n'y en a pas").
+  const handleUploadFile = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    setUploadingFile(true);
+    try {
+      const { url, name } = await uploadDeliverableFile(file);
+      set({ deliverable_file_url: url, deliverable_file_name: name });
+      await onSave({ deliverable_file_url: url, deliverable_file_name: name });
+      toast.success('Fichier importé et enregistré.');
+    } catch (err) {
+      toast.error(err.message || "L'import du fichier a échoué. Réessaie.");
+    } finally {
+      setUploadingFile(false);
+    }
+  };
+
+  const handleRemoveFile = async () => {
+    set({ deliverable_file_url: '', deliverable_file_name: '' });
+    try {
+      await onSave({ deliverable_file_url: null, deliverable_file_name: null });
+    } catch {
+      toast.error("Le retrait du fichier a échoué. Réessaie.");
+    }
+  };
 
   const handleSave = async () => {
     setSaving(true);
@@ -240,13 +280,13 @@ export default function FunnelSettingsPanel({ funnel, plan, onSave }) {
           <h3 className="font-sans font-semibold text-surface">Livraison automatique</h3>
         </div>
         <p className="text-sm text-surface/60">
-          Quand quelqu'un remplit un formulaire ou termine un paiement intégré sur ce tunnel, il reçoit automatiquement un email — l'ebook choisi ci-dessous, tes instructions écrites plus bas, ou les deux à la fois.
+          Quand quelqu'un remplit un formulaire ou termine un paiement intégré sur ce tunnel, il reçoit automatiquement un email — l'ebook choisi ci-dessous, un fichier que tu importes, tes instructions écrites plus bas, ou n'importe quelle combinaison des trois.
         </p>
         {ebooks === null ? (
           <p className="text-sm text-surface/40">Chargement de tes ebooks...</p>
         ) : ebooks.length === 0 ? (
           <p className="text-sm text-surface/50">
-            Tu n'as pas encore d'ebook. <Link to="/app/ebooks" className="text-accent hover:underline">Crée-en un</Link> pour pouvoir le livrer automatiquement ici.
+            Tu n'as pas encore d'ebook. <Link to="/app/ebooks" className="text-accent hover:underline">Crée-en un</Link> pour pouvoir le livrer automatiquement ici — ou importe directement un fichier ci-dessous.
           </p>
         ) : (
           <div>
@@ -263,6 +303,48 @@ export default function FunnelSettingsPanel({ funnel, plan, onSave }) {
             </select>
           </div>
         )}
+        <div>
+          <label className={labelClass}>Fichier à envoyer par email (PDF, ZIP, EPUB, DOC(X), PPT(X), MP4)</label>
+          {draft.deliverable_file_url ? (
+            <div className="flex items-center gap-2 bg-primary/5 border border-surface/10 rounded-xl px-4 py-2.5">
+              <FileText className="w-4 h-4 text-surface/50 shrink-0" />
+              <a
+                href={draft.deliverable_file_url}
+                target="_blank"
+                rel="noreferrer"
+                className="text-sm text-surface truncate hover:underline flex-1 min-w-0"
+              >
+                {draft.deliverable_file_name || 'Fichier importé'}
+              </a>
+              <button
+                type="button"
+                onClick={handleRemoveFile}
+                className="shrink-0 p-1 text-surface/40 hover:text-red-500"
+                aria-label="Retirer ce fichier"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploadingFile}
+              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-dashed border-surface/20 text-sm text-surface/60 hover:border-accent hover:text-accent transition-colors disabled:opacity-50"
+            >
+              <Upload className="w-4 h-4" /> {uploadingFile ? 'Import en cours...' : 'Importer un fichier'}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".pdf,.zip,.epub,.doc,.docx,.ppt,.pptx,.mp4"
+                className="hidden"
+                onChange={handleUploadFile}
+                disabled={uploadingFile}
+              />
+            </button>
+          )}
+          <p className="text-xs text-surface/40 mt-1">50 Mo maximum — enregistré immédiatement, pas besoin de cliquer sur "Enregistrer" plus bas.</p>
+        </div>
         <div>
           <label className={labelClass}>Instructions après achat (optionnel)</label>
           <textarea

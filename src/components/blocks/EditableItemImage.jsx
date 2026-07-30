@@ -87,7 +87,7 @@ export default function EditableItemImage({
       {showMenu && menuPos && (
         <div
           style={{ position: 'fixed', top: menuPos.top, left: menuPos.left, width: MENU_WIDTH, maxHeight: menuPos.maxHeight }}
-          className="z-20 bg-background border border-surface/10 rounded-xl shadow-lg overflow-y-auto"
+          className="dropdown-panel z-20 bg-background border border-surface/10 rounded-xl shadow-lg overflow-y-auto"
           onClick={(e) => e.stopPropagation()}
         >
           <button

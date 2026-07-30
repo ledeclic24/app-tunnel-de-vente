@@ -200,7 +200,7 @@ export default function HeroBlock({ content, onAdvance, onOpenCheckout, primaryO
     <>
       {showMenu && (
         <div
-          className="absolute top-3 right-3 z-30 bg-background border border-surface/10 rounded-xl shadow-lg overflow-hidden min-w-[220px]"
+          className="dropdown-panel absolute top-3 right-3 z-30 bg-background border border-surface/10 rounded-xl shadow-lg overflow-hidden min-w-[220px]"
           onClick={(e) => e.stopPropagation()}
         >
           <button
@@ -250,7 +250,7 @@ export default function HeroBlock({ content, onAdvance, onOpenCheckout, primaryO
       )}
       {showTypeMenu && (
         <div
-          className="absolute top-3 right-3 z-30 bg-background border border-surface/10 rounded-xl shadow-lg overflow-hidden min-w-[180px]"
+          className="dropdown-panel absolute top-3 right-3 z-30 bg-background border border-surface/10 rounded-xl shadow-lg overflow-hidden min-w-[180px]"
           onClick={(e) => e.stopPropagation()}
         >
           {TUNNEL_IMAGE_TYPES.map((t) => (

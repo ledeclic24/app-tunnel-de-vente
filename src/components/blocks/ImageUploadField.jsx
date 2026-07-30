@@ -96,7 +96,7 @@ export default function ImageUploadField({ userId, value, onChange, onGenerate, 
             {showTypeMenu && !generating && typeMenuPos && (
               <div
                 style={{ position: 'fixed', top: typeMenuPos.top, left: typeMenuPos.left, width: TYPE_MENU_WIDTH, maxHeight: typeMenuPos.maxHeight }}
-                className="z-10 bg-background border border-surface/10 rounded-xl shadow-lg overflow-y-auto"
+                className="dropdown-panel z-10 bg-background border border-surface/10 rounded-xl shadow-lg overflow-y-auto"
               >
                 {generateTypes.map((t) => (
                   <button

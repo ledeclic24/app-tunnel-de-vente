@@ -177,7 +177,7 @@ function Lightbox({ images, index, onClose, onNavigate, onDelete, onRegenerate, 
         {menuOpen && (
           <div
             onClick={(e) => e.stopPropagation()}
-            className="absolute top-11 right-0 w-52 bg-background border border-surface/10 rounded-2xl shadow-xl overflow-hidden py-1.5"
+            className="dropdown-panel absolute top-11 right-0 w-52 bg-background border border-surface/10 rounded-2xl shadow-xl overflow-hidden py-1.5"
           >
             <button
               type="button"

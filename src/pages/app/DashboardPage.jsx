@@ -209,7 +209,7 @@ function FunnelCard({
               <MoreHorizontal className="w-4 h-4" />
             </button>
             {isMenuOpen && (
-              <div className="absolute z-30 mt-2 right-0 w-56 bg-background border border-surface/10 rounded-2xl shadow-xl p-1.5">
+              <div className="dropdown-panel absolute z-30 mt-2 right-0 w-56 bg-background border border-surface/10 rounded-2xl shadow-xl p-1.5">
                 <button
                   type="button"
                   onClick={() => { onCloseMenu(); onPreview(funnel); }}

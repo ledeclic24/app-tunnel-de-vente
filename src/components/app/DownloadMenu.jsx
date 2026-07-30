@@ -44,7 +44,7 @@ export default function DownloadMenu({ ebookId, title, disabled, compact = false
   const menu = open && pos && (
     <div
       style={{ position: 'fixed', top: pos.top, left: pos.left, width: PANEL_WIDTH, maxHeight: pos.maxHeight }}
-      className="z-20 bg-background border border-surface/10 rounded-2xl shadow-xl py-2 overflow-y-auto"
+      className="dropdown-panel z-20 bg-background border border-surface/10 rounded-2xl shadow-xl py-2 overflow-y-auto"
     >
       {FORMATS.map((f) => (
         <button
