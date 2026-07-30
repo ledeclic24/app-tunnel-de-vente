@@ -2,6 +2,7 @@ import React from 'react';
 import { getEditableProps, getContentEditableProps, getSectionBackground, cx } from '../../lib/blockStyle';
 import SlotList, { SlotReadOnly } from './SlotList';
 import EditableItemImage from './EditableItemImage';
+import FloatingOrbs from './FloatingOrbs';
 
 function buildDefaultSlots(itemCount) {
   const slots = [];
@@ -68,7 +69,8 @@ export default function TeamBlock({ content, editMode, selectedElement, onSelect
   const effectiveSlots = slots && isSlotsValid(slots, items.length) ? slots : buildDefaultSlots(items.length);
 
   return (
-    <section className={cx('px-6 py-16 md:px-16 md:py-24 max-w-5xl mx-auto', bg.sectionClassName)}>
+    <section className={cx('ambient-glow relative overflow-hidden px-6 py-16 md:px-16 md:py-24 max-w-5xl mx-auto', bg.sectionClassName)}>
+      <FloatingOrbs />
       {heading && (
         <h2
           className={cx('font-sans font-bold text-2xl md:text-3xl text-center mb-10 outline-none', bg.headingClassName, headingProps.className)}

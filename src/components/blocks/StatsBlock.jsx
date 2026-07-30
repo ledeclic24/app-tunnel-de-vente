@@ -1,6 +1,7 @@
 import React from 'react';
 import { getEditableProps, getSectionBackground, cx } from '../../lib/blockStyle';
 import SlotList, { SlotReadOnly } from './SlotList';
+import FloatingOrbs from './FloatingOrbs';
 
 function buildDefaultSlots(itemCount) {
   const slots = [];
@@ -51,7 +52,8 @@ export default function StatsBlock({ content, editMode, selectedElement, onSelec
   const effectiveSlots = slots && isSlotsValid(slots, items.length) ? slots : buildDefaultSlots(items.length);
 
   return (
-    <section className={cx('ambient-glow px-6 py-10 md:px-16 md:py-12 max-w-5xl mx-auto', bg.sectionClassName)}>
+    <section className={cx('ambient-glow relative overflow-hidden px-6 py-10 md:px-16 md:py-12 max-w-5xl mx-auto', bg.sectionClassName)}>
+      <FloatingOrbs />
       {editMode ? (
         <SlotList
           slots={effectiveSlots}

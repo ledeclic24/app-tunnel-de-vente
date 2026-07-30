@@ -3,6 +3,7 @@ import { Check, X } from 'lucide-react';
 import { getEditableProps, getContentEditableProps, getSectionBackground, cx } from '../../lib/blockStyle';
 import SlotList, { SlotReadOnly } from './SlotList';
 import EditableItemImage from './EditableItemImage';
+import FloatingOrbs from './FloatingOrbs';
 
 // Le titre reste en dehors du système d'emplacements (il ne fait pas
 // vraiment sens de le mélanger à une grille de cartes) — seuls les items
@@ -162,7 +163,8 @@ export default function FeaturesBlock({ content, editMode, selectedElement, onSe
   };
 
   return (
-    <section className={cx('ambient-glow px-6 py-16 md:px-16 md:py-24 max-w-5xl mx-auto', bg.sectionClassName)}>
+    <section className={cx('ambient-glow relative overflow-hidden px-6 py-16 md:px-16 md:py-24 max-w-5xl mx-auto', bg.sectionClassName)}>
+      <FloatingOrbs />
       {heading && (
         <h2
           className={cx('font-sans font-bold text-2xl md:text-3xl text-center mb-10 outline-none', bg.headingClassName, headingProps.className)}
