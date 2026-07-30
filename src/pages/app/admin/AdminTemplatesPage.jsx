@@ -70,7 +70,7 @@ function ApprovedTemplatesSection({ onPreview }) {
       {templates.map((t, i) => (
         <div
           key={t.id}
-          className="hover-card fade-in-up bg-block-card border border-background/10 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
+          className="hover-card fade-in-up bg-admin-card border border-background/10 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
           style={{ animationDelay: `${Math.min(i, 8) * 50}ms` }}
         >
           <div className="min-w-0">
@@ -80,7 +80,7 @@ function ApprovedTemplatesSection({ onPreview }) {
           <div className="flex items-center gap-2 flex-wrap sm:shrink-0">
             <button
               onClick={() => onPreview(t)}
-              className="hover-lift inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold bg-background/10 text-background/70 hover:bg-background/15 transition-colors"
+              className="hover-lift inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold bg-accent/10 text-background/80 hover:bg-accent/15 transition-colors"
             >
               <Eye className="w-4 h-4" /> Aperçu
             </button>
@@ -155,13 +155,13 @@ export default function AdminTemplatesPage() {
         <div className="flex items-center gap-2">
           <button
             onClick={() => setTab('pending')}
-            className={`magnetic-btn px-3.5 py-1.5 rounded-full text-xs font-semibold transition-colors ${tab === 'pending' ? 'bg-accent text-primary' : 'bg-block-card text-background/50 hover:text-background/80'}`}
+            className={`magnetic-btn px-3.5 py-1.5 rounded-full text-xs font-semibold transition-colors ${tab === 'pending' ? 'bg-accent text-primary' : 'bg-admin-card text-background/50 hover:text-background/80'}`}
           >
             En attente
           </button>
           <button
             onClick={() => setTab('approved')}
-            className={`magnetic-btn px-3.5 py-1.5 rounded-full text-xs font-semibold transition-colors ${tab === 'approved' ? 'bg-accent text-primary' : 'bg-block-card text-background/50 hover:text-background/80'}`}
+            className={`magnetic-btn px-3.5 py-1.5 rounded-full text-xs font-semibold transition-colors ${tab === 'approved' ? 'bg-accent text-primary' : 'bg-admin-card text-background/50 hover:text-background/80'}`}
           >
             Approuvés — mise en avant
           </button>
@@ -198,7 +198,7 @@ export default function AdminTemplatesPage() {
             {templates.map((t, i) => (
               <div
                 key={t.id}
-                className="hover-card fade-in-up bg-block-card border border-background/10 rounded-2xl p-5"
+                className="hover-card fade-in-up bg-admin-card border border-background/10 rounded-2xl p-5"
                 style={{ animationDelay: `${Math.min(i, 8) * 50}ms` }}
               >
                 <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
@@ -213,7 +213,7 @@ export default function AdminTemplatesPage() {
                   <div className="flex items-center gap-2 flex-wrap sm:shrink-0">
                     <button
                       onClick={() => setPreviewTemplate(t)}
-                      className="hover-lift inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold bg-background/10 text-background/70 hover:bg-background/15 transition-colors"
+                      className="hover-lift inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold bg-accent/10 text-background/80 hover:bg-accent/15 transition-colors"
                     >
                       <Eye className="w-4 h-4" /> Aperçu
                     </button>

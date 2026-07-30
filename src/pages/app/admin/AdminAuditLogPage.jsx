@@ -47,7 +47,7 @@ export default function AdminAuditLogPage() {
       </div>
       <p className="text-background/50 text-sm mb-6">Trace des actions sensibles : changement de plan, statut administrateur, suppression de tunnel ou de compte.</p>
 
-      <div className="fade-in-up bg-block-card border border-background/10 rounded-2xl overflow-hidden">
+      <div className="fade-in-up bg-admin-card border border-background/10 rounded-2xl overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
@@ -60,7 +60,7 @@ export default function AdminAuditLogPage() {
             </thead>
             <tbody>
               {events.map((e) => (
-                <tr key={e.id} className="border-b border-background/5 last:border-0 hover:bg-background/5 transition-colors">
+                <tr key={e.id} className="border-b border-background/5 last:border-0 hover:bg-accent/5 transition-colors">
                   <td className="px-6 py-4 text-background/50 whitespace-nowrap">{new Date(e.created_at).toLocaleString('fr-FR')}</td>
                   <td className="px-6 py-4 text-background font-medium">{ACTION_LABELS[e.action] || e.action}</td>
                   <td className="px-6 py-4 text-background/60">{e.target || '—'}</td>

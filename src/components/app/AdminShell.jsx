@@ -41,7 +41,7 @@ export default function AdminShell() {
           <div className="flex items-center gap-2 shrink-0">
             <button
               onClick={() => navigate('/app')}
-              className="hover-lift hidden sm:flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium text-background/60 hover:text-background hover:bg-background/10 transition-colors"
+              className="hover-lift hidden sm:flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium text-background/60 hover:text-background hover:bg-accent/10 transition-colors"
             >
               <ArrowLeftCircle className="w-4 h-4" /> Retour à l'app
             </button>
@@ -61,7 +61,7 @@ export default function AdminShell() {
               end={end}
               className={({ isActive }) => `
                 flex items-center gap-2 px-3.5 py-2.5 text-sm font-medium whitespace-nowrap border-b-2 rounded-t-lg transition-colors
-                ${isActive ? 'border-accent text-background bg-background/5' : 'border-transparent text-background/40 hover:text-background/80 hover:bg-background/5'}
+                ${isActive ? 'border-accent text-background bg-accent/10' : 'border-transparent text-background/40 hover:text-background/80 hover:bg-accent/5'}
               `}
             >
               <Icon className="w-4 h-4" /> {label}

@@ -8,7 +8,7 @@ import Spinner from '../../../components/app/Spinner';
 function StatCard({ icon: Icon, label, value, delay = 0 }) {
   return (
     <div
-      className="hover-card fade-in-up bg-block-card border border-background/10 rounded-2xl p-6 flex items-center gap-4"
+      className="hover-card fade-in-up bg-admin-card border border-background/10 rounded-2xl p-6 flex items-center gap-4"
       style={{ animationDelay: `${delay}ms` }}
     >
       <div className="w-12 h-12 rounded-xl bg-accent/10 flex items-center justify-center shrink-0">
@@ -82,7 +82,7 @@ export default function AdminOverviewPage() {
       </div>
 
       <div className="grid md:grid-cols-2 gap-6">
-        <div className="fade-in-up bg-block-card border border-background/10 rounded-2xl p-6" style={{ animationDelay: '240ms' }}>
+        <div className="fade-in-up bg-admin-card border border-background/10 rounded-2xl p-6" style={{ animationDelay: '240ms' }}>
           <h2 className="text-sm font-semibold text-background mb-4 uppercase tracking-wider">Répartition par plan</h2>
           <div className="space-y-3">
             {PLAN_ORDER.map((key) => {
@@ -103,7 +103,7 @@ export default function AdminOverviewPage() {
           </div>
         </div>
 
-        <div className="fade-in-up bg-block-card border border-background/10 rounded-2xl p-6" style={{ animationDelay: '300ms' }}>
+        <div className="fade-in-up bg-admin-card border border-background/10 rounded-2xl p-6" style={{ animationDelay: '300ms' }}>
           <h2 className="text-sm font-semibold text-background mb-1 uppercase tracking-wider flex items-center gap-2">
             <Shield className="w-4 h-4 text-accent" /> Nommer un administrateur
           </h2>

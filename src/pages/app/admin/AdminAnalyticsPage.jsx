@@ -33,7 +33,7 @@ function Delta({ current, previous }) {
 function StatCard({ icon: Icon, label, value, total, delta, delayMs = 0 }) {
   return (
     <div
-      className="hover-card fade-in-up bg-block-card border border-background/10 rounded-2xl p-6 flex items-center gap-4"
+      className="hover-card fade-in-up bg-admin-card border border-background/10 rounded-2xl p-6 flex items-center gap-4"
       style={{ animationDelay: `${delayMs}ms` }}
     >
       <div className="w-12 h-12 rounded-xl bg-accent/10 flex items-center justify-center shrink-0">
@@ -71,7 +71,7 @@ function PlanBreakdown({ profiles, livePlans }) {
   const total = profiles.length || 1;
 
   return (
-    <div className="fade-in-up bg-block-card border border-background/10 rounded-2xl p-6">
+    <div className="fade-in-up bg-admin-card border border-background/10 rounded-2xl p-6">
       <h2 className="text-sm font-semibold text-background mb-1 uppercase tracking-wider">Répartition par plan</h2>
       <p className="text-xs text-background/40 mb-4">D'où vient (ou pourrait venir) la MRR — utile pour savoir qui relancer vers un plan payant.</p>
       <div className="space-y-3">
@@ -98,7 +98,7 @@ function PlanBreakdown({ profiles, livePlans }) {
 
 function Chart({ title, data }) {
   return (
-    <div className="fade-in-up bg-block-card border border-background/10 rounded-2xl p-6">
+    <div className="fade-in-up bg-admin-card border border-background/10 rounded-2xl p-6">
       <h2 className="text-sm font-semibold text-background mb-4 uppercase tracking-wider">{title}</h2>
       <ResponsiveContainer width="100%" height={220}>
         <BarChart data={data}>
@@ -174,7 +174,7 @@ export default function AdminAnalyticsPage() {
           <button
             key={r.key}
             onClick={() => setRange(r.key)}
-            className={`magnetic-btn px-4 py-2 rounded-full text-sm font-medium transition-colors ${range === r.key ? 'bg-accent text-primary' : 'bg-block-card border border-background/10 text-background/60 hover:text-background'}`}
+            className={`magnetic-btn px-4 py-2 rounded-full text-sm font-medium transition-colors ${range === r.key ? 'bg-accent text-primary' : 'bg-admin-card border border-background/10 text-background/60 hover:text-background'}`}
           >
             {r.label}
           </button>
@@ -217,7 +217,7 @@ export default function AdminAnalyticsPage() {
         </div>
       </div>
 
-      <div className="fade-in-up bg-block-card border border-background/10 rounded-2xl p-6">
+      <div className="fade-in-up bg-admin-card border border-background/10 rounded-2xl p-6">
         <h2 className="text-sm font-semibold text-background mb-4 uppercase tracking-wider">Changements de plan récents</h2>
         {filtered.planEvents.length === 0 ? (
           <p className="text-sm text-background/40">Aucun changement de plan sur cette période.</p>

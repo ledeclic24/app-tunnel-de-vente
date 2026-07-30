@@ -69,10 +69,10 @@ const TONE_CLASSES = {
     input: 'bg-primary/5 border-surface/10 text-surface focus:border-accent',
   },
   admin: {
-    button: 'bg-background/5 border-background/10 text-background/70',
-    menu: 'bg-block-card border-background/10',
-    item: 'text-background/80 hover:bg-background/5',
-    itemActive: 'text-accent bg-accent/10',
+    button: 'bg-accent/10 border-background/10 text-background/70',
+    menu: 'bg-admin-card border-background/10',
+    item: 'text-background/80 hover:bg-accent/10',
+    itemActive: 'text-accent bg-accent/15',
     input: 'bg-primary/40 border-background/10 text-background focus:border-accent',
   },
 };

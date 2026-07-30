@@ -65,7 +65,7 @@ export default function AdminPlansPage() {
           return (
             <div
               key={key}
-              className="hover-card fade-in-up bg-block-card border border-background/10 rounded-2xl p-6"
+              className="hover-card fade-in-up bg-admin-card border border-background/10 rounded-2xl p-6"
               style={{ animationDelay: `${i * 60}ms` }}
             >
               <h3 className="font-sans font-semibold text-background mb-4">{plan.name}</h3>

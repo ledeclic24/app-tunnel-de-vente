@@ -204,6 +204,15 @@
   background-color: color-mix(in srgb, rgb(var(--color-primary)) 65%, white);
 }
 
+/* Fond de carte du panneau ADMIN uniquement (jamais les blocs de tunnel
+   publiés, qui gardent .bg-block-card ci-dessus) — mélange vers l'ACCENT
+   plutôt que vers le blanc : .bg-block-card rendu ici donnait des cartes
+   grisâtres/délavées, peu lisibles et peu "TonTunnel" ; ce mélange reste
+   nettement vert, plus lisible et plus identifiable comme un bloc. */
+.bg-admin-card {
+  background-color: color-mix(in srgb, rgb(var(--color-primary)) 72%, rgb(var(--color-accent)) 28%);
+}
+
 .magnetic-btn:hover {
   transform: translateY(-2px) scale(1.02);
   box-shadow: 0 10px 24px -8px rgba(0, 0, 0, 0.3);

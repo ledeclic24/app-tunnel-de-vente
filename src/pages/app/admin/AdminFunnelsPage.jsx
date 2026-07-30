@@ -89,13 +89,13 @@ export default function AdminFunnelsPage() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Rechercher par nom ou email propriétaire..."
-            className="w-full bg-block-card border border-background/10 rounded-xl pl-10 pr-4 py-3 text-sm text-background focus:outline-none focus:border-accent transition-colors"
+            className="w-full bg-admin-card border border-background/10 rounded-xl pl-10 pr-4 py-3 text-sm text-background focus:outline-none focus:border-accent transition-colors"
           />
         </div>
         <SortMenu value={sortBy} onChange={setSortBy} options={SORT_OPTIONS} tone="admin" />
       </div>
 
-      <div className="fade-in-up bg-block-card border border-background/10 rounded-2xl overflow-hidden">
+      <div className="fade-in-up bg-admin-card border border-background/10 rounded-2xl overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
@@ -112,7 +112,7 @@ export default function AdminFunnelsPage() {
               {filtered.map((f) => {
                 const owner = profileById.get(f.user_id);
                 return (
-                  <tr key={f.id} className="border-b border-background/5 last:border-0 hover:bg-background/5 transition-colors">
+                  <tr key={f.id} className="border-b border-background/5 last:border-0 hover:bg-accent/5 transition-colors">
                     <td className="px-6 py-4">
                       <p className="font-medium text-background">{f.name}</p>
                       <p className="text-background/50 text-xs font-mono">{f.template}</p>
@@ -132,7 +132,7 @@ export default function AdminFunnelsPage() {
                             href={`/f/${f.slug}`}
                             target="_blank"
                             rel="noreferrer"
-                            className="hover-lift p-2 rounded-lg text-background/50 hover:bg-background/10 hover:text-accent transition-colors"
+                            className="hover-lift p-2 rounded-lg text-background/50 hover:bg-accent/10 hover:text-accent transition-colors"
                             title="Voir la page publique"
                           >
                             <ExternalLink className="w-4 h-4" />
