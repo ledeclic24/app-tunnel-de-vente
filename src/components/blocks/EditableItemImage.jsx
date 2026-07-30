@@ -5,6 +5,9 @@ import ImagePickerModal from '../app/ImagePickerModal';
 import { cx } from '../../lib/blockStyle';
 import { useToast } from '../app/Toast';
 import { useClickOutside } from '../../lib/useClickOutside';
+import { useAnchoredPosition } from '../../lib/useAnchoredPosition';
+
+const MENU_WIDTH = 200;
 
 // Rend cliquable une image déjà présente dans un bloc (photo d'équipe, logo,
 // visuel de tarif, capture témoignage...) : Importer / Choisir dans ma
@@ -19,6 +22,8 @@ export default function EditableItemImage({
   const [showMenu, setShowMenu] = useState(false);
   const [showPicker, setShowPicker] = useState(false);
   const menuRef = useClickOutside(showMenu, () => setShowMenu(false));
+  const triggerRef = useRef(null);
+  const menuPos = useAnchoredPosition(showMenu, triggerRef, MENU_WIDTH);
   const toast = useToast();
   const fileRef = useRef(null);
 
@@ -50,6 +55,7 @@ export default function EditableItemImage({
     <div ref={menuRef} className="relative group/edimg inline-block w-full">
       {src ? (
         <img
+          ref={triggerRef}
           src={src}
           alt={alt}
           loading="lazy"
@@ -59,6 +65,7 @@ export default function EditableItemImage({
         />
       ) : (
         <button
+          ref={triggerRef}
           type="button"
           onClick={handleClick}
           className={cx(className, editableProps?.className, 'flex items-center justify-center')}
@@ -77,9 +84,10 @@ export default function EditableItemImage({
           <Pencil className="w-3 h-3" />
         </button>
       )}
-      {showMenu && (
+      {showMenu && menuPos && (
         <div
-          className="absolute z-20 top-full left-0 mt-1 bg-background border border-surface/10 rounded-xl shadow-lg overflow-hidden min-w-[200px]"
+          style={{ position: 'fixed', top: menuPos.top, left: menuPos.left, width: MENU_WIDTH, maxHeight: menuPos.maxHeight }}
+          className="z-20 bg-background border border-surface/10 rounded-xl shadow-lg overflow-y-auto"
           onClick={(e) => e.stopPropagation()}
         >
           <button

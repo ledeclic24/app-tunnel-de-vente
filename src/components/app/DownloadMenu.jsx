@@ -1,13 +1,17 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { ChevronDown, Download } from 'lucide-react';
 import { downloadEbookPdf, downloadEbookEpub, downloadEbookTxt } from '../../lib/ebooksApi';
 import { useToast } from './Toast';
+import { useClickOutside } from '../../lib/useClickOutside';
+import { useAnchoredPosition } from '../../lib/useAnchoredPosition';
 
 const FORMATS = [
   { key: 'pdf', label: 'PDF', ext: 'pdf', run: downloadEbookPdf },
   { key: 'epub', label: 'EPUB', ext: 'epub', run: downloadEbookEpub },
   { key: 'txt', label: 'Texte (.txt)', ext: 'txt', run: downloadEbookTxt },
 ];
+
+const PANEL_WIDTH = 180;
 
 // Menu de téléchargement d'ebook (PDF/EPUB/TXT) — remplace les boutons
 // séparés "Exporter en PDF" / "Exporter en EPUB" par un seul point
@@ -17,16 +21,12 @@ export default function DownloadMenu({ ebookId, title, disabled, compact = false
   const [open, setOpen] = useState(false);
   const [busyFormat, setBusyFormat] = useState(null);
   const toast = useToast();
-  const ref = useRef(null);
-
-  useEffect(() => {
-    if (!open) return undefined;
-    const onClick = (e) => {
-      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
-    };
-    document.addEventListener('mousedown', onClick);
-    return () => document.removeEventListener('mousedown', onClick);
-  }, [open]);
+  const ref = useClickOutside(open, () => setOpen(false));
+  const triggerRef = useRef(null);
+  // right-0 + largeur fixe débordait hors écran dès que le bouton était
+  // proche du bord gauche (voir SortMenu.jsx pour le même bug corrigé) —
+  // même position calculée en coordonnées écran ici.
+  const pos = useAnchoredPosition(open, triggerRef, PANEL_WIDTH);
 
   const busy = busyFormat !== null;
 
@@ -41,8 +41,11 @@ export default function DownloadMenu({ ebookId, title, disabled, compact = false
     setBusyFormat(null);
   };
 
-  const menu = open && (
-    <div className="absolute right-0 top-full mt-2 z-20 bg-background border border-surface/10 rounded-2xl shadow-xl py-2 min-w-[180px]">
+  const menu = open && pos && (
+    <div
+      style={{ position: 'fixed', top: pos.top, left: pos.left, width: PANEL_WIDTH, maxHeight: pos.maxHeight }}
+      className="z-20 bg-background border border-surface/10 rounded-2xl shadow-xl py-2 overflow-y-auto"
+    >
       {FORMATS.map((f) => (
         <button
           key={f.key}
@@ -61,6 +64,7 @@ export default function DownloadMenu({ ebookId, title, disabled, compact = false
     return (
       <div className="relative inline-block" ref={ref}>
         <button
+          ref={triggerRef}
           type="button"
           onClick={() => setOpen((v) => !v)}
           disabled={disabled || busy}
@@ -82,6 +86,7 @@ export default function DownloadMenu({ ebookId, title, disabled, compact = false
   return (
     <div className="relative inline-block" ref={ref}>
       <button
+        ref={triggerRef}
         type="button"
         onClick={() => setOpen((v) => !v)}
         disabled={disabled || busy}

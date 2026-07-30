@@ -4,6 +4,9 @@ import { uploadImage } from '../../lib/storage';
 import { cx } from '../../lib/blockStyle';
 import ImagePickerModal from '../app/ImagePickerModal';
 import { useClickOutside } from '../../lib/useClickOutside';
+import { useAnchoredPosition } from '../../lib/useAnchoredPosition';
+
+const TYPE_MENU_WIDTH = 160;
 
 // onGenerate/generating sont optionnels : sans eux, comportement inchangé
 // (upload + bibliothèque uniquement). Avec eux, un 3ᵉ bouton "Générer"
@@ -17,6 +20,8 @@ export default function ImageUploadField({ userId, value, onChange, onGenerate, 
   const [showPicker, setShowPicker] = useState(false);
   const [showTypeMenu, setShowTypeMenu] = useState(false);
   const typeMenuRef = useClickOutside(showTypeMenu, () => setShowTypeMenu(false));
+  const typeMenuTriggerRef = useRef(null);
+  const typeMenuPos = useAnchoredPosition(showTypeMenu, typeMenuTriggerRef, TYPE_MENU_WIDTH);
   const fileRef = useRef(null);
 
   const handleFile = async (e) => {
@@ -75,6 +80,7 @@ export default function ImageUploadField({ userId, value, onChange, onGenerate, 
         {onGenerate && (
           <div ref={typeMenuRef} className="relative shrink-0">
             <button
+              ref={typeMenuTriggerRef}
               type="button"
               onClick={() => (generateTypes ? setShowTypeMenu((v) => !v) : onGenerate())}
               disabled={generating}
@@ -87,8 +93,11 @@ export default function ImageUploadField({ userId, value, onChange, onGenerate, 
               )}
               {generating ? 'Génération...' : 'Générer'}
             </button>
-            {showTypeMenu && !generating && (
-              <div className="absolute right-0 top-full mt-1 z-10 bg-background border border-surface/10 rounded-xl shadow-lg overflow-hidden min-w-[160px]">
+            {showTypeMenu && !generating && typeMenuPos && (
+              <div
+                style={{ position: 'fixed', top: typeMenuPos.top, left: typeMenuPos.left, width: TYPE_MENU_WIDTH, maxHeight: typeMenuPos.maxHeight }}
+                className="z-10 bg-background border border-surface/10 rounded-xl shadow-lg overflow-y-auto"
+              >
                 {generateTypes.map((t) => (
                   <button
                     key={t.key}
