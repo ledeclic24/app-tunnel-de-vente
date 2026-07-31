@@ -9,9 +9,10 @@ export default function ReactiveDotGrid({ gap = 36, color = '34,197,94', radius 
     const section = canvas.parentElement;
     let dots = [];
     let mouse = { x: -9999, y: -9999 };
-    let rafId;
+    let rafId = null;
+    let resizeTimer = null;
 
-    const resize = () => {
+    const buildDots = () => {
       const dpr = window.devicePixelRatio || 1;
       const { clientWidth, clientHeight } = section;
       canvas.width = clientWidth * dpr;
@@ -26,6 +27,15 @@ export default function ReactiveDotGrid({ gap = 36, color = '34,197,94', radius 
           dots.push({ x, y });
         }
       }
+    };
+
+    // Un redimensionnement "à la souris" déclenche des dizaines
+    // d'évènements resize par seconde — sans ce debounce, chaque instance
+    // reconstruisait toute sa grille de points à chaque évènement brut,
+    // multiplié par les ~12 sections montées simultanément sur la landing.
+    const handleResize = () => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(buildDots, 120);
     };
 
     const handleMove = (e) => {
@@ -50,15 +60,39 @@ export default function ReactiveDotGrid({ gap = 36, color = '34,197,94', radius 
       rafId = requestAnimationFrame(draw);
     };
 
-    resize();
-    draw();
-    window.addEventListener('resize', resize);
+    const startLoop = () => {
+      if (rafId === null) rafId = requestAnimationFrame(draw);
+    };
+    const stopLoop = () => {
+      if (rafId !== null) cancelAnimationFrame(rafId);
+      rafId = null;
+    };
+
+    buildDots();
+
+    // Avec une douzaine d'instances de ce composant sur une même landing
+    // page, laisser tourner une boucle requestAnimationFrame par section —
+    // y compris celles très loin sous le pli (Footer, Pricing...) — coûte
+    // du temps CPU/GPU en continu pour rien tant qu'elles ne sont pas
+    // visibles, et rivalise avec le scroll pour le budget de la frame.
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) startLoop();
+        else stopLoop();
+      },
+      { rootMargin: '200px 0px' }
+    );
+    observer.observe(section);
+
+    window.addEventListener('resize', handleResize);
     section.addEventListener('mousemove', handleMove);
     section.addEventListener('mouseleave', handleLeave);
 
     return () => {
-      cancelAnimationFrame(rafId);
-      window.removeEventListener('resize', resize);
+      observer.disconnect();
+      stopLoop();
+      clearTimeout(resizeTimer);
+      window.removeEventListener('resize', handleResize);
       section.removeEventListener('mousemove', handleMove);
       section.removeEventListener('mouseleave', handleLeave);
     };

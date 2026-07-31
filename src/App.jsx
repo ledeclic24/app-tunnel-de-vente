@@ -1,18 +1,21 @@
 import React, { Suspense, lazy, useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
-import gsap from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
 import { AuthProvider } from './context/AuthContext';
 import { ConfirmProvider } from './components/app/ConfirmDialog';
 import { ToastProvider } from './components/app/Toast';
-import ProtectedRoute from './components/app/ProtectedRoute';
-import AdminRoute from './components/app/AdminRoute';
-import AppShell from './components/app/AppShell';
-import AdminShell from './components/app/AdminShell';
 import { resolveDomain } from './lib/domainsApi';
 import Spinner from './components/app/Spinner';
 import AnalyticsTracker from './components/AnalyticsTracker';
+
+// Lazy elles aussi : ProtectedRoute/AdminRoute/AppShell/AdminShell ne
+// servent qu'aux routes /app/*, inutile de les faire peser sur le chunk
+// d'entrée pour un visiteur qui ne fait que consulter la landing ou se
+// connecter.
+const ProtectedRoute = lazy(() => import('./components/app/ProtectedRoute'));
+const AdminRoute = lazy(() => import('./components/app/AdminRoute'));
+const AppShell = lazy(() => import('./components/app/AppShell'));
+const AdminShell = lazy(() => import('./components/app/AdminShell'));
 
 // Chargées à la demande (comme les pages /app/* ci-dessous) plutôt qu'en
 // avance : ces 8 routes finissaient toutes dans le même paquet que
@@ -54,8 +57,6 @@ const AdminAnalyticsPage = lazy(() => import('./pages/app/admin/AdminAnalyticsPa
 const AdminAuditLogPage = lazy(() => import('./pages/app/admin/AdminAuditLogPage'));
 const AdminTemplatesPage = lazy(() => import('./pages/app/admin/AdminTemplatesPage'));
 const AdminMetaPixelPage = lazy(() => import('./pages/app/admin/AdminMetaPixelPage'));
-
-gsap.registerPlugin(ScrollTrigger);
 
 function NotFoundPage() {
   return (

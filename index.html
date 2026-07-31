@@ -7,10 +7,19 @@
     <meta name="description" content="Crée un tunnel de vente complet en quelques minutes, même si tu n'as jamais vendu en ligne. Pages, textes et mise en page générés par IA, sans écrire une ligne de code." />
     <title>TonTunnel — Crée ton tunnel de vente sans expertise</title>
 
-    <!-- Google Fonts -->
+    <!-- Google Fonts : Manrope/Fraunces/JetBrains Mono pour l'UI de base,
+         les autres familles (Sora, Inter, Poppins, Playfair Display, Space
+         Grotesk) sont les choix disponibles dans le Brand Kit des tunnels
+         publiés (voir src/lib/colorUtils.js) — Fira Code et Instrument
+         Serif ne sont référencées nulle part dans le code, retirées.
+         Chargée en non-bloquant (preload + media=print → all au onload) :
+         le CSSOM ne l'attend plus pour peindre le premier rendu, et
+         font-display=swap évite tout flash de texte invisible en attendant. -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Fira+Code:wght@400;500;600&family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700;800&family=Poppins:wght@400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&family=Fraunces:ital,wght@0,400;0,500;0,600;1,400;1,500;1,600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&family=Poppins:wght@400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&family=Fraunces:ital,wght@0,400;0,500;0,600;1,400;1,500;1,600&family=JetBrains+Mono:wght@400;500;600&display=swap">
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&family=Poppins:wght@400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&family=Fraunces:ital,wght@0,400;0,500;0,600;1,400;1,500;1,600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+    <noscript><link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&family=Poppins:wght@400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&family=Fraunces:ital,wght@0,400;0,500;0,600;1,400;1,500;1,600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"></noscript>
   </head>
   <body class="bg-primary text-background font-sans antialiased overflow-x-hidden selection:bg-accent selection:text-primary">
     <!-- SVG Noise Filter Definition -->

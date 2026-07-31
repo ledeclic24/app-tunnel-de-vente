@@ -1,6 +1,9 @@
 import React, { useEffect, useRef } from 'react';
 import gsap from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import ReactiveDotGrid from './ReactiveDotGrid';
+
+gsap.registerPlugin(ScrollTrigger);
 
 export default function Philosophy() {
   const sectionRef = useRef(null);

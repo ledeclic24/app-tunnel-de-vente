@@ -15,6 +15,21 @@
   }
 }
 
+/* Navigation par ancre (navbar → #produit, #modeles...) : défilement fluide
+   plutôt que le saut instantané par défaut. scroll-margin-top compense la
+   navbar fixe (h-16 = 64px) pour que la section ciblée n'apparaisse pas
+   coupée sous elle à l'arrivée. */
+html {
+  scroll-behavior: smooth;
+}
+
+#produit,
+#modeles,
+#comment-ca-marche,
+#pricing {
+  scroll-margin-top: 88px;
+}
+
 .noise-overlay {
   position: fixed;
   inset: 0;
@@ -311,6 +326,10 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
   .magnetic-btn,
   .hover-lift,
   .hover-card,
