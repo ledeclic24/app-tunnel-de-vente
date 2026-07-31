@@ -4,6 +4,7 @@ import gsap from 'gsap';
 import { ArrowRight, Sparkles, Lock } from 'lucide-react';
 import ReactiveDotGrid from './ReactiveDotGrid';
 import LiveGenerationDemo from './LiveGenerationDemo';
+import { trackAction } from '../lib/analyticsTracker';
 
 const ROTATING_WORDS = ['ta formation', 'ton ebook', 'tes séances de coaching', 'tes produits'];
 
@@ -85,6 +86,7 @@ export default function Hero() {
         <div ref={btnRef} className="flex flex-col items-center gap-2">
           <Link
             to="/inscription"
+            onClick={() => trackAction('cta_click_hero')}
             className="magnetic-btn group inline-flex items-center gap-2 gradient-accent text-background px-6 py-3.5 rounded-xl text-base font-semibold shadow-lg shadow-accent/25"
           >
             Essayer gratuitement

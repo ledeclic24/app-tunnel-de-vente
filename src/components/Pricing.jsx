@@ -4,6 +4,7 @@ import { Check, ArrowRight } from 'lucide-react';
 import { PLANS, PLAN_ORDER, formatPrice } from '../lib/plans';
 import { getLivePlans } from '../lib/plansApi';
 import ReactiveDotGrid from './ReactiveDotGrid';
+import { trackAction } from '../lib/analyticsTracker';
 
 const DESCRIPTIONS = {
   starter: "Pour découvrir TonTunnel et publier ton premier tunnel.",
@@ -73,12 +74,16 @@ export default function Pricing() {
                 </span>
               </div>
 
-              <Link to="/inscription" className={`
+              <Link
+                to="/inscription"
+                onClick={() => trackAction(`cta_click_pricing_${plan.name.toLowerCase()}`)}
+                className={`
                 magnetic-btn w-full py-4 rounded-full font-semibold transition-colors duration-300 flex items-center justify-center gap-2 group
                 ${plan.highlight
                   ? 'bg-accent text-background hover:bg-white hover:text-surface'
                   : 'bg-primary text-background hover:bg-surface'}
-              `}>
+              `}
+              >
                 Essayer gratuitement
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </Link>

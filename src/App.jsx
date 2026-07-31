@@ -12,6 +12,7 @@ import AppShell from './components/app/AppShell';
 import AdminShell from './components/app/AdminShell';
 import { resolveDomain } from './lib/domainsApi';
 import Spinner from './components/app/Spinner';
+import AnalyticsTracker from './components/AnalyticsTracker';
 
 // Chargées à la demande (comme les pages /app/* ci-dessous) plutôt qu'en
 // avance : ces 8 routes finissaient toutes dans le même paquet que
@@ -129,6 +130,7 @@ function App() {
       <ConfirmProvider>
         <Suspense fallback={<RouteFallback />}>
           <CustomDomainGate>
+          <AnalyticsTracker />
           <Routes>
             <Route path="/" element={<LandingPage />} />
             <Route path="/connexion" element={<LoginPage />} />

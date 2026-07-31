@@ -4,6 +4,7 @@ import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { ArrowRight, Sparkles } from 'lucide-react';
 import ReactiveDotGrid from './ReactiveDotGrid';
+import { trackAction } from '../lib/analyticsTracker';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -45,6 +46,7 @@ export default function CtaBanner() {
         <div className="flex flex-col items-center gap-3">
           <Link
             to="/inscription"
+            onClick={() => trackAction('cta_click_banner')}
             className="magnetic-btn group inline-flex items-center gap-2 gradient-accent text-background px-7 py-4 rounded-xl text-base font-semibold shadow-lg shadow-accent/25"
           >
             Essayer gratuitement

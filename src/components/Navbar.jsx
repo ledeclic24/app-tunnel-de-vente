@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { trackAction } from '../lib/analyticsTracker';
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
@@ -36,6 +37,7 @@ export default function Navbar() {
           )}
           <Link
             to={user ? '/app' : '/inscription'}
+            onClick={() => { if (!user) trackAction('cta_click_navbar'); }}
             className="group inline-flex items-center gap-2 bg-surface text-background px-4 py-2 rounded-lg text-sm font-semibold hover:bg-primary transition-colors"
           >
             {user ? 'Tableau de bord' : 'Essayer gratuitement'}

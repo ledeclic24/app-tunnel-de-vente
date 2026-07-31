@@ -6,6 +6,7 @@ import PasswordInput from '../../components/auth/PasswordInput';
 import { useAuth } from '../../context/AuthContext';
 import { isApiConfigured } from '../../lib/apiClient';
 import SetupRequired from '../../components/app/SetupRequired';
+import { trackAction } from '../../lib/analyticsTracker';
 
 export default function SignupPage() {
   const { user, signUp } = useAuth();
@@ -24,6 +25,7 @@ export default function SignupPage() {
     e.preventDefault();
     setError('');
     setLoading(true);
+    trackAction('signup_started');
     const { data, error } = await signUp(email, password, fullName);
     setLoading(false);
     if (error) {
@@ -47,6 +49,7 @@ export default function SignupPage() {
     if (typeof window.fbq === 'function') {
       window.fbq('track', 'CompleteRegistration', {}, { eventID: data.user.id });
     }
+    trackAction('signup_completed');
     navigate('/app');
   };
 

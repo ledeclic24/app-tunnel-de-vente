@@ -10,6 +10,7 @@ import { fetchCreditsBalance, fetchCreditPacks, purchaseCreditPack, fetchCreditT
 import GradientBanner from '../../components/ui/GradientBanner';
 import CollapsibleSection from '../../components/app/CollapsibleSection';
 import Spinner from '../../components/app/Spinner';
+import { trackAction } from '../../lib/analyticsTracker';
 
 const PACK_LABELS = {
   boost: 'Boost',
@@ -146,6 +147,7 @@ export default function BillingPage() {
   const handlePay = async (planKey) => {
     setPayingKey(planKey);
     setError('');
+    trackAction('checkout_started', `/app/billing?plan=${planKey}`);
     try {
       const checkoutUrl = await createPayment(planKey);
       window.location.href = checkoutUrl;

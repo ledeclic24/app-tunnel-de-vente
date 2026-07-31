@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
-import { Wallet, UserPlus, Mail, Layers, ArrowUp, ArrowDown, Minus } from 'lucide-react';
+import { Wallet, UserPlus, Mail, Layers, ArrowUp, ArrowDown, Minus, Eye, Users } from 'lucide-react';
 import { fetchAnalyticsData, bucketByDay } from '../../../lib/analyticsApi';
 import { getLivePlans } from '../../../lib/plansApi';
 import { PLANS } from '../../../lib/plans';
@@ -113,6 +113,71 @@ function Chart({ title, data }) {
   );
 }
 
+const PAGE_LABELS = {
+  '/': 'Landing page',
+  '/inscription': 'Inscription',
+  '/connexion': 'Connexion',
+  '/mot-de-passe-oublie': 'Mot de passe oublié',
+  '/mentions-legales': 'Mentions légales',
+  '/cgu': 'CGU',
+  '/cgv': 'CGV',
+  '/confidentialite': 'Confidentialité',
+};
+
+const ACTION_LABELS = {
+  cta_click_hero: 'Clic CTA — Hero',
+  cta_click_navbar: 'Clic CTA — Barre de navigation',
+  cta_click_banner: 'Clic CTA — Bannière finale',
+  signup_started: 'Inscription démarrée',
+  signup_completed: 'Inscription terminée',
+  checkout_started: 'Paiement démarré',
+};
+
+function actionLabel(name) {
+  if (ACTION_LABELS[name]) return ACTION_LABELS[name];
+  if (name.startsWith('cta_click_pricing_')) return `Clic CTA — Tarifs (${name.replace('cta_click_pricing_', '')})`;
+  return name;
+}
+
+// Regroupe et trie par fréquence — même logique pour les pages vues et les
+// actions, seul le libellé affiché change.
+function topCounts(rows, labelFn) {
+  const map = new Map();
+  for (const row of rows) {
+    map.set(row.name, (map.get(row.name) || 0) + 1);
+  }
+  return [...map.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 8)
+    .map(([name, count]) => ({ name, label: labelFn(name), count }));
+}
+
+function TopList({ title, items, emptyLabel }) {
+  const max = items[0]?.count || 1;
+  return (
+    <div className="fade-in-up bg-admin-card border border-background/10 rounded-2xl p-6">
+      <h2 className="text-sm font-semibold text-background mb-4 uppercase tracking-wider">{title}</h2>
+      {items.length === 0 ? (
+        <p className="text-sm text-background/40">{emptyLabel}</p>
+      ) : (
+        <div className="space-y-3">
+          {items.map((item) => (
+            <div key={item.name}>
+              <div className="flex justify-between text-sm mb-1">
+                <span className="text-background/80 truncate">{item.label}</span>
+                <span className="font-mono text-xs text-background/50 shrink-0 ml-2">{item.count}</span>
+              </div>
+              <div className="h-1.5 bg-background/10 rounded-full overflow-hidden">
+                <div className="h-full bg-accent rounded-full transition-all duration-500" style={{ width: `${(item.count / max) * 100}%` }} />
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function AdminAnalyticsPage() {
   const [data, setData] = useState(null);
   const [livePlans, setLivePlans] = useState(PLANS);
@@ -132,6 +197,8 @@ export default function AdminAnalyticsPage() {
       funnels: data.funnels.filter((f) => new Date(f.created_at) >= cutoff),
       leads: data.leads.filter((l) => new Date(l.created_at) >= cutoff),
       planEvents: data.planEvents.filter((e) => new Date(e.changed_at) >= cutoff),
+      pageviews: data.pageviews.filter((p) => new Date(p.created_at) >= cutoff),
+      actions: data.actions.filter((a) => new Date(a.created_at) >= cutoff),
     };
   }, [data, range]);
 
@@ -152,6 +219,7 @@ export default function AdminAnalyticsPage() {
       profiles: data.profiles.filter((p) => inRange(p.created_at)).length,
       funnels: data.funnels.filter((f) => inRange(f.created_at)).length,
       leads: data.leads.filter((l) => inRange(l.created_at)).length,
+      pageviews: data.pageviews.filter((p) => inRange(p.created_at)).length,
     };
   }, [data, range]);
 
@@ -166,6 +234,10 @@ export default function AdminAnalyticsPage() {
   const mrr = data.profiles.reduce((sum, p) => sum + (livePlans[p.plan || 'starter']?.price || 0), 0);
   const signupsChart = bucketByDay(filtered.profiles, 'created_at', range);
   const leadsChart = bucketByDay(filtered.leads, 'created_at', range);
+  const pageviewsChart = bucketByDay(filtered.pageviews, 'created_at', range);
+  const uniqueVisitors = new Set(filtered.pageviews.map((p) => p.visitor_id)).size;
+  const topPages = topCounts(filtered.pageviews, (name) => PAGE_LABELS[name] || name);
+  const topActions = topCounts(filtered.actions, actionLabel);
 
   return (
     <div>
@@ -214,6 +286,27 @@ export default function AdminAnalyticsPage() {
         <div className="grid grid-rows-2 gap-6">
           <Chart title="Nouveaux utilisateurs par jour" data={signupsChart} />
           <Chart title="Leads capturés par jour" data={leadsChart} />
+        </div>
+      </div>
+
+      <p className="font-mono text-xs uppercase tracking-widest text-background/40 mb-3">Trafic (pages publiques)</p>
+      <div className="grid grid-cols-2 gap-4 mb-6">
+        <StatCard
+          icon={Eye}
+          label={`Visites (${range}j)`}
+          value={filtered.pageviews.length}
+          total={data.pageviews.length}
+          delta={<Delta current={filtered.pageviews.length} previous={previous.pageviews} />}
+          delayMs={0}
+        />
+        <StatCard icon={Users} label={`Visiteurs uniques (${range}j)`} value={uniqueVisitors} delayMs={60} />
+      </div>
+
+      <div className="grid md:grid-cols-2 gap-6 mb-8">
+        <Chart title="Visites par jour" data={pageviewsChart} />
+        <div className="grid md:grid-cols-2 gap-6">
+          <TopList title="Pages les plus visitées" items={topPages} emptyLabel="Aucune visite sur cette période." />
+          <TopList title="Actions des visiteurs" items={topActions} emptyLabel="Aucune action enregistrée sur cette période." />
         </div>
       </div>
 

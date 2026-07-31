@@ -17,6 +17,17 @@ export async function fetchAnalyticsData() {
       new_plan: e.toPlan,
       changed_at: e.changedAt,
     })),
+    pageviews: (data.pageviews || []).map((p) => ({
+      name: p.name,
+      visitor_id: p.visitorId,
+      created_at: p.createdAt,
+    })),
+    actions: (data.actions || []).map((a) => ({
+      name: a.name,
+      path: a.path,
+      visitor_id: a.visitorId,
+      created_at: a.createdAt,
+    })),
   };
 }
 
