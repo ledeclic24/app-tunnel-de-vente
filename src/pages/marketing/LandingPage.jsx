@@ -1,5 +1,6 @@
 import React from 'react';
 
+import AppMetaPixel from '../../components/AppMetaPixel';
 import Navbar from '../../components/Navbar';
 import Hero from '../../components/Hero';
 import WhoItsFor from '../../components/WhoItsFor';
@@ -21,6 +22,7 @@ export default function LandingPage() {
   return (
     <div className="relative w-full bg-background min-h-screen text-surface font-sans selection:bg-accent selection:text-background">
       <div className="noise-overlay" aria-hidden="true"></div>
+      <AppMetaPixel />
       <Navbar />
       <main>
         <Hero />

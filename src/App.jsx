@@ -52,6 +52,7 @@ const AdminPlansPage = lazy(() => import('./pages/app/admin/AdminPlansPage'));
 const AdminAnalyticsPage = lazy(() => import('./pages/app/admin/AdminAnalyticsPage'));
 const AdminAuditLogPage = lazy(() => import('./pages/app/admin/AdminAuditLogPage'));
 const AdminTemplatesPage = lazy(() => import('./pages/app/admin/AdminTemplatesPage'));
+const AdminMetaPixelPage = lazy(() => import('./pages/app/admin/AdminMetaPixelPage'));
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -173,6 +174,7 @@ function App() {
                   <Route path="analytics" element={<AdminAnalyticsPage />} />
                   <Route path="audit" element={<AdminAuditLogPage />} />
                   <Route path="templates" element={<AdminTemplatesPage />} />
+                  <Route path="meta-pixel" element={<AdminMetaPixelPage />} />
                 </Route>
               </Route>
             </Route>

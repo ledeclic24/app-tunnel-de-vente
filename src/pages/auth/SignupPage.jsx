@@ -40,6 +40,13 @@ export default function SignupPage() {
       setConfirmationPending(true);
       return;
     }
+    // Complément côté client à l'évènement serveur déjà envoyé par
+    // AuthService.signup (voir MetaPixelService) — ne fait rien si le pixel
+    // de l'app n'a jamais été chargé (ex. arrivée directe sur /inscription
+    // sans être passé par la landing, voir AppMetaPixel).
+    if (typeof window.fbq === 'function') {
+      window.fbq('track', 'CompleteRegistration', {}, { eventID: data.user.id });
+    }
     navigate('/app');
   };
 

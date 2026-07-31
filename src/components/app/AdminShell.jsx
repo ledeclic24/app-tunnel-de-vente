@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { LayoutGrid, Users, Layers, CreditCard, LineChart, LogOut, ArrowLeftCircle, ScrollText, Store } from 'lucide-react';
+import { LayoutGrid, Users, Layers, CreditCard, LineChart, LogOut, ArrowLeftCircle, ScrollText, Store, Megaphone } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
 const TABS = [
@@ -11,6 +11,7 @@ const TABS = [
   { to: '/app/admin/analytics', label: 'Analytique', icon: LineChart },
   { to: '/app/admin/audit', label: "Journal d'audit", icon: ScrollText },
   { to: '/app/admin/templates', label: 'Modèles', icon: Store },
+  { to: '/app/admin/meta-pixel', label: 'Pixel Meta', icon: Megaphone },
 ];
 
 // Reprend la palette réelle de la marque (primary/accent/background, voir
