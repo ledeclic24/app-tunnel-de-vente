@@ -3,6 +3,7 @@ import { NavLink, Link, Outlet, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, User, LogOut, Menu, X, Shield, Mail, BarChart3, Lock, Sparkles, ArrowRight,
   Search, Bell, Building2, Webhook, Megaphone, Image as ImageIcon, BookOpen, Gem, CreditCard, Compass, MailWarning, Store,
+  HelpCircle,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { getPlan, PLAN_ORDER } from '../../lib/plans';
@@ -36,6 +37,12 @@ const NAV_GROUPS = [
       { to: '/app/organisation', label: 'Organisation', icon: Building2 },
       { to: '/app/billing', label: 'Tarifs', icon: CreditCard },
       { to: '/app/account', label: 'Compte', icon: User },
+    ],
+  },
+  {
+    label: 'Aide',
+    items: [
+      { to: '/app/guide', label: 'Guide d’utilisation', icon: HelpCircle },
     ],
   },
 ];
