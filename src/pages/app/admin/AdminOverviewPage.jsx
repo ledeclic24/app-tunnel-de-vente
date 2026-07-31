@@ -3,8 +3,8 @@ import { Users, Layers, Rocket, Mail, Shield, ArrowRight, Megaphone } from 'luci
 import { fetchAllProfiles, fetchAllFunnels, fetchAllLeadCounts, setAdminStatus } from '../../../lib/adminApi';
 import { fetchSocialProof, updateSocialProof } from '../../../lib/socialProofApi';
 import { useAuth } from '../../../context/AuthContext';
-import { PLAN_ORDER, getPlan } from '../../../lib/plans';
 import Spinner from '../../../components/app/Spinner';
+import PlanDonut from '../../../components/app/admin/PlanDonut';
 
 function ToggleSwitch({ checked, onChange, disabled }) {
   return (
@@ -38,7 +38,7 @@ function StatCard({ icon: Icon, label, value, delay = 0 }) {
       </div>
       <div>
         <p className="text-2xl font-mono font-bold text-background">{value}</p>
-        <p className="text-xs text-background/50 uppercase tracking-wider font-mono">{label}</p>
+        <p className="text-xs text-background/65 uppercase tracking-wider font-mono">{label}</p>
       </div>
     </div>
   );
@@ -124,32 +124,13 @@ export default function AdminOverviewPage() {
       </div>
 
       <div className="grid md:grid-cols-2 gap-6">
-        <div className="fade-in-up bg-admin-card border border-background/10 rounded-2xl p-6" style={{ animationDelay: '240ms' }}>
-          <h2 className="text-sm font-semibold text-background mb-4 uppercase tracking-wider">Répartition par plan</h2>
-          <div className="space-y-3">
-            {PLAN_ORDER.map((key) => {
-              const count = profiles.filter((p) => (p.plan || 'starter') === key).length;
-              const pct = profiles.length ? Math.round((count / profiles.length) * 100) : 0;
-              return (
-                <div key={key}>
-                  <div className="flex justify-between text-sm mb-1">
-                    <span className="text-background/80">{getPlan(key).name}</span>
-                    <span className="text-background/50 font-mono text-xs">{count}</span>
-                  </div>
-                  <div className="h-2 bg-background/10 rounded-full overflow-hidden">
-                    <div className="h-full bg-accent rounded-full transition-all duration-500" style={{ width: `${pct}%` }} />
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
+        <PlanDonut profiles={profiles} />
 
         <div className="fade-in-up bg-admin-card border border-background/10 rounded-2xl p-6" style={{ animationDelay: '300ms' }}>
           <h2 className="text-sm font-semibold text-background mb-1 uppercase tracking-wider flex items-center gap-2">
             <Shield className="w-4 h-4 text-accent" /> Nommer un administrateur
           </h2>
-          <p className="text-xs text-background/50 mb-4">La personne doit déjà avoir un compte TonTunnel.</p>
+          <p className="text-xs text-background/65 mb-4">La personne doit déjà avoir un compte TonTunnel.</p>
           <form onSubmit={handlePromote} className="flex gap-2">
             <input
               type="email"
@@ -180,7 +161,7 @@ export default function AdminOverviewPage() {
           </div>
           <div>
             <h2 className="text-sm font-semibold text-background uppercase tracking-wider">Preuve sociale sur la landing page</h2>
-            <p className="text-xs text-background/50 mt-1 max-w-md">
+            <p className="text-xs text-background/65 mt-1 max-w-md">
               Affiche un toast avec les dernières vraies inscriptions et publications de tunnels. Reste désactivé tant qu'il n'y a pas assez de vendeurs actifs pour que ce soit crédible.
             </p>
           </div>
