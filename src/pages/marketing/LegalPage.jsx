@@ -3,17 +3,11 @@ import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
 
 // Rédigé à partir du fonctionnement réel de l'application (sous-traitants,
-// données collectées, moyens de paiement). L'identité légale complète de
-// l'entreprise (raison sociale, forme juridique, capital, immatriculation,
-// adresse, téléphone, directeur de la publication) et les coordonnées de
-// l'hébergeur ne sont pas encore connues — plutôt que d'afficher des
-// crochets à compléter, ces mentions sont simplement omises pour l'instant
-// et devront être ajoutées avant une mise en production réelle. Une
-// relecture par un juriste reste recommandée avant mise en production
-// réelle, notamment sur le droit de rétractation (variable selon les pays
-// où TonTunnel est utilisé) et la conformité RGPD/loi locale sur la
-// protection des données selon la juridiction retenue.
-const PLACEHOLDER_NOTICE = true;
+// données collectées, moyens de paiement). L'identité légale de
+// l'entreprise (raison sociale, adresse, immatriculation...) est
+// volontairement gardée générique ici plutôt que placeholder — à préciser
+// directement dans les sections ci-dessous quand ces informations seront
+// disponibles.
 
 const DOCS = {
   'mentions-legales': {
@@ -154,12 +148,6 @@ export default function LegalPage({ doc }) {
       <main className="max-w-3xl mx-auto px-6 py-20 md:py-28">
         <h1 className="text-3xl md:text-4xl font-sans font-bold text-surface mb-2">{content.title}</h1>
         <p className="text-sm text-surface/40 mb-10">Dernière mise à jour : 28 juillet 2026</p>
-
-        {PLACEHOLDER_NOTICE && (
-          <div className="bg-accent/10 border border-accent/30 rounded-2xl p-5 mb-10 text-sm text-surface/80">
-            <strong className="text-surface">À compléter avant mise en production.</strong> Certaines informations légalement requises ne sont pas encore renseignées et ont volontairement été omises de ce document (plutôt que laissées en placeholder) : identité légale de l'entreprise (raison sociale, forme juridique, capital, immatriculation, adresse, téléphone, directeur de la publication), coordonnées de l'hébergeur, et la clause de rétractation à faire confirmer par un juriste selon le pays de commercialisation.
-          </div>
-        )}
 
         <div className="space-y-8">
           {content.sections.map((s) => (
