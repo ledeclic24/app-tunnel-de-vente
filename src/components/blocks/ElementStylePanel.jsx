@@ -134,7 +134,16 @@ export default function ElementStylePanel({ block, elementKey, kind, label, onCh
   const hasContent = Object.keys(style).some((k) => k !== 'desktop' && style[k] !== undefined) || Object.keys(desktop).length > 0;
 
   return (
-    <div className="fixed right-4 top-24 bottom-4 w-80 max-w-[90vw] bg-background border border-surface/10 rounded-[2rem] shadow-2xl z-30 flex flex-col overflow-hidden">
+    // Feuille remontant du bas sur mobile (largeur pleine, hauteur plafonnée
+    // à 75vh) plutôt que le panneau flottant `right-4 w-80` d'origine, qui
+    // sur un écran étroit (max-w-[90vw]) recouvrait quasiment tout l'écran
+    // et masquait le bloc en cours d'édition derrière — signalé par un
+    // utilisateur réel, aucune variante mobile n'existait jusque-là. Le
+    // panneau desktop (à partir de md:) reste identique à l'original.
+    <div className="fixed inset-x-0 bottom-0 max-h-[75vh] bg-background border border-surface/10 rounded-t-[2rem] shadow-2xl z-30 flex flex-col overflow-hidden md:inset-x-auto md:left-auto md:right-4 md:top-24 md:bottom-4 md:max-h-none md:w-80 md:max-w-[90vw] md:rounded-[2rem]">
+      <div className="flex justify-center pt-2.5 pb-1 md:hidden shrink-0" aria-hidden="true">
+        <span className="w-10 h-1 rounded-full bg-surface/15" />
+      </div>
       <div className="flex items-center justify-between px-5 py-4 border-b border-surface/10 bg-surface/[0.02]">
         <div>
           <p className="text-xs text-surface/40 uppercase tracking-wider">Élément sélectionné</p>

@@ -403,10 +403,15 @@ export default function FunnelEditorPage() {
       // Le backend refuse maintenant de publier une offre payante sans
       // moyen de paiement rattaché, avec un message précis identifiant
       // l'offre concernée (voir FunnelsService.publish) — on l'affiche tel
-      // quel plutôt qu'un message générique.
+      // quel plutôt qu'un message générique. actionErrorCode permet en plus
+      // d'afficher un bouton qui amène directement au bloc concerné (voir
+      // le check "payment-method" de computeHealthScore, calculé sur les
+      // mêmes données) plutôt que de laisser un débutant chercher tout
+      // seul où se trouve ce réglage.
       setActionError(
         err.message || (needsPublish ? 'La publication a échoué. Réessaie.' : 'La dépublication a échoué. Réessaie.'),
       );
+      setActionErrorCode(err.message || '');
     }
   };
 
@@ -1095,6 +1100,19 @@ export default function FunnelEditorPage() {
           <div className="flex items-center gap-3">
             <span>{actionError}</span>
             {actionErrorCode === 'insufficient_credits' && <RechargeCreditsButton />}
+            {actionErrorCode?.includes('aucun moyen de paiement rattaché') && (
+              <button
+                type="button"
+                onClick={() => {
+                  const check = checks.find((c) => c.id === 'payment-method');
+                  if (check) handleHealthCheckNavigate(check);
+                  setActionError('');
+                }}
+                className="shrink-0 whitespace-nowrap text-xs font-semibold underline hover:opacity-70"
+              >
+                Configurer le paiement
+              </button>
+            )}
           </div>
           <button onClick={() => setActionError('')} className="shrink-0 hover:opacity-70"><X className="w-4 h-4" /></button>
         </div>

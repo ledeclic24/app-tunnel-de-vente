@@ -1,3 +1,5 @@
+import { parsePriceAmount } from './checkoutApi';
+
 // Évalue la qualité d'un tunnel à partir de son contenu réel (étapes + blocs),
 // sans appel réseau : tout est déjà chargé côté éditeur au moment du calcul.
 //
@@ -162,6 +164,31 @@ export function computeHealthScore(steps, blocksByStepId) {
     passed: ctaBlocksCount === 0 || ctaBlocksGenericCount === 0,
     stepId: ctaPersonalizedStepId,
     blockId: ctaPersonalizedBlockId,
+    target: 'block',
+  });
+
+  // Miroir du blocage serveur (FunnelsService.publish → findUnpayableOffers) :
+  // signalé ici AVANT la tentative de publication plutôt que découvert
+  // seulement au clic sur "Publier" — un vendeur débutant qui ne connaît pas
+  // encore l'existence du bloc Tarifs n'a sinon aucune raison d'aller y
+  // chercher un réglage de paiement (retour utilisateur réel).
+  let paymentStepId, paymentBlockId, unpaidOfferName;
+  for (const s of steps) {
+    for (const b of stepBlocks(blocksByStepId, s.id)) {
+      if (b.type !== 'pricing') continue;
+      const unpaidPlan = (b.content?.plans || []).find(
+        (p) => parsePriceAmount(p.price) > 0 && (p.paymentLinks || []).length === 0,
+      );
+      if (unpaidPlan) { paymentStepId = s.id; paymentBlockId = b.id; unpaidOfferName = unpaidPlan.name || 'Offre'; break; }
+    }
+    if (paymentBlockId) break;
+  }
+  checks.push({
+    id: 'payment-method',
+    label: !paymentBlockId ? 'Chaque offre payante a un moyen de paiement rattaché' : `L'offre "${unpaidOfferName}" a un prix mais aucun moyen de paiement rattaché`,
+    passed: !paymentBlockId,
+    stepId: paymentStepId,
+    blockId: paymentBlockId,
     target: 'block',
   });
 
