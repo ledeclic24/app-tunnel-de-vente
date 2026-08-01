@@ -5,6 +5,7 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { ArrowRight, Sparkles } from 'lucide-react';
 import ReactiveDotGrid from './ReactiveDotGrid';
 import { trackAction } from '../lib/analyticsTracker';
+import ctaPhoto from '../assets/landing/cta-photo.jpg';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -31,6 +32,30 @@ export default function CtaBanner() {
 
   return (
     <section ref={containerRef} className="relative overflow-hidden bg-primary text-background py-24 md:py-32 px-6 md:px-10 text-center">
+      <img
+        src={ctaPhoto}
+        alt=""
+        aria-hidden="true"
+        className="absolute inset-0 w-full h-full object-cover object-[78%_45%] opacity-70"
+      />
+      {/* Même logique que Hero.jsx : dégradé radial qui protège le texte
+          central tout en laissant le portrait et les icônes de croissance
+          identifiables sur les bords — réglage plus large sur mobile, où
+          le texte occupe presque toute la largeur de l'écran. */}
+      <div
+        className="absolute inset-0 md:hidden"
+        aria-hidden="true"
+        style={{
+          background: 'radial-gradient(ellipse 68% 85% at 50% 38%, rgb(11 40 24) 0%, rgb(11 40 24 / 0.94) 50%, rgb(11 40 24 / 0.65) 75%, rgb(11 40 24 / 0.15) 100%)',
+        }}
+      />
+      <div
+        className="absolute inset-0 hidden md:block"
+        aria-hidden="true"
+        style={{
+          background: 'radial-gradient(ellipse 40% 85% at 50% 42%, rgb(11 40 24) 0%, rgb(11 40 24 / 0.9) 45%, rgb(11 40 24 / 0.5) 70%, rgb(11 40 24 / 0.1) 100%)',
+        }}
+      />
       <ReactiveDotGrid color="34,197,94" />
       <div className="cta-banner-content max-w-2xl mx-auto relative z-10">
         <div className="inline-flex items-center gap-2 bg-accent/10 text-accent px-3.5 py-1.5 rounded-full text-sm font-semibold mb-7">
