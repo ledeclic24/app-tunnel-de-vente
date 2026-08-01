@@ -11,7 +11,7 @@ export default function Footer() {
         {/* Brand & Status */}
         <div className="md:col-span-2 flex flex-col items-start">
           <div className="flex items-center gap-2 mb-4">
-            <img src="/favicon.png" alt="" className="w-8 h-8" />
+            <img src="/icon-app.png" alt="" className="w-8 h-8" />
             <h2 className="text-3xl font-sans font-bold">TonTunnel</h2>
           </div>
           <p className="text-background/60 text-sm max-w-sm mb-8">

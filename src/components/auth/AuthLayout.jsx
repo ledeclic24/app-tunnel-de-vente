@@ -9,7 +9,7 @@ export default function AuthLayout({ title, subtitle, children, footer }) {
 
       <div className="relative z-10 w-full max-w-md">
         <Link to="/" className="flex items-center justify-center gap-2 mb-8 font-sans font-bold text-2xl text-background">
-          <img src="/favicon.png" alt="" className="w-8 h-8" />
+          <img src="/icon-app.png" alt="" className="w-8 h-8" />
           TonTunnel
         </Link>
 

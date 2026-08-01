@@ -318,7 +318,7 @@ function NotificationBell({ leads, dark = false, ownerId }) {
 function ShellLogo({ className = '' }) {
   return (
     <Link to="/app" className={`flex items-center gap-2 ${className}`}>
-      <img src="/favicon.png" alt="" className="h-7 w-7 rounded-lg shrink-0" />
+      <img src="/icon-app.png" alt="" className="h-7 w-7 rounded-lg shrink-0" />
       <span className="font-sans font-bold text-background">TonTunnel</span>
     </Link>
   );

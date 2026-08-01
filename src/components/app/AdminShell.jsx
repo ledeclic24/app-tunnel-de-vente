@@ -33,7 +33,7 @@ export default function AdminShell() {
       <header className="border-b border-background/10 bg-primary/95 backdrop-blur sticky top-0 z-30">
         <div className="max-w-7xl mx-auto px-4 md:px-8 h-16 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3 min-w-0">
-            <img src="/favicon.png" alt="TonTunnel" className="w-8 h-8 shrink-0" />
+            <img src="/icon-app.png" alt="TonTunnel" className="w-8 h-8 shrink-0" />
             <div className="min-w-0">
               <p className="font-mono text-xs uppercase tracking-[0.2em] text-accent leading-none">Admin</p>
               <p className="font-sans font-semibold text-sm text-background truncate">TonTunnel Control Room</p>
