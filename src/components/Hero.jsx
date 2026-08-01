@@ -5,6 +5,7 @@ import { ArrowRight, Sparkles, Lock } from 'lucide-react';
 import ReactiveDotGrid from './ReactiveDotGrid';
 import LiveGenerationDemo from './LiveGenerationDemo';
 import { trackAction } from '../lib/analyticsTracker';
+import heroPhoto from '../assets/landing/hero-photo.jpg';
 
 const ROTATING_WORDS = ['ta formation', 'ton ebook', 'tes séances de coaching', 'tes produits'];
 
@@ -66,6 +67,37 @@ export default function Hero() {
 
   return (
     <section ref={containerRef} className="relative w-full pt-36 pb-24 md:pt-44 md:pb-0 px-6 md:px-10 bg-primary overflow-hidden text-center">
+      <img
+        src={heroPhoto}
+        alt=""
+        aria-hidden="true"
+        className="absolute inset-0 w-full h-full object-cover object-[80%_30%] opacity-70"
+      />
+      {/* Le portrait reste identifiable sur les bords tout en garantissant
+          un fond uni derrière le texte — dégradé radial (bande centrale
+          sombre) plutôt qu'un voile plat. Sur mobile le texte occupe
+          presque toute la largeur de l'écran et a besoin d'une zone
+          protégée plus large que sur desktop, d'où les deux réglages
+          distincts plutôt qu'un seul compromis. */}
+      <div
+        className="absolute inset-0 md:hidden"
+        aria-hidden="true"
+        style={{
+          background: 'radial-gradient(ellipse 68% 85% at 50% 32%, rgb(11 40 24) 0%, rgb(11 40 24 / 0.94) 50%, rgb(11 40 24 / 0.65) 75%, rgb(11 40 24 / 0.15) 100%)',
+        }}
+      />
+      <div
+        className="absolute inset-0 hidden md:block"
+        aria-hidden="true"
+        style={{
+          background: 'radial-gradient(ellipse 38% 80% at 50% 32%, rgb(11 40 24) 0%, rgb(11 40 24 / 0.9) 45%, rgb(11 40 24 / 0.5) 70%, rgb(11 40 24 / 0.1) 100%)',
+        }}
+      />
+      <div
+        className="absolute inset-x-0 bottom-0 h-40"
+        aria-hidden="true"
+        style={{ background: 'linear-gradient(180deg, transparent 0%, rgb(11 40 24) 100%)' }}
+      />
       <ReactiveDotGrid color="34,197,94" />
       <div className="max-w-3xl mx-auto relative z-10">
         <div ref={badgeRef} className="inline-flex items-center gap-2 bg-accent/10 text-accent px-3.5 py-1.5 rounded-full text-sm font-semibold mb-7">
