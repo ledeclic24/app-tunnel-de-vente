@@ -253,6 +253,23 @@ export default function FunnelSettingsPanel({ funnel, plan, onSave }) {
     }
   };
 
+  // Même correctif que handleUploadFile ci-dessus, pour la même raison :
+  // avant ce correctif, choisir un ebook dans la liste ne faisait que
+  // modifier le brouillon local — il fallait ensuite repérer et cliquer sur
+  // "Enregistrer" tout en bas du panneau (après la section Livraison ET la
+  // section SEO) pour que ça compte vraiment. Un vendeur a rapporté avoir
+  // choisi son ebook puis buté sur "aucun livrable configuré" en publiant :
+  // exactement ce piège, cette fois sur le champ ebook plutôt que le fichier.
+  const handleSelectEbook = async (ebookId) => {
+    set({ deliverable_ebook_id: ebookId });
+    try {
+      await onSave({ deliverable_ebook_id: ebookId || null });
+      toast.success(ebookId ? 'Ebook enregistré.' : 'Ebook retiré.');
+    } catch {
+      toast.error("L'enregistrement de l'ebook a échoué. Réessaie.");
+    }
+  };
+
   const handleRemoveFile = async () => {
     set({ deliverable_file_url: '', deliverable_file_name: '' });
     try {
@@ -272,7 +289,6 @@ export default function FunnelSettingsPanel({ funnel, plan, onSave }) {
         seo_image_url: draft.seo_image_url.trim(),
         publish_at: fromDatetimeLocalValue(draft.publish_at),
         unpublish_at: fromDatetimeLocalValue(draft.unpublish_at),
-        deliverable_ebook_id: draft.deliverable_ebook_id || null,
         post_purchase_instructions: draft.post_purchase_instructions.trim() || null,
         is_gallery_opt_in: draft.is_gallery_opt_in,
       });
@@ -310,13 +326,14 @@ export default function FunnelSettingsPanel({ funnel, plan, onSave }) {
             <select
               className={inputClass}
               value={draft.deliverable_ebook_id}
-              onChange={(e) => set({ deliverable_ebook_id: e.target.value })}
+              onChange={(e) => handleSelectEbook(e.target.value)}
             >
               <option value="">Aucun</option>
               {ebooks.map((eb) => (
                 <option key={eb.id} value={eb.id}>{eb.title}</option>
               ))}
             </select>
+            <p className="text-xs text-surface/40 mt-1">Enregistré immédiatement, pas besoin de cliquer sur "Enregistrer" plus bas.</p>
           </div>
         )}
         <div>

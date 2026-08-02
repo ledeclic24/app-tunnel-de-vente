@@ -15,7 +15,7 @@ function stepBlocks(blocksByStepId, stepId) {
   return blocksByStepId[stepId] || [];
 }
 
-export function computeHealthScore(steps, blocksByStepId) {
+export function computeHealthScore(steps, blocksByStepId, funnelDeliverable) {
   const allBlocks = steps.flatMap((s) => stepBlocks(blocksByStepId, s.id));
   const checks = [];
 
@@ -190,6 +190,33 @@ export function computeHealthScore(steps, blocksByStepId) {
     stepId: paymentStepId,
     blockId: paymentBlockId,
     target: 'block',
+  });
+
+  // Miroir du second blocage serveur (FunnelsService.publish, juste après
+  // findUnpayableOffers) : une offre payante sans ebook/fichier/instructions
+  // rattaché ne livre rien au client après paiement. Même logique de
+  // discoverability que "payment-method" ci-dessus — signalé avant la
+  // tentative de publication. Pas de stepId/blockId : ce réglage vit au
+  // niveau du tunnel (Réglages → Général → Livraison automatique), pas sur
+  // une étape précise, d'où `target: 'settings'` plutôt que 'step'/'block'.
+  const hasPricedPlan = allBlocks.some(
+    (b) =>
+      b.type === 'pricing' &&
+      (b.content?.plans || []).some((p) => parsePriceAmount(p.price) > 0),
+  );
+  const hasDeliverable = Boolean(
+    funnelDeliverable?.hasEbook ||
+      funnelDeliverable?.hasFile ||
+      funnelDeliverable?.hasInstructions,
+  );
+  checks.push({
+    id: 'deliverable',
+    label:
+      !hasPricedPlan || hasDeliverable
+        ? 'Un livrable est configuré pour toute offre payante'
+        : "Ce tunnel vend une offre payante mais aucun livrable n'est configuré (ebook, fichier ou instructions)",
+    passed: !hasPricedPlan || hasDeliverable,
+    target: 'settings',
   });
 
   const passedCount = checks.filter((c) => c.passed).length;

@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import {
   ArrowLeft, ExternalLink, Plus, X, Pencil, Trash2, Users, Check, Lock, Unlock, Palette, Copy,
-  GripVertical, Undo2, Redo2, Eye, Settings, BookmarkPlus, Sparkles, Wand2, Megaphone,
+  GripVertical, Undo2, Redo2, Eye, Settings, BookmarkPlus, Sparkles, Wand2, Megaphone, MoreVertical,
 } from 'lucide-react';
 import {
   DndContext, closestCenter, PointerSensor, KeyboardSensor, useSensor, useSensors,
@@ -92,6 +92,18 @@ const BlockCard = React.memo(function BlockCard({
   // visuel cohérent entre les cartes plutôt qu'un bandeau gris uniforme.
   const headerTint = defaultBg === 'primary' ? 'bg-primary/5' : 'bg-accent/5';
 
+  // En dessous de 768px, la rangée complète (6 boutons de 28px collés par
+  // 4px) s'est révélée trop dense pour un doigt en usage réel — repéré en
+  // mesurant les cibles tactiles : "Enregistrer dans ma bibliothèque" et
+  // "Supprimer" ne sont séparés que de 4px, un vrai risque de mauvais tap.
+  // Desktop garde la rangée inchangée (souris = précision suffisante) ;
+  // mobile ne garde en direct que "Modifier" (le geste le plus fréquent) et
+  // regroupe le reste dans un menu dont chaque ligne fait ~40px de haut.
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const mobileMenuRef = useClickOutside(showMobileMenu, () => setShowMobileMenu(false));
+  const mobileMenuTriggerRef = useRef(null);
+  const mobileMenuPos = useAnchoredPosition(showMobileMenu, mobileMenuTriggerRef, 240);
+
   return (
     <div id={`block-${block.id}`} className={`bg-background border rounded-[2rem] overflow-hidden shadow-soft ${locked ? 'border-accent/30' : 'border-surface/10'}`}>
       <div className={`flex items-center justify-between px-5 py-3 border-b border-surface/10 ${headerTint}`}>
@@ -108,7 +120,8 @@ const BlockCard = React.memo(function BlockCard({
           <span className="truncate">{def?.label || block.type}</span>
           {locked && <span className="text-[10px] font-mono uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-accent/10 text-accent shrink-0">Verrouillé</span>}
         </div>
-        <div className="flex items-center gap-1 shrink-0">
+
+        <div className="hidden md:flex items-center gap-1 shrink-0">
           {canRegenerate && !locked && (
             <button
               onClick={() => onRegenerate(block)}
@@ -146,11 +159,79 @@ const BlockCard = React.memo(function BlockCard({
           >
             <BookmarkPlus className="w-4 h-4" />
           </button>
-          <button onClick={() => onDelete(block)} className="p-1.5 rounded-lg text-surface/40 hover:text-red-500">
+          <button onClick={() => onDelete(block)} className="p-1.5 rounded-lg text-surface/40 hover:text-red-500" aria-label="Supprimer ce bloc">
             <Trash2 className="w-4 h-4" />
           </button>
         </div>
+
+        <div className="flex md:hidden items-center gap-1 shrink-0">
+          <button
+            onClick={() => onToggle(block.id)}
+            className={`p-2.5 rounded-lg ${isExpanded ? 'text-accent' : 'text-surface/40 hover:text-surface'}`}
+            aria-label="Modifier ce bloc"
+          >
+            <Pencil className="w-4 h-4" />
+          </button>
+          <button
+            ref={mobileMenuTriggerRef}
+            type="button"
+            onClick={() => setShowMobileMenu((v) => !v)}
+            className={`p-2.5 rounded-lg ${showMobileMenu ? 'text-surface bg-surface/10' : 'text-surface/40 hover:text-surface'}`}
+            aria-label="Plus d'actions sur ce bloc"
+          >
+            <MoreVertical className="w-4 h-4" />
+          </button>
+        </div>
       </div>
+
+      {showMobileMenu && mobileMenuPos && (
+        <div
+          ref={mobileMenuRef}
+          style={{ position: 'fixed', top: mobileMenuPos.top, left: mobileMenuPos.left, width: 240, maxHeight: mobileMenuPos.maxHeight }}
+          className="dropdown-panel md:hidden z-30 bg-background border border-surface/10 rounded-2xl shadow-xl p-1.5 overflow-y-auto"
+        >
+          {canRegenerate && !locked && (
+            <button
+              type="button"
+              onClick={() => { setShowMobileMenu(false); onRegenerate(block); }}
+              disabled={isRegenerating}
+              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-left text-surface/80 hover:bg-surface/5 disabled:opacity-50"
+            >
+              <Wand2 className="w-4 h-4 shrink-0" /> Régénérer avec l'IA{regenerateCost ? ` (${regenerateCost} crédits)` : ''}
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={() => { setShowMobileMenu(false); onToggleLock(block); }}
+            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-left ${locked ? 'text-accent' : 'text-surface/80 hover:bg-surface/5'}`}
+          >
+            {locked ? <Lock className="w-4 h-4 shrink-0" /> : <Unlock className="w-4 h-4 shrink-0" />}
+            {locked ? "Déverrouiller (l'IA pourra à nouveau le modifier)" : 'Verrouiller (protège des régénérations IA)'}
+          </button>
+          <button
+            type="button"
+            onClick={() => { setShowMobileMenu(false); onDuplicate(block); }}
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-left text-surface/80 hover:bg-surface/5"
+          >
+            <Copy className="w-4 h-4 shrink-0" /> Dupliquer
+          </button>
+          <button
+            type="button"
+            onClick={() => { setShowMobileMenu(false); onSaveToLibrary(block); }}
+            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-left ${canUseLibrary ? 'text-surface/80 hover:bg-surface/5' : 'text-surface/40'}`}
+          >
+            <BookmarkPlus className="w-4 h-4 shrink-0" /> {canUseLibrary ? 'Enregistrer dans ma bibliothèque' : 'Bibliothèque (plans payants)'}
+          </button>
+          <div className="my-1 border-t border-surface/10" />
+          <button
+            type="button"
+            onClick={() => { setShowMobileMenu(false); onDelete(block); }}
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-left text-red-500 hover:bg-red-500/10"
+          >
+            <Trash2 className="w-4 h-4 shrink-0" /> Supprimer
+          </button>
+        </div>
+      )}
 
       <div>
         <BlockRenderer
@@ -895,9 +976,15 @@ export default function FunnelEditorPage() {
     const t = setTimeout(() => setHealthSnapshot({ steps, blocksByStepId }), 500);
     return () => clearTimeout(t);
   }, [steps, blocksByStepId]);
+  const funnelDeliverable = {
+    hasEbook: Boolean(funnel?.deliverable_ebook_id),
+    hasFile: Boolean(funnel?.deliverable_file_url),
+    hasInstructions: Boolean(funnel?.post_purchase_instructions?.trim()),
+  };
   const { score, checks } = useMemo(
-    () => computeHealthScore(healthSnapshot.steps, healthSnapshot.blocksByStepId),
-    [healthSnapshot],
+    () => computeHealthScore(healthSnapshot.steps, healthSnapshot.blocksByStepId, funnelDeliverable),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [healthSnapshot, funnelDeliverable.hasEbook, funnelDeliverable.hasFile, funnelDeliverable.hasInstructions],
   );
 
   // Transforme un point du Score de santé en action concrète : amène à la
@@ -906,7 +993,21 @@ export default function FunnelEditorPage() {
   // parcours guidé pour un débutant). Voir computeHealthScore pour la
   // provenance de stepId/blockId/target par point vérifié.
   const handleHealthCheckNavigate = async (check) => {
-    if (!check.stepId) return;
+    // Seul cas sans stepId : 'settings' vit au niveau du tunnel entier
+    // (Réglages → Général), pas sur une étape précise — voir le check
+    // 'deliverable' de computeHealthScore.
+    if (check.target !== 'settings' && !check.stepId) return;
+    if (check.target === 'settings') {
+      setExpandedBlockId(null);
+      setShowBrandKit(false);
+      setShowPageSettings(false);
+      setShowAiAssistant(false);
+      setShowSettings(true);
+      setTimeout(() => {
+        document.querySelector('[data-funnel-settings-panel]')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 50);
+      return;
+    }
     if (selectedStepId !== check.stepId) await selectStep(check.stepId);
     if (check.target === 'block' && check.blockId) {
       setShowSettings(false);
@@ -1113,6 +1214,20 @@ export default function FunnelEditorPage() {
                 Configurer le paiement
               </button>
             )}
+            {actionErrorCode?.includes('aucun livrable') && (
+              <button
+                type="button"
+                onClick={() => {
+                  const check = checks.find((c) => c.id === 'deliverable');
+                  if (check) handleHealthCheckNavigate(check);
+                  else handleHealthCheckNavigate({ target: 'settings' });
+                  setActionError('');
+                }}
+                className="shrink-0 whitespace-nowrap text-xs font-semibold underline hover:opacity-70"
+              >
+                Configurer la livraison
+              </button>
+            )}
           </div>
           <button onClick={() => setActionError('')} className="shrink-0 hover:opacity-70"><X className="w-4 h-4" /></button>
         </div>
@@ -1125,7 +1240,7 @@ export default function FunnelEditorPage() {
       )}
 
       {showSettings && (
-        <div className="mb-6 max-w-2xl">
+        <div className="mb-6 max-w-2xl" data-funnel-settings-panel>
           <FunnelSettingsPanel funnel={funnel} plan={plan} onSave={handleSaveSettings} />
         </div>
       )}
