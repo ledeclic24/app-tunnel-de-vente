@@ -31,44 +31,38 @@ export default function CtaBanner() {
   }, []);
 
   return (
-    <section ref={containerRef} className="relative overflow-hidden bg-primary text-background py-24 md:py-32 px-6 md:px-10 text-center">
+    <section ref={containerRef} className="relative overflow-hidden bg-primary text-background py-24 md:py-32 px-6 md:px-10 text-center md:text-left">
+      {/* Desktop seulement : la photo en fond plein cadre. Composition
+          volontairement asymétrique (sujet + icônes de croissance à droite,
+          fond uni à gauche déjà présent dans la photo elle-même) — le texte
+          s'aligne à gauche pour occuper cet espace plutôt qu'un dégradé
+          centré qui masquerait inutilement le sujet. */}
       <img
         src={ctaPhoto}
         alt=""
         aria-hidden="true"
-        className="absolute inset-0 w-full h-full object-cover object-[78%_45%] opacity-70"
-      />
-      {/* Même logique que Hero.jsx : dégradé radial qui protège le texte
-          central tout en laissant le portrait et les icônes de croissance
-          identifiables sur les bords — réglage plus large sur mobile, où
-          le texte occupe presque toute la largeur de l'écran. */}
-      <div
-        className="absolute inset-0 md:hidden"
-        aria-hidden="true"
-        style={{
-          background: 'radial-gradient(ellipse 68% 85% at 50% 38%, rgb(11 40 24) 0%, rgb(11 40 24 / 0.94) 50%, rgb(11 40 24 / 0.65) 75%, rgb(11 40 24 / 0.15) 100%)',
-        }}
+        className="hidden md:block absolute inset-0 w-full h-full object-cover object-[70%_center]"
       />
       <div
         className="absolute inset-0 hidden md:block"
         aria-hidden="true"
         style={{
-          background: 'radial-gradient(ellipse 40% 85% at 50% 42%, rgb(11 40 24) 0%, rgb(11 40 24 / 0.9) 45%, rgb(11 40 24 / 0.5) 70%, rgb(11 40 24 / 0.1) 100%)',
+          background: 'linear-gradient(90deg, rgb(11 40 24) 0%, rgb(11 40 24) 30%, rgb(11 40 24 / 0.85) 48%, rgb(11 40 24 / 0.25) 68%, rgb(11 40 24 / 0.1) 100%)',
         }}
       />
       <ReactiveDotGrid color="34,197,94" />
-      <div className="cta-banner-content max-w-2xl mx-auto relative z-10">
+      <div className="cta-banner-content max-w-2xl mx-auto md:mx-0 md:max-w-xl relative z-10">
         <div className="inline-flex items-center gap-2 bg-accent/10 text-accent px-3.5 py-1.5 rounded-full text-sm font-semibold mb-7">
           <Sparkles className="w-4 h-4" />
           Rejoins les créateurs qui vendent déjà avec TonTunnel
         </div>
-        <h2 className="font-sans font-bold text-4xl md:text-5xl leading-[1.08] tracking-tight mb-6">
+        <h2 className="font-sans font-bold text-5xl md:text-6xl leading-[1.08] tracking-tight mb-6">
           Prêt à vendre <span className="font-serif italic text-accent">sans te prendre la tête ?</span>
         </h2>
-        <p className="text-lg text-background/60 max-w-lg mx-auto mb-10">
+        <p className="text-lg text-background/60 max-w-lg mx-auto md:mx-0 mb-10">
           Décris ton offre aujourd'hui, publie ta première page dans la foulée.
         </p>
-        <div className="flex flex-col items-center gap-3">
+        <div className="flex flex-col items-center md:items-start gap-3">
           <Link
             to="/inscription"
             onClick={() => trackAction('cta_click_banner')}
@@ -78,6 +72,15 @@ export default function CtaBanner() {
             <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
           </Link>
           <p className="text-xs text-background/40">Aucune carte bancaire requise · 1 tunnel gratuit</p>
+        </div>
+
+        {/* Mobile seulement : le recadrage plein cadre d'une photo pensée
+            pour du paysage tombait mal sur un écran portrait (visage ou
+            fragments isolés derrière le texte). Plus simple et plus soigné
+            de la montrer entière, comme une vraie photo dans une carte,
+            sous le texte plutôt qu'en fond forcé derrière lui. */}
+        <div className="md:hidden mt-10 rounded-[1.75rem] overflow-hidden border border-background/10 shadow-xl">
+          <img src={ctaPhoto} alt="" className="w-full h-auto object-cover aspect-[4/3] object-[68%_18%]" />
         </div>
       </div>
     </section>
